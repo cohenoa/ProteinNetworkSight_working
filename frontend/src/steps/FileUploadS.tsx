@@ -6,6 +6,8 @@ import {
   updateFileUpload,
   updateFileName,
   updateIsLoading,
+  updatestringNames,
+  updateNamesMap,
 } from "../common/UpdateActions";
 import { clearAction } from "../common/ClearAction";
 import "../styles/FileUpload.css";
@@ -16,6 +18,7 @@ import { userInfo } from "os";
 import { get, set } from 'idb-keyval';
 import { json } from "stream/consumers";
 import { headers } from "../assets/DefualtFile";
+import { INamesStringMap } from "../@types/global";
 
 const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
@@ -23,6 +26,8 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     updateFileUpload,
     clearAction,
     updateIsLoading,
+    updatestringNames,
+    updateNamesMap,
   });
   const [isDefualt, setIsDefualt] = useState<boolean>(false);
   const [file, setFile] = useState<File>();
@@ -160,7 +165,34 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     console.log(dataParse.length);
     console.log("file json:", dataParse);
     console.log("file headers:", headers);
-    validateFile(dataParse, headers); 
+    if( headers.includes('String Name')){
+      const namesStringMap: INamesStringMap = {};
+
+      for (let i =0 ; i < dataParse.length; i++){
+        namesStringMap[dataParse[i][0]] = {
+          stringId: dataParse[i][2],
+          stringName: dataParse[i][1],
+        };
+
+        dataParse[i].splice(1, 3);
+      }
+      console.log(dataParse);
+      headers.splice(headers.indexOf('String Id'), 1);
+      headers.splice(headers.indexOf('String Name'), 1);
+      set(state.fileName,{json: dataParse, headers: headers, namesStringMap: namesStringMap});
+      actions.updateFileUpload({
+          json: dataParse,
+          headers: headers,
+        });      
+      console.log(headers);
+      state.headers = headers;
+      console.log(state.headers)
+      actions.updateNamesMap({ namesStringMap: namesStringMap });
+      goNextStep();
+    }
+    else{
+      validateFile(dataParse, headers); 
+    }
   };
 
   return (

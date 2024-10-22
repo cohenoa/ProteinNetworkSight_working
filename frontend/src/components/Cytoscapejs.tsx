@@ -15,7 +15,14 @@ import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { headers } from "../assets/DefualtFile";
 import { faDiagramProject, faDownload,faPencil } from '@fortawesome/free-solid-svg-icons';
 import fcose from 'cytoscape-fcose';
+// @ts-ignore
+import cise from 'cytoscape-cise';
+// @ts-ignore
+import elk from 'cytoscape-elk';
+
 cytoscape.use( fcose );
+cytoscape.use( cise );
+cytoscape.use( elk );
 
 /**
  * The component create the graph, using cytoscape.js library.
@@ -319,8 +326,8 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         data: {
           id: node.id,
           label: node.id == undefined || typeof node.id === "number"? node.id: node.id,
-          color: getNodeColor(node.size),
-          size: ( nodes.length / 2),  // set the size of the node to be bigger so it will be shown in the graph.
+          color: node.color,
+          size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
         },
       })
     );
@@ -342,26 +349,26 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
     // setElements(elements)
   };
   
-// The function return the color of the node based on the size
-const getNodeColor = (size: number): string => {
-  if (size === 0) return "#B2E5FF"; // Light Blue for zero
+// // The function return the color of the node based on the size
+// const getNodeColor = (size: number): string => {
+//   if (size === 0) return "#B2E5FF"; // Light Blue for zero
 
-  // Darker warm colors for positive values, with doubled range
-  if (size > 0.9) return "#CC3700"; // Darker Orange Red
-  if (size > 0.7) return "#E5533A"; // Darker Tomato
-  if (size > 0.5) return "#CCAC00"; // Darker Gold
-  if (size > 0.3) return "#CC8400"; // Darker Orange
-  if (size > 0.1) return "#CC6F00"; // Darker Dark Orange
+//   // Darker warm colors for positive values, with doubled range
+//   if (size > 0.9) return "#CC3700"; // Darker Orange Red
+//   if (size > 0.7) return "#E5533A"; // Darker Tomato
+//   if (size > 0.5) return "#CCAC00"; // Darker Gold
+//   if (size > 0.3) return "#CC8400"; // Darker Orange
+//   if (size > 0.1) return "#CC6F00"; // Darker Dark Orange
 
-  // Darker cool colors for negative values, with doubled range
-  if (size < -0.9) return "#1875CC"; // Darker Dodger Blue
-  if (size < -0.7) return "#0093CC"; // Darker Deep Sky Blue
-  if (size < -0.5) return "#009999"; // Darker Dark Turquoise
-  if (size < -0.3) return "#1A8C80"; // Darker Light Sea Green
-  if (size < -0.1) return "#4A7980"; // Darker Cadet Blue
+//   // Darker cool colors for negative values, with doubled range
+//   if (size < -0.9) return "#1875CC"; // Darker Dodger Blue
+//   if (size < -0.7) return "#0093CC"; // Darker Deep Sky Blue
+//   if (size < -0.5) return "#009999"; // Darker Dark Turquoise
+//   if (size < -0.3) return "#1A8C80"; // Darker Light Sea Green
+//   if (size < -0.1) return "#4A7980"; // Darker Cadet Blue
 
-  return "#B2E5FF"; // Default light blue for any other values (just in case)
-};
+//   return "#B2E5FF"; // Default light blue for any other values (just in case)
+// };
 
 
 
@@ -420,19 +427,28 @@ const savePositionsToIndexedDB = async () => {
     }
   }
 };
-
 const btnCsvClick = async () => {
   const val = await get(state.fileName);
-  let values_map: { [key: string]: { [id: string]: number } } = {};
-  const ids_arr = Array<string>();
+  let values_map: { [key: string]: { [id: string]: string } } = {};
+  const ids_arr: string[] = [];
+  const standard_name: string[] = [];
+  const string_id_arr: string[] = [];
 
-  console.log("state.namesStringMap: \n", Object.keys(state.namesStringMap))
-  for(const objName in state.namesStringMap){
-    if(state.namesStringMap[objName].stringId !== '0'){
-      ids_arr.push(state.namesStringMap[objName].stringName)
+  // Log the keys of namesStringMap
+  console.log("state.namesStringMap: \n", Object.keys(state.namesStringMap));
+
+  // Build ids_arr, standard_name, and string_id_arr arrays from namesStringMap
+  for (const objName in state.namesStringMap) {
+    const obj = state.namesStringMap[objName];
+    
+    if (obj?.stringId !== '0' && obj?.stringName && obj?.stringId) {
+      ids_arr.push(obj.stringName);
+      standard_name.push(objName);
+      string_id_arr.push(obj.stringId);
     }
   }
-  console.log("ids_arr: \n", ids_arr)
+  console.log("ids_arr: \n", ids_arr);
+
   // Prepare values_map where keys are vectorNames and ids
   for (const vectorName in val['vectorsValues']) {
     const values_arr = val['vectorsValues'][vectorName] || [];
@@ -440,30 +456,40 @@ const btnCsvClick = async () => {
       values_map[vectorName] = {};
     }
     for (let i = 0; i < values_arr.length; i++) {
-      values_map[vectorName][ids_arr[i]] = values_arr[i];
+      values_map[vectorName][standard_name[i]] = values_arr[i];
     }
   }
 
-  // Prepare CSV
-  let csvContent = '';
-  // Add the header row (first column will be 'ID')
-  csvContent += 'UID,' + Object.keys(val['vectorsValues']).join(',') + '\n';
+  // Add string names and string IDs to values_map
+  for (let i = 0; i < ids_arr.length; i++) {
+    if (!values_map['String Name']) {
+      values_map['String Name'] = {};
+    }
+    if (!values_map['String Id']) {
+      values_map['String Id'] = {};
+    }
+    values_map['String Name'][standard_name[i]] = ids_arr[i];
+    values_map['String Id'][standard_name[i]] = string_id_arr[i];
+  }
 
-  // Add rows for each protein ID
-  ids_arr.forEach((id) => {
-    const row = [id]; // Start row with the protein ID
+  // Prepare CSV content
+  let csvContent = 'UID,String Name,String Id,' + Object.keys(val['vectorsValues']).join(',') + '\n';
+
+  // Add rows for each ID
+  standard_name.forEach((name, index) => {
+    const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
     Object.keys(val['vectorsValues']).forEach((vectorName) => {
-      const value = values_map[vectorName][id] || '';
+      const value = values_map[vectorName][name] || '';
       row.push(value);
     });
-    csvContent += row.join(',') + '\n'; // Join row values and add to CSV content
+    csvContent += row.join(',') + '\n'; // Join the row values and append to CSV content
   });
 
-  // Create a downloadable file
+  // Create a downloadable CSV file
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.setAttribute('href'State, url);
+  link.setAttribute('href', url);
   link.setAttribute('download', `${state.fileName.split('.')[0]}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
@@ -561,6 +587,10 @@ const contextMenuItems: MenuItem[] = [
       }},
       {label: 'FCose', icon: faDiagramProject, onClick: () => {
         layout.name = 'fcose';
+        cyRef.current?.layout(layout).run();
+      }},
+      {label: 'elk', icon: faDiagramProject, onClick: () => {
+        layout.name = 'elk';
         cyRef.current?.layout(layout).run();
       }}
     ],

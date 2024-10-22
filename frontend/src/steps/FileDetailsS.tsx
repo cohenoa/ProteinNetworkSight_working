@@ -27,7 +27,7 @@ type vectorsValues = {
 };
 
 const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
-  const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading });
+  const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading ,updateThresholds});
   const [selectedOption, setSelectedOption] = useState<OptionType>({
     ...state.organism,
   });
@@ -42,7 +42,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   const collectThresholds = async (thresholds: Array<Array<number>>) => {
     var results =  get(state.fileName).then((val) => {
-      // console.log(val['headers']);
+      console.log(val['headers']);
       const mappedThresholds = thresholds.map((item, index) => ({[`${state.headers[index + 1]}`]: item}));
       console.log("mappedThresholds: ", thresholds)
       const resultObject = mappedThresholds.reduce((acc, item) => {
@@ -53,7 +53,8 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
       console.log('modified thresholds: ', resultObject);
       state.thresholds = resultObject
       console.log( state.thresholds["G1"])
-      updateThresholds(state, {thresholds:resultObject})
+      // updateThresholds(state, {thresholds:resultObject})
+      actions.updateThresholds({ thresholds: resultObject });
       return resultObject
     });
     closeModal();
@@ -149,6 +150,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
           // state.vectorsValues
         } 
       });
+      console.log(vectorsHeaders)
       // console.log("vectorsValues in File Deatiles: ",vectorsValues);
       set(state.fileName,{json: proteins, headers: headers, vectorsHeaders: vectorsHeaders, vectorsValues: vectorsValues})
       if(Object.entries(state.thresholds).length === 0){

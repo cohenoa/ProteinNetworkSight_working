@@ -1,3 +1,6 @@
+import { json } from "../assets/DefualtFile";
+import { ColumnState} from "ag-grid-community";
+
 export const emptyState = {
   fileName: "",
   json: [],
@@ -18,5 +21,7 @@ export const emptyState = {
   isLoading: false,
   isSetNamesMap: false,
   showError: false,
-  thresholds:{}
+  thresholds:{},
+  sortTable: Array<ColumnState>(),
+  stringNames: [],
 };

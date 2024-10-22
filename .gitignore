@@ -4,7 +4,7 @@ backend/common/database.ini
 # Certbot files and directories
 /.well-known/
 /renewal/
-
+*node_modules
 # Ignore Certbot configuration files
 /etc/letsencrypt/
 *.pem

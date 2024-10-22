@@ -69,7 +69,7 @@ export const ActionPage: FC = () => {
       <div className="action-page">
         <div className="explanation-wrapper">{renderStepExplanation()}</div>
 
-        {/* {step === 5 ? (
+        {step === 5 ? (
 
 
             <div className="result">
@@ -79,28 +79,31 @@ export const ActionPage: FC = () => {
                 formId={"form" + step}
                 step={step}
                 goBackStep={goBackStep}
+                goNextStep={goNextStep}
               />
           </div>
-            </div> */}
+            </div>):(
+              <div className="steps">
+                {step !== 5 && (
+                    <div className="step-bar">
+                      <StepsBar step={step} />
+                    </div>  
+                )}
+                <div className="step-content">{renderStepComponent()}</div>
+
+                <div className="buttons-bar">
+                  <ButtonsBar
+                    formId={"form" + step}
+                    step={step}
+                    goNextStep={goNextStep}
+                    goBackStep={goBackStep}
+                  />
+                </div>
+              </div>
+            )}
 
         
-          <div className="steps">
-            {step !== 5 && (
-                <div className="step-bar">
-                  <StepsBar step={step} />
-                </div>  
-            )}
-            <div className="step-content">{renderStepComponent()}</div>
-
-            <div className="buttons-bar">
-              <ButtonsBar
-                formId={"form" + step}
-                step={step}
-                goNextStep={goNextStep}
-                goBackStep={goBackStep}
-              />
-            </div>
-          </div>
+          
         
       </div>
     </StateMachineProvider>

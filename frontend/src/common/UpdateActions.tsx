@@ -4,8 +4,10 @@ import {
   IVectorsValues,
   threshMap,
 } from "../@types/global";
-
+import {ColumnState} from "ag-grid-community";
 import { ISuggestionsJson, OptionType } from "../@types/json";
+
+
 
 export function updateIsLoading(
   state: GlobalState,
@@ -108,9 +110,42 @@ export function updateUuid(
 }
 
 
+/**
+ * Updates the global state with the thresholds as an object with protein names as keys
+ * and threshold values as an array of length 3 with the values for negative, score and positive thresholds
+ * @param state The current global state
+ * @param payload An object with a single property `thresholds` with the thresholds as an object with the same structure as above
+ * @returns The new global state
+ */
+
 export function updateThresholds(
   state: GlobalState,
   payload: { thresholds: { [x: string]: number[]; }}
+): GlobalState {
+  console.log(payload);
+  return {
+    ...state,
+    ...payload,
+  };
+};
+
+
+export function updatestringNames(
+  state: GlobalState,
+  payload: { stringNames: string[] }
+): GlobalState {
+  console.log(payload);
+  return {
+    ...state,
+    ...payload,
+  };
+};
+
+
+// Update the payload type to accept an array of ColumnState
+export function updateSortTable(
+  state: GlobalState,
+  payload: { sortTable: ColumnState[] } // Change here
 ): GlobalState {
   console.log(payload);
   return {

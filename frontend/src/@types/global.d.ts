@@ -37,6 +37,8 @@ declare module "little-state-machine" {
     uuid: string;
     showError:boolean
     thresholds:{[x: string]: number[];}
+    sortTable:Array<ColumnState>;
+    stringNames:Array<string>;
   }
 };
 

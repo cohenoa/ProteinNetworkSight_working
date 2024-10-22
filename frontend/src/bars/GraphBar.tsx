@@ -45,14 +45,12 @@ const GraphBar: FC<IGraphBarProps> = ({
             {openTable ? "Show as graph" : "Show as Table"}
           </button>
         </div>
-        <h1 className="title">{clickedVector}</h1>
+        {/* <h1 className="title">{clickedVector}</h1> */}
         <div className="graph-info">
           Nodes: {nodesNum}, Links: {linksNum}
         </div>
-      </div>
-
-      <div className="threashold-row">
-        <label htmlFor="positiveThreshold">Positive Threshold:</label>
+        <div className="threashold-row">
+        <label htmlFor="positiveThreshold">P. Threshold: </label>
         <input
           id="positiveThreshold"
           type="number"
@@ -64,7 +62,7 @@ const GraphBar: FC<IGraphBarProps> = ({
           required
           onChange={(e) => setPos(Number(e.target.value))}
         />
-        <label htmlFor="negativeThreshold">Negative Threshold:</label>
+        <label htmlFor="negativeThreshold">N. Threshold: </label>
 
         <input
           id="negativeThreshold"
@@ -77,13 +75,18 @@ const GraphBar: FC<IGraphBarProps> = ({
           required
           onChange={(e) => setNeg(Number(e.target.value))}
         />
-        <button
+         <button
           className="btn btn--gray btn--small"
           onClick={btnSubmitThresholds}
         >
-          submit
+          Submit
         </button>
+        
       </div>
+     
+      </div>
+
+     
       <p className="graph-notice">
         It is possible to move any individual node,&nbsp;
         <span className="bold">once the graph has loaded (may take a few seconds).</span> To move

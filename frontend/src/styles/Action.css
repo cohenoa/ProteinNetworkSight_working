@@ -3,7 +3,7 @@
   width: 100%;
   background-image:var(  --background-light-gradient);
   height: var(--container-height);
-  padding: 1% 8%;
+  padding: 1% 5%;
 }
 
 .explanation-wrapper {
@@ -18,7 +18,7 @@
 }
 .result {
     border-radius: 10px;
-  width: 70%;
+  width: 85%;
   height: 100%;
 }
 .steps {
@@ -33,7 +33,7 @@
 .step-bar {
     border-radius: 10px;
 
-  height: 15%;
+  height: 10%;
   width: 100%;
 }
 

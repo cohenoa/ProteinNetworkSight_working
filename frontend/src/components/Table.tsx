@@ -1,10 +1,14 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { SortChangedEvent ,GridReadyEvent} from 'ag-grid-community';
+
 import "ag-grid-enterprise";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-alpine.css";
 import "../styles/Table.css";
 import { ICustomGraphData } from "../@types/graphs";
+import { useStateMachine } from "little-state-machine";
+import { updateSortTable } from "../common/UpdateActions";
 
 type row = {
   "Original Name": string;
@@ -18,6 +22,7 @@ type row = {
 const TableComponent: FC<{
   data: ICustomGraphData;
 }> = ({ data }) => {
+  const { state, actions } = useStateMachine({updateSortTable});
   const [rowData, setRowData] = useState<row[]>([]);
   const initialExplanation = "click on a cell to read information about it"
   const [explanation, setExplanation] = useState(initialExplanation)
@@ -89,8 +94,22 @@ const updateExplanationText = (cellColumn?:string)=>{
   };
 
 
-  const onSortChanged = () => {
-    
+  const onSortChanged = (e: SortChangedEvent) => {
+    if(e.columnApi){
+
+      const sortState = e.columnApi
+        .getColumnState()
+      console.log(sortState);
+      // updateSortTable(state, { sortTable: sortState[0] });
+      if(sortState !== undefined)
+        actions.updateSortTable({ sortTable: sortState });
+    }
+    // console.log("after Save", state.sortTable);
+  }
+  const onGridReady = (e: GridReadyEvent) => {
+    console.log("onGridReady\n");
+    e.columnApi.applyColumnState({state : state.sortTable});
+    console.log("after applay", e.columnApi.getColumnState());
   };
 
   return (
@@ -103,6 +122,7 @@ const updateExplanationText = (cellColumn?:string)=>{
         rowData={rowData}
         columnDefs={columnDefs}
         onSortChanged={onSortChanged}
+        onGridReady={onGridReady}
         onCellClicked={(event) => {
           updateExplanationText(event.colDef.field);
         }}
