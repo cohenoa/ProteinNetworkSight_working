@@ -680,6 +680,7 @@ return (
           style={{ width: "100%", height: "100%" }}
           stylesheet={myStyle}
           cy={handleCyInit}
+          wheelSensitivity={0.1}
         />
       </>
     )}

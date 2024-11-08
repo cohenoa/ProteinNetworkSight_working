@@ -1,7 +1,8 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { IButtonsProps } from "../@types/props";
 import { useStateMachine } from "little-state-machine";
 import { clearAction } from "../common/ClearAction";
+
 import "../styles/Button.css";
 
 const ButtonsBar: FC<IButtonsProps> = ({ formId, step, goBackStep }) => {
@@ -43,8 +44,6 @@ const ButtonsBar: FC<IButtonsProps> = ({ formId, step, goBackStep }) => {
         next
       </button>
       )}
-
-      
     </div>
   );
 };

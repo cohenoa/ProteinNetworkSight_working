@@ -70,8 +70,6 @@ export const ActionPage: FC = () => {
         <div className="explanation-wrapper">{renderStepExplanation()}</div>
 
         {step === 5 ? (
-
-
             <div className="result">
               <Result />
               <div className="buttons-bar">
@@ -101,10 +99,6 @@ export const ActionPage: FC = () => {
                 </div>
               </div>
             )}
-
-        
-          
-        
       </div>
     </StateMachineProvider>
   );
