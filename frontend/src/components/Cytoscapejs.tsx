@@ -446,8 +446,15 @@ const btnCsvClick = async () => {
       standard_name.push(objName);
       string_id_arr.push(obj.stringId);
     }
+    else{
+      ids_arr.push("");
+      standard_name.push(objName);
+      string_id_arr.push("");
+    }
   }
   console.log("ids_arr: \n", ids_arr);
+
+  // console.log("vectorsValues: \n", val['vectorsValues']);
 
   // Prepare values_map where keys are vectorNames and ids
   for (const vectorName in val['vectorsValues']) {
