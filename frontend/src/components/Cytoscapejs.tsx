@@ -7,6 +7,7 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
+import  { layoutTester }  from "./layoutAlgorithms";
 import { saveAs } from 'file-saver';
 import { get, set, update } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
@@ -83,7 +84,6 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
 
   // const [clicked_vectors, set_clicked_vectors] = useState([])
   const [isLoading, setIsLoading] = useState(true);
-  const [nodePositions, setNodePositions] = useState<Array<any>>([]);
 
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
@@ -162,7 +162,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         console.error("Error fetching data from IndexedDB", error);
       }
   },
-    [graphData,clickedVector, state.fileName]
+    [graphData, clickedVector, state.fileName]
   );
 
   const fetchData = async () => {
@@ -176,9 +176,9 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
 
         elementsVector = clickedVectors[clickedVector].elements[0]
         const positions = clickedVectors[clickedVector].positions;
+
         if (positions != undefined) {
           setElements(elementsVector);
-          setNodePositions(positions);
 
           // Create a layout with saved positions
           console.log("positions: \n", positions)
@@ -197,7 +197,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         layout.positions = false;
 
         if (clickedVector in clickedVectors){
-          delete  val.clicked_vectors[clickedVector];
+          delete val.clicked_vectors[clickedVector];
           await set(state.fileName,val);
           console.log(val.clicked_vectors)
          
@@ -374,16 +374,24 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
 
 //The function return the color of the link, based on the score
 const getLinkColor = (score: Number) => {
-  if (score === 1994) return "white";
-  if (score.valueOf() >= 0.95) return "black";
-  if (score.valueOf() >= 0.9) return "#101010";
-  if (score.valueOf() >= 0.8) return "#282828";
-  if (score.valueOf() >= 0.7) return "#383838";
-  if (score.valueOf() >= 0.6) return "#484848";
-  if (score.valueOf() >= 0.5) return "#585858";
-  if (score.valueOf() >= 0.4) return "#696969";
-  if (score.valueOf() >= 0.3) return "#888888";
-  return "white";
+  let strength = String(Math.round((1 - score.valueOf()) * 99));
+
+  if (strength.length === 1) {
+    strength = "0" + strength;
+  }
+
+  return "#" + strength + strength + strength;
+
+  // if (score === 1994) return "white";
+  // if (score.valueOf() >= 0.95) return "black";
+  // if (score.valueOf() >= 0.9) return "#101010";
+  // if (score.valueOf() >= 0.8) return "#282828";
+  // if (score.valueOf() >= 0.7) return "#383838";
+  // if (score.valueOf() >= 0.6) return "#484848";
+  // if (score.valueOf() >= 0.5) return "#585858";
+  // if (score.valueOf() >= 0.4) return "#696969";
+  // if (score.valueOf() >= 0.3) return "#888888";
+  // return "white";
 };
 
 const savePositionsToIndexedDB = async () => {
@@ -584,6 +592,11 @@ const contextMenuItems: MenuItem[] = [
       {label: 'Circle', icon: faDiagramProject, onClick: () => {
         layout.name = 'circle';
         cyRef.current?.layout(layout).run();
+        console.log('here');
+        // console.log(graphData.nodes);
+        // console.log(graphData.links);
+        layoutTester(graphData);
+        console.log('here');
       }},
       {label: 'FCose', icon: faDiagramProject, onClick: () => {
         layout.name = 'fcose';

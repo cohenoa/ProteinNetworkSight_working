@@ -100,7 +100,7 @@ const Result: FC = () => {
     setError(false);
     get(state.fileName)
       .then((val) => {
-        const headers = val['headers'];
+        // const headers = val['headers'];
         vectorsValues = val['vectorsValues'];
         // console.log("vectors values: ",vectorsValues);
         // console.log(vectorsValues['G18']);

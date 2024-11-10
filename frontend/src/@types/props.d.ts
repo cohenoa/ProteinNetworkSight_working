@@ -70,3 +70,7 @@ interface ContextMenuProps {
   position: { x: number; y: number };
   items: MenuItem[];
 }
+
+interface position {
+  [nodeId: string]: { x: number, y: number }
+}
