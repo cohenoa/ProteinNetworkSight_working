@@ -7,6 +7,7 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
+import { write, utils } from "xlsx";
 import { saveAs } from 'file-saver';
 import { get, set, update } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
@@ -427,8 +428,8 @@ const savePositionsToIndexedDB = async () => {
     }
   }
 };
-const btnCsvClick = async () => {
-  const val = await get(state.fileName);
+
+const getNameMap = (val: any) => {
   let values_map: { [key: string]: { [id: string]: string } } = {};
   const ids_arr: string[] = [];
   const standard_name: string[] = [];
@@ -452,9 +453,6 @@ const btnCsvClick = async () => {
       string_id_arr.push("");
     }
   }
-  console.log("ids_arr: \n", ids_arr);
-
-  // console.log("vectorsValues: \n", val['vectorsValues']);
 
   // Prepare values_map where keys are vectorNames and ids
   for (const vectorName in val['vectorsValues']) {
@@ -479,9 +477,52 @@ const btnCsvClick = async () => {
     values_map['String Id'][standard_name[i]] = string_id_arr[i];
   }
 
-  // Prepare CSV content
-  let csvContent = 'UID,String Name,String Id,' + Object.keys(val['vectorsValues']).join(',') + '\n';
+  return {'values_map': values_map, 'ids_arr': ids_arr, 'standard_name': standard_name, 'string_id_arr': string_id_arr};
+}
 
+const btnXLSXClick = async () => {
+  const val = await get(state.fileName);
+  const {values_map, ids_arr, standard_name, string_id_arr} = getNameMap(val);
+
+  let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(val['vectorsValues']))];
+
+  standard_name.forEach((name, index) => {
+    const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
+    Object.keys(val['vectorsValues']).forEach((vectorName) => {
+      const value = values_map[vectorName][name] || '';
+      row.push(value);
+    });
+    xlsxContent.push(row);
+  })
+
+  console.log("my xl content: \n", xlsxContent);
+
+  const worksheet = utils.aoa_to_sheet(xlsxContent);
+  const workbook = utils.book_new();
+  utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+  // Create a Blob from the workbook
+  const file = write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([file], { type: "application/octet-stream" });
+
+  // Create a download link and click it programmatically
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${state.fileName.split('.')[0]}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+
+
+const btnCsvClick = async () => {
+  const val = await get(state.fileName);
+  const {values_map, ids_arr, standard_name, string_id_arr} = getNameMap(val);
+
+  let csvContent = 'UID,STRING Name,STRING id,' + Object.keys(val['vectorsValues']).join(',') + '\n';
   // Add rows for each ID
   standard_name.forEach((name, index) => {
     const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
@@ -504,32 +545,32 @@ const btnCsvClick = async () => {
   document.body.removeChild(link);
 };
 
-  const btnJsonClick = () => {
-    const cy = cyRef.current;
-    if (cy) {
-      const jsonData = cy.json();
-      
-      // Convert the JSON object to a string
-      const jsonString = JSON.stringify(jsonData, null, 2); // 2 spaces for indentation
-  
-      // Create a Blob from the JSON string
-      const jsonBlob = new Blob([jsonString], { type: 'application/json' });
-  
-      const a = document.createElement('a');
-  
-      // Set the href attribute with the Blob URL
-      a.href = URL.createObjectURL(jsonBlob);
-  
-      // Set the download attribute for the file name
-      a.download =state.fileName.split('.')[0] + '_' + clickedVector + '.json';
-  
-      // Append the anchor to the document body
-      document.body.appendChild(a);
-  
-      // Programmatically click the anchor to trigger the download
-      a.click();
-      
-  }}
+const btnJsonClick = () => {
+  const cy = cyRef.current;
+  if (cy) {
+    const jsonData = cy.json();
+    
+    // Convert the JSON object to a string
+    const jsonString = JSON.stringify(jsonData, null, 2); // 2 spaces for indentation
+
+    // Create a Blob from the JSON string
+    const jsonBlob = new Blob([jsonString], { type: 'application/json' });
+
+    const a = document.createElement('a');
+
+    // Set the href attribute with the Blob URL
+    a.href = URL.createObjectURL(jsonBlob);
+
+    // Set the download attribute for the file name
+    a.download =state.fileName.split('.')[0] + '_' + clickedVector + '.json';
+
+    // Append the anchor to the document body
+    document.body.appendChild(a);
+
+    // Programmatically click the anchor to trigger the download
+    a.click();
+    
+}}
 
   const btnPngClick = () =>{
     const cy = cyRef.current;
@@ -558,7 +599,8 @@ const contextMenuItems: MenuItem[] = [
       { label: '.svg', icon: faDownload, onClick: btnSVGExportClick },
       { label: '.png', icon: faDownload, onClick: btnPngClick },
       { label: '.json', icon: faDownload, onClick: btnJsonClick },
-      { label: '.tsv', icon: faDownload, onClick: btnCsvClick },
+      { label: '.csv', icon: faDownload, onClick: btnCsvClick },
+      { label: '.xlsx', icon: faDownload, onClick: btnXLSXClick },
     ],
   },
   {

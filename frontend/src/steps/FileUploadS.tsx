@@ -142,7 +142,6 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const onXLSXReadFile = (e: ProgressEvent<FileReader>) => {
-    console.log("shalalalalalalalalalalal");
     /*
       This functions get called by fileReader when he finish loading the file from the browser.
       It reads the first sheet and updates the fileInfo global state.
@@ -155,42 +154,47 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     let readData = read(data, { type: "binary" });
     const workingSheetName = readData.SheetNames[0];
     const workingSheet = readData.Sheets[workingSheetName];
-    // console.log("workingSheet:", workingSheet);
+    
     const dataParse = utils.sheet_to_json(workingSheet, {
       header: 1,
     }) as any[][];
+
+    console.log("file json:", dataParse);
+
     const headers = dataParse.shift() as string[];
     if(dataParse.length > 2000){
       setHasError(true);
       return;
     }
     console.log(dataParse.length);
-    console.log("file json:", dataParse);
     console.log("file headers:", headers);
-    if( headers.includes('String Name')){
+
+    if( headers.includes('STRING Name')){
+      console.log("loading saved file");
       const namesStringMap: INamesStringMap = {};
 
       for (let i = 0 ; i < dataParse.length; i++){
 
-        if (dataParse[i][1] === undefined) {
-          console.log(dataParse[i][0]);
+        // console.log(typeof dataParse[i][1]);
+        if (dataParse[i][1] != ""){
+          namesStringMap[dataParse[i][0]] = {
+            stringId: dataParse[i][2],
+            stringName: dataParse[i][1],
+          };
         }
         else{
-          console.log(dataParse[i][1]);
+          // console.log("hello from the other side");
+          namesStringMap[dataParse[i][0]] = {
+            stringId: "0",
+            stringName: "",
+          };
         }
 
-        namesStringMap[dataParse[i][0]] = {
-          stringId: dataParse[i][2],
-          stringName: dataParse[i][1],
-        };
-
-        dataParse[i].splice(1, 3);
-
-        // console.log(dataParse[i]);
+        dataParse[i].splice(1, 2);
       }
-      console.log(dataParse);
-      headers.splice(headers.indexOf('String Id'), 1);
-      headers.splice(headers.indexOf('String Name'), 1);
+
+      headers.splice(headers.indexOf('STRING id'), 1);
+      headers.splice(headers.indexOf('STRING Name'), 1);
       set(state.fileName,{json: dataParse, headers: headers, namesStringMap: namesStringMap});
       actions.updateFileUpload({
           json: dataParse,
