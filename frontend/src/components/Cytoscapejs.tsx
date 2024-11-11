@@ -77,7 +77,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
     avoidOverlapPadding: 30, // extra spacing around nodes when avoidOverlap: true
     nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
     condense: true, // uses all available space on false, uses minimal space on true
-    animate: true,
+    animate: false,
     positions: false,
    });
 
@@ -590,18 +590,22 @@ const contextMenuItems: MenuItem[] = [
       // }},
       {label: 'Circle', icon: faDiagramProject, onClick: () => {
         layout.name = 'circle';
+        layout.animate = true;
         cyRef.current?.layout(layout).run();
       }},
       {label: 'FCose', icon: faDiagramProject, onClick: () => {
         layout.name = 'fcose';
+        layout.animate = true;
         cyRef.current?.layout(layout).run();
       }},
       {label: 'elk', icon: faDiagramProject, onClick: () => {
         layout.name = 'elk';
+        layout.animate = true;
         cyRef.current?.layout(layout).run();
       }},
       {label: 'cise', icon: faDiagramProject, onClick: () => {
         layout.name = 'cise';
+        layout.animate = true;
         cyRef.current?.layout(layout).run();
       }}
     ],
