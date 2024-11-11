@@ -599,6 +599,10 @@ const contextMenuItems: MenuItem[] = [
       {label: 'elk', icon: faDiagramProject, onClick: () => {
         layout.name = 'elk';
         cyRef.current?.layout(layout).run();
+      }},
+      {label: 'cise', icon: faDiagramProject, onClick: () => {
+        layout.name = 'cise';
+        cyRef.current?.layout(layout).run();
       }}
     ],
   },
