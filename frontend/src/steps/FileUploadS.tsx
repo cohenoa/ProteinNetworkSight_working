@@ -142,6 +142,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const onXLSXReadFile = (e: ProgressEvent<FileReader>) => {
+    console.log("shalalalalalalalalalalal");
     /*
       This functions get called by fileReader when he finish loading the file from the browser.
       It reads the first sheet and updates the fileInfo global state.
@@ -154,6 +155,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     let readData = read(data, { type: "binary" });
     const workingSheetName = readData.SheetNames[0];
     const workingSheet = readData.Sheets[workingSheetName];
+    // console.log("workingSheet:", workingSheet);
     const dataParse = utils.sheet_to_json(workingSheet, {
       header: 1,
     }) as any[][];
@@ -168,13 +170,23 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     if( headers.includes('String Name')){
       const namesStringMap: INamesStringMap = {};
 
-      for (let i =0 ; i < dataParse.length; i++){
+      for (let i = 0 ; i < dataParse.length; i++){
+
+        if (dataParse[i][1] === undefined) {
+          console.log(dataParse[i][0]);
+        }
+        else{
+          console.log(dataParse[i][1]);
+        }
+
         namesStringMap[dataParse[i][0]] = {
           stringId: dataParse[i][2],
           stringName: dataParse[i][1],
         };
 
         dataParse[i].splice(1, 3);
+
+        // console.log(dataParse[i]);
       }
       console.log(dataParse);
       headers.splice(headers.indexOf('String Id'), 1);

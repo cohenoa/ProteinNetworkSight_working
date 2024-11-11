@@ -193,8 +193,8 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         }
       } else {
         console.log("Setting the elements for the first time");
-        layout.name = 'circle';
-        layout.positions = false;
+        // layout.name = 'circle';
+        // layout.positions = false;
 
         if (clickedVector in clickedVectors){
           delete  val.clicked_vectors[clickedVector];
