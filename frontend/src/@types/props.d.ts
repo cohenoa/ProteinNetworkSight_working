@@ -30,9 +30,9 @@ export interface IStepsBarProps {
   step: number;
 }
 
-export interface IButtonsProps extends IStepProps {
+export interface IButtonsProps extends IStepProps{
   formId: string;
-  goBackStep: () => void;
+  buttons: IButtonConfig[];
 }
 
 export interface IVectorsButtonsProp {
@@ -69,4 +69,11 @@ interface MenuItem {
 interface ContextMenuProps {
   position: { x: number; y: number };
   items: MenuItem[];
+}
+
+interface IButtonConfig {
+  label: string;
+  type: "button" | "submit";
+  className: string;
+  onClick?: (actions: any) => void;
 }
