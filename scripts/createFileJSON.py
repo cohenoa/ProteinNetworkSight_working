@@ -8,15 +8,16 @@ dest_path = 'C:/Users/omrin/Downloads/example.tsx'
 
 df = pd.read_excel(src_path)
 
-# for uid in df['UID']:
 
 jsonArr = []
 
+# add xlsx content to json array
 for row in df.iterrows():
     rowArr = []
     jsonArr.append(row[1].values.tolist())
 
-print(jsonArr)
+
+# create tsx file and dump json to it with in readable format
 with open(dest_path, 'w') as outfile:
     outfile.write('export const data = [\n')
     for row in jsonArr:
@@ -27,5 +28,5 @@ with open(dest_path, 'w') as outfile:
     outfile.write('];')
 
 
-
+# for simple json dump
 # json.dump(jsonArr, open(dest_path, 'w'))
