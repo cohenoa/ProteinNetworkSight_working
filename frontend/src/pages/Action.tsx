@@ -120,11 +120,11 @@ export const ActionPage: FC = () => {
     }
 
     if (step !== 5){
-      if (step > 0){
-        bar.push(nextButton);
+      if (step > 1){
+        bar.push(nextNoOpButton);
       }
       else{
-        // bar.push(nextButton);
+        bar.push(nextNoOpButton);
       }
     }
     else{
@@ -148,7 +148,12 @@ export const ActionPage: FC = () => {
 
     console.log(formID);
 
+    // if (step === 3){
+    //   return <></>
+    // }
     return <ButtonsBar formId={formID} buttons={bar}></ButtonsBar>;
+
+    // return <ButtonsBar step={step} goNextStep={goNextStep} formId={formID} buttons={bar}></ButtonsBar>;
   }
 
   return (
@@ -156,7 +161,8 @@ export const ActionPage: FC = () => {
       <div className="action-page">
         <div className="explanation-wrapper">{renderStepExplanation()}</div>
 
-        {step === 5 ? (
+        <div className="main-wrapper">
+          {step === 5 ? (
             <div className="result">
               <Result />
               {/* <ButtonsBar formId="result-form" buttons={renderButtonBar()} /> */}
@@ -169,9 +175,10 @@ export const ActionPage: FC = () => {
                   </div>  
               )}
               <div className="step-content">{renderStepComponent()}</div>
-              <div>{renderButtonBar()}</div>
             </div>
             )}
+            <div className="button-bar">{renderButtonBar()}</div>
+        </div>
       </div>
     </StateMachineProvider>
   );

@@ -73,13 +73,13 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       console.log("is defualt!");
       actions.updateFileUpload(getExampleFile());
       set(state.fileName,getExampleFile());
-      // goNextStep();
+      goNextStep();
       return;
     }
 
     // case of entering by pressing back
     if (state.json.length > 0) {
-      // goNextStep();
+      goNextStep();
       return;
     }
 
@@ -139,7 +139,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
         
     //     console.log(fileJson)
     //   })
-    // goNextStep();
+    goNextStep();
   };
 
   const onXLSXReadFile = (e: ProgressEvent<FileReader>) => {
@@ -189,7 +189,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       state.headers = headers;
       console.log(state.headers)
       actions.updateNamesMap({ namesStringMap: namesStringMap });
-      // goNextStep();
+      goNextStep();
     }
     else{
       validateFile(dataParse, headers); 

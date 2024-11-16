@@ -113,31 +113,59 @@ const SuggestionsS: FC<IStepProps> = ({ step, goNextStep }) => {
     // Display loading component while data is being fetched
     <LoadingComponent />
   ) : (
-    // Render the form with Switchable components based on suggestions
-    <div className="suggestions-scroll">
-      <div className="suggestions-stats">
-        {suggestionsObj && <h4 style={{fontWeight: "bold"}}>
-          {Object.keys(suggestionsObj.perfect_match).length} Perfect matches, {"\t"}
-          {Object.keys(suggestionsObj.alternative_match).length} Alternative names, {"\t"}
-          {suggestionsObj.no_match.length} No matches
-          </h4>
+    // <div className="suggestions-container">
+      <div className="suggestions-scroll">
+        {/* <div className="suggestions-stats">
+          {suggestionsObj && 
+            <h4 style={{fontWeight: "bold"}}>
+              {Object.keys(suggestionsObj.perfect_match).length} Perfect matches, {"\t"}
+              {Object.keys(suggestionsObj.alternative_match).length} Alternative names, {"\t"}
+              {suggestionsObj.no_match.length} No matches
+            </h4>
           }
+        </div> */}
+        <form className="suggestions-form" id={"form" + step} onSubmit={handleSubmit(onSubmit)}>
+          {suggestionsObj &&
+            Object.keys(suggestionsObj.alternative_match).map((orgName) => {
+              const suggestions = suggestionsObj.alternative_match[orgName];
+              return (
+                <Switchable
+                  key={orgName}
+                  setNamesStringMap={setNamesStringMap}
+                  orgName={orgName}
+                  suggestions={suggestions}
+                />
+              );
+            })}
+            <div className="suggestions-buffer"></div>
+        </form>
       </div>
-      <form id={"form" + step} onSubmit={handleSubmit(onSubmit)}>
-        {suggestionsObj &&
-          Object.keys(suggestionsObj.alternative_match).map((orgName) => {
-            const suggestions = suggestionsObj.alternative_match[orgName];
-            return (
-              <Switchable
-                key={orgName}
-                setNamesStringMap={setNamesStringMap}
-                orgName={orgName}
-                suggestions={suggestions}
-              />
-            );
-          })}
-      </form>
-    </div>
+    // </div>
+    // Render the form with Switchable components based on suggestions
+    // <div className="suggestions-scroll">
+    //   {/* <div className="suggestions-stats">
+    //     {suggestionsObj && <h4 style={{fontWeight: "bold"}}>
+    //       {Object.keys(suggestionsObj.perfect_match).length} Perfect matches, {"\t"}
+    //       {Object.keys(suggestionsObj.alternative_match).length} Alternative names, {"\t"}
+    //       {suggestionsObj.no_match.length} No matches
+    //       </h4>
+    //       }
+    //   </div> */}
+    //   {/* <form className="suggestions-form" id={"form" + step} onSubmit={handleSubmit(onSubmit)}>
+    //     {suggestionsObj &&
+    //       Object.keys(suggestionsObj.alternative_match).map((orgName) => {
+    //         const suggestions = suggestionsObj.alternative_match[orgName];
+    //         return (
+    //           <Switchable
+    //             key={orgName}
+    //             setNamesStringMap={setNamesStringMap}
+    //             orgName={orgName}
+    //             suggestions={suggestions}
+    //           />
+    //         );
+    //       })}
+    //   </form> */}
+    // </div>
   );
 };
 

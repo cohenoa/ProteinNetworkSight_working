@@ -30,7 +30,7 @@ export interface IStepsBarProps {
   step: number;
 }
 
-export interface IButtonsProps extends IStepProps{
+export interface IButtonsProps{
   formId: string;
   buttons: IButtonConfig[];
 }
@@ -75,5 +75,5 @@ interface IButtonConfig {
   label: string;
   type: "button" | "submit";
   className: string;
-  onClick?: (actions: any) => void;
+  onClick: () => void;
 }
