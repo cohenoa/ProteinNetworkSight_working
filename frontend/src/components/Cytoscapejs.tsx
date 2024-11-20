@@ -609,7 +609,7 @@ const contextMenuItems: MenuItem[] = [
     label: 'Node Size',
     icon: faPencil,
     submenu: [
-      { label: '0.1', icon: faPencil, onClick: () => {setNodeSize(0.1)}},
+      // { label: '0.1', icon: faPencil, onClick: () => {setNodeSize(0.1)}},
       { label: '0.25', icon: faPencil, onClick: () => {setNodeSize(0.25)}},
       { label: '0.5', icon: faPencil, onClick: () => {setNodeSize(0.5)}},
       { label: '1', icon: faPencil, onClick: () => {setNodeSize(1)}},
