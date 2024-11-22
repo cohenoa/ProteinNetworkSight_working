@@ -163,9 +163,8 @@ export const ActionPage: FC = () => {
 
         <div className="main-wrapper">
           {step === 5 ? (
-            <div className="result">
+            <div className="step-content">
               <Result />
-              {/* <ButtonsBar formId="result-form" buttons={renderButtonBar()} /> */}
             </div>
             ):(
             <div className="steps">
