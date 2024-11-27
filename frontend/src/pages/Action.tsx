@@ -10,6 +10,7 @@ import FileUploadStep from "../steps/FileUploadS";
 import FileDetailsStep from "../steps/FileDetailsS";
 import SuggestionsS from "../steps/SuggestionsS";
 import Result from "../steps/ResultS";
+import SaveResults from "../steps/SaveResults";
 import ButtonsBar from "../bars/FormNavigateBar";
 import StepsBar from "../bars/StepsBar";
 import "../styles/Action.css";
@@ -21,7 +22,7 @@ import { useStateMachine } from "little-state-machine";
 createStore({ ...emptyState });
 
 export const ActionPage: FC = () => {
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(6);
   // const { state, actions } = useStateMachine({ clearAction });
 
   const goNextStep = () => {
@@ -49,7 +50,10 @@ export const ActionPage: FC = () => {
         return <OthersS {...stepProps} />;
       case 5:
         console.log("step 5");
-        return <Result />;
+        return <Result {...stepProps}/>;
+      case 6:
+        console.log("step 6");
+        return <SaveResults />;
       default:
         return <></>;
     }
@@ -67,14 +71,12 @@ export const ActionPage: FC = () => {
         return <OthersE />;
       case 5:
         return <GraphExplanation />;
+      case 6:
+        return <></>;
       default:
         return <></>;
     }
   };
-
-  const tester = () => {
-    console.log("i'm mister missics look at me!");
-  }
 
   const renderButtonBar = () => {
     const backButton: IButtonConfig = {
@@ -133,16 +135,13 @@ export const ActionPage: FC = () => {
         type: "button",
         className: "btn btn--primary btn--wide",
         onClick: () => {
-          tester();
+          goNextStep();
         },
       }
       bar.push(saveButton);
     }
 
     console.log(bar);
-
-    // bar.push(backButton);
-    // bar.push(nextButton);
 
     let formID = "form" + step;
 
@@ -162,21 +161,15 @@ export const ActionPage: FC = () => {
         <div className="explanation-wrapper">{renderStepExplanation()}</div>
 
         <div className="main-wrapper">
-          {step === 5 ? (
-            <div className="step-content">
-              <Result />
-            </div>
+          {step > 4 ? (
+            <div className="step-content">{renderStepComponent()}</div>
             ):(
             <div className="steps">
-              {step !== 5 && (
-                  <div className="step-bar">
-                    <StepsBar step={step} />
-                  </div>  
-              )}
+              <div className="step-bar"><StepsBar step={step}/></div>  
               <div className="step-content">{renderStepComponent()}</div>
             </div>
-            )}
-            <div className="button-bar">{renderButtonBar()}</div>
+          )}
+          <div className="button-bar">{renderButtonBar()}</div>
         </div>
       </div>
     </StateMachineProvider>

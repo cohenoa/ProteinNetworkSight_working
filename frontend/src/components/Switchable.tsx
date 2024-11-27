@@ -67,7 +67,7 @@ const Switchable: FC<ISwitchableProps> = ({
   };
 
   return (
-    <div className="fieldset-container">
+    <div className="fieldset-container suggestionsSwitch">
       <label className="protein-label">{orgName}:</label>
       {/* @ts-ignore */}
       <Switch name={orgName} onItemChanged={onItemChanged}>

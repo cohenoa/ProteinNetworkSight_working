@@ -17,8 +17,9 @@ import {
   IVectorsValues,
 } from "../@types/global";
 import { threshMap } from "../@types/global";
+import { IStepProps } from "../@types/props";
 
-const Result: FC = () => {
+const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
     updateIsLoading,
     updateShowError,

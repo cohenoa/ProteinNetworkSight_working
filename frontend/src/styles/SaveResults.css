@@ -1,0 +1,26 @@
+.saveResultsWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+.saveResultsMenu {
+    all: unset;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 10%;
+    padding: 10px;
+    /* border-radius: 10px; */
+}
+
+.modeSwitch {
+    width: 100%;
+    height: 100%;
+}
+
+  
