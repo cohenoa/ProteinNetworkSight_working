@@ -23,4 +23,91 @@
     height: 100%;
 }
 
+
+/*   Overlay -> The layer that covers every item when item is active.
+
+    *------*-----------------*
+    | On   |                 |
+    |      |                 |
+    *------*-----------------*
+*/
+.saveResultsMenu .abg-switch__overlay {
+    box-shadow: 0 0 4px 1px var(--primary) !important;
+    border: 1px solid transparent;
+    transition: all 0.4s ease;
+    outline: none;
+}
+  
+  /*  Item -> Every Item inside the container 
+  
+      *------*-----------------*
+      | Item |                 |
+      |      |                 |
+      *------*-----------------*
+  */
+  
+.saveResultsMenu .abg-switch__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    letter-spacing: inherit;
+    cursor: pointer;
+    padding: 5px;
+    font-size: var(--small-text)!important;
+    background: transparent;
+    overflow: visible;
+    border: none;
+    outline: none;
+}
+.saveResultsMenu .abg-switch__item:not(.switch__item--disable):hover {
+    color: var(--primary)!important; 
+}
+
+.saveResultsMenu .abg-switch__item input {
+    display: none; 
+}
+  
+.saveResultsMenu .abg-switch__item.abg-switch__item--on {
+    z-index: 2;
+    color: var(--text-blue) !important;
+    outline: none; 
+}
+.saveResultsMenu .abg-switch__item.abg-switch__item--on:hover {
+    color: var(--text-blue) !important; 
+}
+  
+.saveResultsMenu .abg-switch__item.abg-switch__item--disable {
+    opacity: 0.3; 
+}
+.saveResultsMenu .abg-switch__item.abg-switch__item--disable:hover {
+    color: inherit; 
+}
+  
+  /*  Switch -> The container
+  
+      *------------------------*
+      |                        |
+      |                        |
+      *------------------------*
+  */
+  
+.saveResultsMenu .abg-switch {
+    margin: 5px;
+    outline: none; 
+    background-color: #b3d2fb6f !important;
+}
+  
+.saveResultsMenu .abg-switch__container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid white;
+    z-index: 1;
+    outline: none; 
+}
+  
+.saveResultsMenu .abg-switch--disable {
+    opacity: 0.3; 
+}
+
   

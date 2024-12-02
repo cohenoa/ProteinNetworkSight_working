@@ -27,12 +27,11 @@ const SaveResults: FC = () => {
     const renderModeMenu = () => {
         return (
             <div className="saveResultsMenu">
+                {/* @ts-ignore */}
                 <Switch name="mode" onItemChanged={() => {}}>
                     <Item value={"0"}>Save Data</Item>
                     <Item value={"1"}>Save Graphs</Item>
                 </Switch>
-                {/* <button className="menuButton" onClick={() => setMode(SaveMode.data)}>Save Data</button>
-                <button className="menuButton" onClick={() => setMode(SaveMode.graphs)}>Save Graphs</button> */}
             </div>
         )
     }

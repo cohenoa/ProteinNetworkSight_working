@@ -94,7 +94,7 @@
   outline: none; 
 }
 
-.abg-switch--disable {
+.suggestionsSwitch .abg-switch--disable {
   opacity: 0.3; 
 }
 
