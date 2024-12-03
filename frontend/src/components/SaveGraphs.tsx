@@ -4,7 +4,7 @@ const SaveGraph: FC = () => {
 
     return (
         <div className="saveGraph">
-            <h1>Save Data</h1>
+            <h1>Save Graphs</h1>
         </div>
     )
 }

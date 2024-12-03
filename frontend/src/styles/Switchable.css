@@ -1,0 +1,89 @@
+/*   Overlay -> The layer that covers every item when item is active.
+
+    *------*-----------------*
+    | On   |                 |
+    |      |                 |
+    *------*-----------------*
+*/
+.suggestionsSwitch .abg-switch__overlay {
+    box-shadow: 0 0 4px 1px var(--primary) !important;
+    border: 1px solid transparent;
+    transition: all 0.4s ease;
+    outline: none;
+}
+  
+  /*  Item -> Every Item inside the container 
+  
+      *------*-----------------*
+      | Item |                 |
+      |      |                 |
+      *------*-----------------*
+  */
+  
+.suggestionsSwitch .abg-switch__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    letter-spacing: inherit;
+    cursor: pointer;
+    padding: 40px;
+    width: fit-content;
+    font-size: var(--small-text)!important;
+    background: transparent;
+    overflow: visible;
+    border: none;
+    outline: none;
+}
+
+.suggestionsSwitch .abg-switch__item:not(.switch__item--disable):hover {
+    color: var(--primary)!important; 
+}
+
+.suggestionsSwitch .abg-switch__item input {
+    display: none; 
+}
+  
+.suggestionsSwitch .abg-switch__item.abg-switch__item--on {
+    z-index: 2;
+    color: var(--text-blue) !important;
+    outline: none; 
+}
+.suggestionsSwitch .abg-switch__item.abg-switch__item--on:hover {
+    color: var(--text-blue) !important; 
+}
+  
+.suggestionsSwitch .abg-switch__item.abg-switch__item--disable {
+    opacity: 0.3; 
+}
+.suggestionsSwitch .abg-switch__item.abg-switch__item--disable:hover {
+    color: inherit; 
+}
+  
+  /*  Switch -> The container
+  
+      *------------------------*
+      |                        |
+      |                        |
+      *------------------------*
+  */
+  
+.suggestionsSwitch .abg-switch {
+    /* max-width: max-content; */
+    max-width: fit-content;
+    margin: 5px;
+    outline: none; 
+    background-color: #b3d2fb6f !important;
+}
+  
+.abg-switch__container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid white;
+    z-index: 1;
+    outline: none; 
+}
+  
+.abg-switch--disable {
+    opacity: 0.3; 
+}

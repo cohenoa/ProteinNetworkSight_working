@@ -1,102 +1,5 @@
 
-/*   Overlay -> The layer that covers every item when item is active.
 
-    *------*-----------------*
-    | On   |                 |
-    |      |                 |
-    *------*-----------------*
-*/
-.suggestionsSwitch .abg-switch__overlay {
-  position: absolute;
-  height: 100%;
-  border-radius: 100px;
-  box-shadow: 0 0 4px 1px var(--primary) !important;
-  border: 1px solid transparent;
-  box-sizing: border-box;
-  transition: all 0.4s ease;
-    max-width: 100px;
-  outline: none;
-}
-
-/*  Item -> Every Item inside the container 
-
-    *------*-----------------*
-    | Item |                 |
-    |      |                 |
-    *------*-----------------*
-*/
-
-.suggestionsSwitch .abg-switch__item {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  letter-spacing: inherit;
-  cursor: pointer;
-  min-width: 100px;
-  height: 100%;
-  padding: 5px;
-  font-size: var(--small-text)!important;
-  background: transparent;
-  overflow: visible;
-  border: none;
-  outline: none;
-}
-.suggestionsSwitch .abg-switch__item:not(.switch__item--disable):hover {
-  color: var(--primary)!important; 
-}
-.suggestionsSwitch .abg-switch__item input {
-  display: none; 
-}
-
-.suggestionsSwitch .abg-switch__item.abg-switch__item--on {
-  z-index: 2;
-  color: var(--text-blue) !important;
-  outline: none; 
-}
-.suggestionsSwitch .abg-switch__item.abg-switch__item--on:hover {
-  color: var(--text-blue) !important; 
-}
-
-.suggestionsSwitch .abg-switch__item.abg-switch__item--disable {
-  opacity: 0.3; 
-}
-.suggestionsSwitch .abg-switch__item.abg-switch__item--disable:hover {
-  color: inherit; 
-}
-
-/*  Switch -> The container
-
-    *------------------------*
-    |                        |
-    |                        |
-    *------------------------*
-*/
-
-.suggestionsSwitch .abg-switch {
-  width: 100%;
-  min-height: 30px;
-  box-sizing: border-box;
-  margin: 5px;
-  outline: none; 
-  background-color: #b3d2fb6f !important;
-}
-
-.suggestionsSwitch .abg-switch__container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  max-width: fit-content;
-  height: 100%;
-  min-height: 30px;
-  border: 1px solid white;
-  border-radius: 100px;
-  z-index: 1;
-  outline: none; 
-}
-
-.suggestionsSwitch .abg-switch--disable {
-  opacity: 0.3; 
-}
 
 .suggestions-scroll {
   overflow-y: scroll;
@@ -125,8 +28,8 @@
     font-size: var(--small-text);
     /* overflow: hidden; */
     align-items: center;
-
 }
+
 .protein-label{
   font-weight: bold;
   margin: 5px;

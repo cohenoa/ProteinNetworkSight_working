@@ -22,7 +22,7 @@ import { useStateMachine } from "little-state-machine";
 createStore({ ...emptyState });
 
 export const ActionPage: FC = () => {
-  const [step, setStep] = useState<number>(6);
+  const [step, setStep] = useState<number>(1);
   // const { state, actions } = useStateMachine({ clearAction });
 
   const goNextStep = () => {
@@ -49,6 +49,8 @@ export const ActionPage: FC = () => {
         console.log("step 4");
         return <OthersS {...stepProps} />;
       case 5:
+        // console.log("step 6");
+        // return <SaveResults/>;
         console.log("step 5");
         return <Result {...stepProps}/>;
       case 6:
