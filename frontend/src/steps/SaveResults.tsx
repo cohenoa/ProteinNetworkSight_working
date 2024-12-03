@@ -4,7 +4,7 @@ import SaveGraphs from "../components/SaveGraphs";
 import "../styles/SaveResults.css";
 import "../styles/StringSuggestions.css";
 import Switch, { Item } from "react-switchable";
-import { IStepProps } from "../@types/props";
+import { ISaveProps } from "../@types/props";
 
 enum SaveMode {
     data,
@@ -15,11 +15,16 @@ const SaveResults: FC = () => {
 
     const [mode, setMode] = useState(SaveMode.data);
 
+    function tester(): void {
+        console.log("tester")
+    }
+
     const renderSaveModel = () => {
         switch (mode) {
             case SaveMode.data:
                 console.log("Save Data")
-                return <SaveData />
+                // console.log(typeof tester)
+                return <SaveData data="test" />
             case SaveMode.graphs:
                 console.log("Save Graphs")
                 return <SaveGraphs />

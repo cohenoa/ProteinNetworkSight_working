@@ -22,7 +22,7 @@ import { useStateMachine } from "little-state-machine";
 createStore({ ...emptyState });
 
 export const ActionPage: FC = () => {
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(6);
   // const { state, actions } = useStateMachine({ clearAction });
 
   const goNextStep = () => {
@@ -149,12 +149,7 @@ export const ActionPage: FC = () => {
 
     console.log(formID);
 
-    // if (step === 3){
-    //   return <></>
-    // }
     return <ButtonsBar formId={formID} buttons={bar}></ButtonsBar>;
-
-    // return <ButtonsBar step={step} goNextStep={goNextStep} formId={formID} buttons={bar}></ButtonsBar>;
   }
 
   return (

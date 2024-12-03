@@ -53,7 +53,7 @@
     letter-spacing: inherit;
     cursor: pointer;
     padding: 5px;
-    font-size: var(--small-text)!important;
+    font-size: var(--big-text)!important;
     background: transparent;
     overflow: visible;
     border: none;
