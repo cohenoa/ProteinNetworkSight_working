@@ -28,10 +28,11 @@ const SaveData: FC = () => {
         let manmap: any = {};
 
         for (const [name, match] of Object.entries(state.namesStringMap)) {
+            if (match === undefined) continue;
             if (name in state.suggestionsObj.alternative_match) {
-                altmap[name] = match.stringName;
+                altmap[name] = match?.stringName;
             } else if (state.suggestionsObj.no_match.includes(name) && match.stringId != "0") {
-                manmap[name] = match.stringName;
+                manmap[name] = match?.stringName;
             }
             else{
                 console.log("not found");

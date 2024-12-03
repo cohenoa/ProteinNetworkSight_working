@@ -18,16 +18,17 @@ enum validOption {
 
 const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName }) => {
   const { state, actions } = useStateMachine({ updateNamesMap, updateIsLoading });
-  const [enteredName, setEnteredName] = useState<string>("");
+  const [enteredName, setEnteredName] = useState<string>(state.namesStringMap[orgName]?.stringId !== "0" ? state.namesStringMap[orgName].stringName : "");
   const [smallLoad, setSmallLoad] = useState<boolean>(false);
-  const [isValid, setIsValid] = useState<validOption>(validOption.noValue);
-  const [isChecked, setIsChecked] = useState<boolean>(false);
+  const [isValid, setIsValid] = useState<validOption>(state.namesStringMap[orgName]?.stringId !== "0" ? validOption.valid : validOption.noValue);
+  const [isChecked, setIsChecked] = useState<boolean>(state.namesStringMap[orgName]?.stringId !== "0" ? true : false);
 
   useEffect(() => {
     if (!isChecked) {
       setIsValid(validOption.disabled);
       setEnteredName("");
     }
+
   }, [isChecked]);
   const getStringId = (name: string) => {
     const body = JSON.stringify({
