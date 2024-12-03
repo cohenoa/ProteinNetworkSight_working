@@ -7,25 +7,43 @@ import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig } from "../@types/props";
 
-const SaveData: FC<ISaveProps> = () => {
+const SaveData: FC = () => {
     const { state, actions } = useStateMachine({
         updateIsLoading,
         updateShowError,
     });
 
-    let vectorsValues: IVectorsValues = {} as IVectorsValues;
+    const [altmap, setAltmap] = useState({});
+    const [manmap, setManmap] = useState({});
 
    useEffect(() => {
-        // getData();
+        getData();
    }, []);
 
-    const getData = () => {
-        get(state.fileName).then((val) => {
-            const headers = val['headers'];
-            vectorsValues = val['vectorsValues'];
+    const getData = async() => {
+        console.log(state.suggestionsObj);
+        console.log(state.namesStringMap);
 
-            console.log("vectors values: ", vectorsValues);
-        })
+        let altmap: any = {};
+        let manmap: any = {};
+
+        for (const [name, match] of Object.entries(state.namesStringMap)) {
+            if (name in state.suggestionsObj.alternative_match) {
+                altmap[name] = match.stringName;
+            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId != "0") {
+                manmap[name] = match.stringName;
+            }
+            else{
+                console.log("not found");
+            }
+        }
+
+        console.log(altmap);
+        console.log(manmap);
+
+        setAltmap(altmap);
+        setManmap(manmap);
+
     }
 
     const renderButtonBar = () => {

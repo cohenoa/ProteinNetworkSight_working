@@ -4,7 +4,6 @@ import SaveGraphs from "../components/SaveGraphs";
 import "../styles/SaveResults.css";
 import "../styles/StringSuggestions.css";
 import Switch, { Item } from "react-switchable";
-import { ISaveProps } from "../@types/props";
 
 enum SaveMode {
     data,
@@ -23,8 +22,7 @@ const SaveResults: FC = () => {
         switch (mode) {
             case SaveMode.data:
                 console.log("Save Data")
-                // console.log(typeof tester)
-                return <SaveData data="test" />
+                return <SaveData />
             case SaveMode.graphs:
                 console.log("Save Graphs")
                 return <SaveGraphs />
