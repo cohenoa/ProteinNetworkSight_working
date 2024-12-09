@@ -1,7 +1,7 @@
-import { useState, FC } from "react";
+import { useState, FC, useRef, forwardRef, useImperativeHandle, RefObject } from "react";
 import { StateMachineProvider, createStore } from "little-state-machine";
 import { emptyState } from "../common/EmptyState";
-import { IStepProps, IButtonConfig } from "../@types/props";
+import { IStepProps, IButtonConfig, formRef, formRefProps } from "../@types/props";
 import FileDetailsExplanation from "../explanations/FileDetailsE";
 import FileUploadExplanation from "../explanations/FileUploadE";
 import StringSuggestionsExplanation from "../explanations/StringSuggestionsE";
@@ -22,7 +22,8 @@ import { useStateMachine } from "little-state-machine";
 createStore({ ...emptyState });
 
 export const ActionPage: FC = () => {
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(6);
+  const saveFormRef = useRef<formRef>(null);
   // const { state, actions } = useStateMachine({ clearAction });
 
   const goNextStep = () => {
@@ -49,13 +50,11 @@ export const ActionPage: FC = () => {
         console.log("step 4");
         return <OthersS {...stepProps} />;
       case 5:
-        // console.log("step 6");
-        // return <SaveResults/>;
         console.log("step 5");
         return <Result {...stepProps}/>;
       case 6:
         console.log("step 6");
-        return <SaveResults />;
+        return <SaveResults formRef={saveFormRef}/>;
       default:
         return <></>;
     }
@@ -81,6 +80,8 @@ export const ActionPage: FC = () => {
   };
 
   const renderButtonBar = () => {
+    let bar = [];
+
     const backButton: IButtonConfig = {
       label: "back",
       type: "button",
@@ -90,23 +91,12 @@ export const ActionPage: FC = () => {
       },
     };
 
-    const nextButton: IButtonConfig = {
-      label: "next",
-      type: "submit",
-      className: "btn btn--primary btn--wide",
-      onClick: () => {
-        goNextStep();
-      },
-    };
-
     const nextNoOpButton: IButtonConfig = {
       label: "next",
       type: "submit",
       className: "btn btn--primary btn--wide",
       onClick: () => {},
     };
-
-    let bar = [];
 
     if (step !== 1){
       bar.push(backButton);
@@ -123,21 +113,35 @@ export const ActionPage: FC = () => {
       bar.push(clearButton);
     }
 
-    if (step !== 5){
-      if (step > 1){
-        bar.push(nextNoOpButton);
-      }
-      else{
-        bar.push(nextNoOpButton);
-      }
+    if (step < 5){
+      bar.push(nextNoOpButton)
     }
-    else{
-      let saveButton: IButtonConfig = {
+    else if (step === 5){
+      const goSave: IButtonConfig = {
         label: "Save",
         type: "button",
         className: "btn btn--primary btn--wide",
         onClick: () => {
           goNextStep();
+        },
+      }
+      bar.push(goSave);
+    }
+    else if (step === 6){
+      const saveButton: IButtonConfig = {
+        label: "Save",
+        type: "button",
+        className: "btn btn--primary btn--wide",
+        onClick: () => {
+          if (saveFormRef.current) {
+            const formData = saveFormRef.current.getFormData();
+            console.log('Data from Son:', formData);
+          }
+          else{
+            console.log("formRef is null: " + saveFormRef);
+          }
+          console.log('clicked button');
+          
         },
       }
       bar.push(saveButton);
@@ -172,5 +176,39 @@ export const ActionPage: FC = () => {
     </StateMachineProvider>
   );
 };
+
+// const Father: FC<formRefProps> = ({ formRef }) => {
+
+//   const renderSon = () => {
+//     return <Son ref={formRef}/>;
+//   }
+
+//   return (<>
+//   {renderSon()}
+//   </>);
+// };
+
+// // Son component
+// const Son = forwardRef((props, ref) => {
+//   // const formRef = useRef<HTMLFormElement>();
+
+//   console.log("ref of son: " + ref);
+
+//   useImperativeHandle(ref, () => ({
+//     getFormData: () => {
+//       console.log("inside getFormData");
+//       return "getFormData return value";
+//     }
+//   }));
+
+//   return (
+//     <form>
+//       <input name="firstName" type="text" placeholder="First Name" />
+//       <input name="lastName" type="text" placeholder="Last Name" />
+//       <input name="email" type="email" placeholder="Email" />
+//     </form>
+//   );
+// });
+
 
 export default ActionPage;

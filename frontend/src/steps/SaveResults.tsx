@@ -1,30 +1,31 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, forwardRef, useImperativeHandle} from "react";
 import SaveData from "../components/SaveData";
 import SaveGraphs from "../components/SaveGraphs";
 import "../styles/SaveResults.css";
 import "../styles/StringSuggestions.css";
 import Switch, { Item } from "react-switchable";
+import { formRefProps } from "../@types/props";
 
 enum SaveMode {
     data,
     graphs
 }
 
-const SaveResults: FC = () => {
+const SaveResults: FC<formRefProps> = ({ formRef }) => {
 
     const [mode, setMode] = useState(SaveMode.data);
 
-    function tester(): void {
-        console.log("tester")
-    }
+    console.log("save results ref: ", formRef);
+
 
     const renderSaveModel = () => {
         switch (mode) {
             case SaveMode.data:
-                console.log("Save Data")
-                return <SaveData />
+                console.log("Save Data");
+                // return <Son ref={formRef}/>;
+                return <SaveData ref={formRef} />
             case SaveMode.graphs:
-                console.log("Save Graphs")
+                console.log("Save Graphs");
                 return <SaveGraphs />
             default:
                 console.log("Error")

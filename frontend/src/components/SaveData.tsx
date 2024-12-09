@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useImperativeHandle, useRef, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
@@ -6,8 +6,11 @@ import { IVectorsValues } from "../@types/global";
 import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig } from "../@types/props";
+// import { IFormRefProps, formRef } from "../@types/props";
 
-const SaveData: FC = () => {
+const SaveData = forwardRef((props, ref) => {
+    const formRef = useRef<HTMLFormElement>(null);
+
     const { state, actions } = useStateMachine({
         updateIsLoading,
         updateShowError,
@@ -69,6 +72,14 @@ const SaveData: FC = () => {
         return <ButtonsBar buttons={[reset, replaceAll]} formId="saveDataForm" />;
     }
 
+    useImperativeHandle(ref, () => ({
+        getFormData: () => {
+          console.log("inside getFormData");
+          console.log("actual formRef: " + formRef.current);
+          return "getFormData return value";
+        }
+      }));
+
     return (
         <div className="saveData">
             <div className="SectionWrapper">
@@ -76,7 +87,9 @@ const SaveData: FC = () => {
                     <label>replace Alternative Names</label>
                 </div>
                 <div className="SectionContent">
-
+                    <form ref={formRef} id="saveDataForm">
+                        
+                    </form>
                 </div>
                 <div className="SectionFooter">
                     {renderButtonBar()}
@@ -95,6 +108,6 @@ const SaveData: FC = () => {
             </div>
         </div>
     )
-}
+});
 
 export default SaveData;

@@ -5,6 +5,15 @@ import { threshMap } from "./global";
   This file define all the props interface - the argument for components.
 */
 
+export interface formRef {
+  getFormData: () => Record<string, string>;
+}
+
+// Interface for props of Father and ButtonComponent that includes formRef
+export interface formRefProps {
+  formRef: RefObject<formRef>;
+}
+
 export interface IErrorInputTextProps {
   orgName: string;
 }
