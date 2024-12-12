@@ -22,7 +22,6 @@ const SaveResults: FC<formRefProps> = ({ formRef }) => {
         switch (mode) {
             case SaveMode.data:
                 console.log("Save Data");
-                // return <Son ref={formRef}/>;
                 return <SaveData ref={formRef} />
             case SaveMode.graphs:
                 console.log("Save Graphs");
@@ -50,7 +49,9 @@ const SaveResults: FC<formRefProps> = ({ formRef }) => {
     return (
         <div className="saveResultsWrapper">
             {renderModeMenu()}
-            {renderSaveModel()}
+            <div className="saveResultsContent">
+                {renderSaveModel()}
+            </div>
         </div>
     )
 };

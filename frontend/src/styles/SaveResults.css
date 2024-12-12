@@ -1,11 +1,17 @@
 .saveResultsWrapper {
-    display: flex;
+    /* display: flex;
     flex-direction: column;
+    width: 100%;
+    height: 80%;
+    padding: 10px;
+    background-color: red;
+    border-radius: 10px; */
     width: 100%;
     height: 100%;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
     background-color: white;
-    border-radius: 10px;
 }
 
 .saveResultsMenu {
@@ -15,12 +21,20 @@
     width: 100%;
     height: 10%;
     padding: 10px;
+    padding-top: 0px;
     /* border-radius: 10px; */
+}
+
+.saveResultsContent {
+    height: 90%;
+    width: 100%;
+    overflow-y: hidden;
 }
 
 .modeSwitch {
     width: 100%;
     height: 100%;
+    background-color: red;
 }
 
 

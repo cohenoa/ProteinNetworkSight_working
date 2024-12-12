@@ -131,9 +131,6 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       });
       window.addEventListener('contextmenu', (event) => {
         console.log(event)
-        // if (event.target){
-          // event.preventDefault();
-        // }
       })
 
       cyRef.current.on("click", "node", (event) => {

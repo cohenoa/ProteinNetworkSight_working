@@ -115,7 +115,7 @@ const SuggestionsS: FC<IStepProps> = ({ step, goNextStep }) => {
   ) : (
     // <div className="suggestions-container">
       <div className="suggestions-scroll">
-        {/* <div className="suggestions-stats">
+        <div className="suggestions-stats">
           {suggestionsObj && 
             <h4 style={{fontWeight: "bold"}}>
               {Object.keys(suggestionsObj.perfect_match).length} Perfect matches, {"\t"}
@@ -123,7 +123,7 @@ const SuggestionsS: FC<IStepProps> = ({ step, goNextStep }) => {
               {suggestionsObj.no_match.length} No matches
             </h4>
           }
-        </div> */}
+        </div>
         <form className="suggestions-form" id={"form" + step} onSubmit={handleSubmit(onSubmit)}>
           {suggestionsObj &&
             Object.keys(suggestionsObj.alternative_match).map((orgName) => {

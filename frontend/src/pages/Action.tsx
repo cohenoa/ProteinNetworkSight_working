@@ -163,14 +163,14 @@ export const ActionPage: FC = () => {
 
         <div className="main-wrapper">
           {step > 4 ? (
-            <div className="step-content">{renderStepComponent()}</div>
+            <div className="step-content full">{renderStepComponent()}</div>
             ):(
             <div className="steps">
               <div className="step-bar"><StepsBar step={step}/></div>  
               <div className="step-content">{renderStepComponent()}</div>
             </div>
           )}
-          <div className="button-bar">{renderButtonBar()}</div>
+          <div className="buttons-bar">{renderButtonBar()}</div>
         </div>
       </div>
     </StateMachineProvider>
