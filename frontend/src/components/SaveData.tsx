@@ -6,43 +6,71 @@ import { IVectorsValues } from "../@types/global";
 import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig } from "../@types/props";
-// import { IFormRefProps, formRef } from "../@types/props";
-
-interface nameStatus {
-    accepted: boolean,
-}
-
-interface replaceNameStatus extends nameStatus {
-    string_name: string,
-    string_id: string,
-}
+import { write, utils } from "xlsx";
+import { nameStatus, replaceNameStatus } from "../@types/props";
 
 const SaveData = forwardRef((props, ref) => {
-    const replacementFormRef = useRef<HTMLFormElement>(null);
-    const unMatchedFormRef = useRef<HTMLFormElement>(null);
 
     const { state, actions } = useStateMachine({
         updateIsLoading,
         updateShowError,
     });
 
-    const [replacementMap, setReplacementMap] = useState<{ [key: string]: replaceNameStatus }>({
-        "name1": {
-            accepted: false,
-            string_name: "string_name_1",
-            string_id: "1",
-        },
-        "name2": {
-            accepted: false,
-            string_name: "string_name_2",
-            string_id: "2",
-        }
-    });
+    const [replacementMap, setReplacementMap] = useState<{ [key: string]: replaceNameStatus }>({});
     const [unMatchedMap, setUnMatchedMap] = useState<{ [key: string]: nameStatus }>({});
 
     useImperativeHandle(ref, () => ({
-        getFormData: () => {
-          return "getFormData return value";
+        getFormData: async () => {
+
+            const val = await get(state.fileName);
+
+            let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(val['vectorsValues']))];
+
+            Object.entries(state.namesStringMap).forEach(([name, match], index) => {
+                if (match === null || typeof match !== "object" || !("stringId" in match) || !("stringName" in match)) return;
+                if (name in unMatchedMap && unMatchedMap[name].accepted) return;
+
+                let orgName = name;
+                let orgSTRINGname = match.stringName;
+                let orgSTRINGId = match.stringId;
+
+                if (orgSTRINGId == "0"){
+                    orgSTRINGname = "";
+                    orgSTRINGId = "";
+                };
+
+                if (name in replacementMap && replacementMap[name].accepted) {
+                    orgName = replacementMap[name].string_name;
+                }
+
+                const row: string[] = [orgName, String(orgSTRINGname), String(orgSTRINGId)];
+
+                Object.keys(val['vectorsValues']).forEach((vectorName) => {
+                    row.push(val['vectorsValues'][vectorName][index]);
+                });
+
+                xlsxContent.push(row);
+            })
+      
+            const worksheet = utils.aoa_to_sheet(xlsxContent);
+            const workbook = utils.book_new();
+            utils.book_append_sheet(workbook, worksheet, "Sheet1");
+        
+            // Create a Blob from the workbook
+            const file = write(workbook, { bookType: "xlsx", type: "array" });
+            const blob = new Blob([file], { type: "application/octet-stream" });
+        
+            // Create a download link and click it programmatically
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${state.fileName.split('.')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            return "downloaded XLSX data file";
         }
       }));
 
@@ -51,8 +79,6 @@ const SaveData = forwardRef((props, ref) => {
     }, []);
 
     const getData = async() => {
-        console.log(state.suggestionsObj);
-        console.log(state.namesStringMap);
 
         let altmap: { [key: string]: replaceNameStatus } = {};
         let manmap: { [key: string]: replaceNameStatus } = {};
@@ -119,7 +145,6 @@ const SaveData = forwardRef((props, ref) => {
     }
 
     const changeStatus = (name: string, match: nameStatus, map: { [key: string]: nameStatus }, setMap: React.Dispatch<React.SetStateAction<any>>) => {
-        console.log("replace name button clicked");
         const updatedMap = {
             ...map,
             [name]: {
@@ -156,7 +181,6 @@ const SaveData = forwardRef((props, ref) => {
                 <div className={att.orgNameClass}>{name}</div>
                 <button type="button" className={att.btnClass} onClick={() => changeStatus(name, match, map, setMap)}>{match.accepted? att.acceptedBtnSymbol : att.notAcceptedBtnSymbol}</button>
                 {isReplace && <div className={att.StringNameClass}>{match.string_name}</div>}
-
             </div>
         )
     }
@@ -168,7 +192,7 @@ const SaveData = forwardRef((props, ref) => {
                     <label>Replace Matched Names</label>
                 </div>
                 <div className="SectionContent">
-                    <form ref={replacementFormRef} id="saveDataForm1">
+                    <form id="saveDataForm1">
                         {Object.entries(replacementMap).map(([name, match], index) => renderAltMap(name, match, index))}
                     </form>
                 </div>
@@ -181,7 +205,7 @@ const SaveData = forwardRef((props, ref) => {
                     <label>Remove Unmatched Names</label>
                 </div>
                 <div className="SectionContent">
-                    <form ref={unMatchedFormRef} id="saveDataForm2">
+                    <form id="saveDataForm2">
                         {Object.entries(unMatchedMap).map(([name, match], index) => renderAltMap(name, match, index))}
                     </form>
                 </div>

@@ -5,6 +5,15 @@ import { threshMap } from "./global";
   This file define all the props interface - the argument for components.
 */
 
+export interface nameStatus {
+  accepted: boolean,
+}
+
+export interface replaceNameStatus extends nameStatus {
+  string_name: string,
+  string_id: string,
+}
+
 export interface formRef {
   getFormData: () => Record<string, string>;
 }
