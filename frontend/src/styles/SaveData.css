@@ -3,6 +3,7 @@
     flex-direction: row;
     height: 100%;
     width: 100%;
+    overflow-y: hidden;
 }
 
 .SectionWrapper {
@@ -50,7 +51,7 @@
     justify-content: space-between;
     align-items: center;
     width: calc(100% - 5px);
-    height: 40px;
+    height: 60px;
     overflow-y: hidden;
     margin: 5px
 }
@@ -58,10 +59,15 @@
 .replaceName{
     font-size: var(--small-text);
     padding: 2px;
+    padding-top: 8px;
     margin: 2px;
     width: 45%;
+    height: 65%;
     text-align: center;
-    border-radius: 5px;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     transition: all 0.35s ease-in-out;
 }
 
@@ -95,7 +101,7 @@
 
 .ItemBtn {
     display: block;
-    width: 40px;
+    width: 50px;
     border: none;
     text-align: center;
     text-decoration: none;
@@ -103,7 +109,7 @@
     font-size: 16px;
     margin: 8px 4px;
     cursor: pointer;
-    height: 90%;
+    height: 80%;
     border-radius: 100%;
     background-color: var(--background-gray);
     border-color: var(--border-color);
@@ -112,15 +118,20 @@
 }
 
 .removeBtn {
-    margin-right: 10px;
+    margin-right: 15px;
 }
 
 .unMatchedName {
     font-size: var(--small-text);
     padding: 2px;
+    padding-top: 8px;
     margin: 2px;
     width: 90%;
+    height: 65%;
     text-align: center;
-    border-radius: 5px;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     transition: all 0.35s ease-in-out;
 }

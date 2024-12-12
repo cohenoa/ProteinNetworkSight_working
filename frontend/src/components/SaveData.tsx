@@ -27,13 +27,18 @@ const SaveData = forwardRef((props, ref) => {
     });
 
     const [replacementMap, setReplacementMap] = useState<{ [key: string]: replaceNameStatus }>({
-        'name1': { string_name: "string_name_1", string_id: "id_1", accepted: false},
-        'name2': { string_name: "string_name_2", string_id: "id_2", accepted: false},
+        "name1": {
+            accepted: false,
+            string_name: "string_name_1",
+            string_id: "1",
+        },
+        "name2": {
+            accepted: false,
+            string_name: "string_name_2",
+            string_id: "2",
+        }
     });
-    const [unMatchedMap, setUnMatchedMap] = useState<{ [key: string]: nameStatus }>({
-        'unUse1': {accepted: false},
-        'unUse2': {accepted: false},
-    });
+    const [unMatchedMap, setUnMatchedMap] = useState<{ [key: string]: nameStatus }>({});
 
     useImperativeHandle(ref, () => ({
         getFormData: () => {
@@ -42,14 +47,12 @@ const SaveData = forwardRef((props, ref) => {
       }));
 
     useEffect(() => {
-            // getData();
+            getData();
     }, []);
 
     const getData = async() => {
         console.log(state.suggestionsObj);
         console.log(state.namesStringMap);
-
-        
 
         let altmap: { [key: string]: replaceNameStatus } = {};
         let manmap: { [key: string]: replaceNameStatus } = {};
