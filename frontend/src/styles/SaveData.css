@@ -44,10 +44,83 @@
     margin: 5px
 }
 
-/* .AlternativeNames {
-    background-color: aqua;
+.ItemContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 5px);
+    height: 40px;
+    overflow-y: hidden;
+    margin: 5px
 }
 
-.ManualNames {
-    background-color: yellow;
-} */
+.replaceName{
+    font-size: var(--small-text);
+    padding: 2px;
+    margin: 2px;
+    width: 45%;
+    text-align: center;
+    border-radius: 5px;
+    transition: all 0.35s ease-in-out;
+}
+
+.originalName{
+    background-color: var(--primary);
+    color: white;
+}
+
+.cancledOriginalName{
+    background-color: rgba(220, 0, 0, 0.5);
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.STRINGName{
+    /* background-color: var(--primary);
+    color: white; */
+
+    background-color: #75ea9c;
+    color: rgba(0, 0, 0, 1);
+}
+
+.chosenSTRINGName{
+    /* option 1: confirmed */
+    /* background-color: #75ea9c;
+    color: rgba(0, 0, 0, 1); */
+
+    /* option 2: stay the same */
+    background-color: var(--primary);
+    color: white;
+}
+
+.ItemBtn {
+    display: block;
+    width: 40px;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 8px 4px;
+    cursor: pointer;
+    height: 90%;
+    border-radius: 100%;
+    background-color: var(--background-gray);
+    border-color: var(--border-color);
+    font-size: large;
+    transition: all 0.35s ease-in-out;
+}
+
+.removeBtn {
+    margin-right: 10px;
+}
+
+.unMatchedName {
+    font-size: var(--small-text);
+    padding: 2px;
+    margin: 2px;
+    width: 90%;
+    text-align: center;
+    border-radius: 5px;
+    transition: all 0.35s ease-in-out;
+}
