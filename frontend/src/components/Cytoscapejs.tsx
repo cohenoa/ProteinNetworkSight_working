@@ -191,8 +191,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         }
       } else {
         console.log("Setting the elements for the first time");
-        // layout.name = 'circle';
-        // layout.positions = false;
+
 
         if (clickedVector in clickedVectors){
           delete  val.clicked_vectors[clickedVector];
@@ -228,9 +227,9 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
 
   }, [ graphData.nodes, graphData.links, state.fileName]);
 
-  useEffect(() => {
-    cyRef.current?.layout(layout).run();
-  }, [layout])
+  // useEffect(() => {
+  //   cyRef.current?.layout(layout).run();
+  // }, [layout])
 
   function convertArrayToSvg(nodesData: any[]): string {
     const svgContent = `
@@ -426,148 +425,13 @@ const savePositionsToIndexedDB = async () => {
   }
 };
 
-const getNameMap = (val: any) => {
-  let values_map: { [key: string]: { [id: string]: string } } = {};
-  const ids_arr: string[] = [];
-  const standard_name: string[] = [];
-  const string_id_arr: string[] = [];
-
-  // Log the keys of namesStringMap
-  console.log("state.namesStringMap: \n", Object.keys(state.namesStringMap));
-
-  // Build ids_arr, standard_name, and string_id_arr arrays from namesStringMap
-  for (const objName in state.namesStringMap) {
-    const obj = state.namesStringMap[objName];
-    
-    if (obj?.stringId !== '0' && obj?.stringName && obj?.stringId) {
-      ids_arr.push(obj.stringName);
-      standard_name.push(objName);
-      string_id_arr.push(obj.stringId);
-    }
-    else{
-      ids_arr.push("");
-      standard_name.push(objName);
-      string_id_arr.push("");
-    }
-  }
-
-  // Prepare values_map where keys are vectorNames and ids
-  for (const vectorName in val['vectorsValues']) {
-    const values_arr = val['vectorsValues'][vectorName] || [];
-    if (!values_map[vectorName]) {
-      values_map[vectorName] = {};
-    }
-    for (let i = 0; i < values_arr.length; i++) {
-      values_map[vectorName][standard_name[i]] = values_arr[i];
-    }
-  }
-
-  // Add string names and string IDs to values_map
-  for (let i = 0; i < ids_arr.length; i++) {
-    if (!values_map['String Name']) {
-      values_map['String Name'] = {};
-    }
-    if (!values_map['String Id']) {
-      values_map['String Id'] = {};
-    }
-    values_map['String Name'][standard_name[i]] = ids_arr[i];
-    values_map['String Id'][standard_name[i]] = string_id_arr[i];
-  }
-
-  return {'values_map': values_map, 'ids_arr': ids_arr, 'standard_name': standard_name, 'string_id_arr': string_id_arr};
-}
-
-const btnXLSXClick = async () => {
-  const val = await get(state.fileName);
-  const {values_map, ids_arr, standard_name, string_id_arr} = getNameMap(val);
-
-  let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(val['vectorsValues']))];
-
-  standard_name.forEach((name, index) => {
-    const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
-    Object.keys(val['vectorsValues']).forEach((vectorName) => {
-      const value = values_map[vectorName][name] || '';
-      row.push(value);
-    });
-    xlsxContent.push(row);
-  })
-
-  console.log("my xl content: \n", xlsxContent);
-
-  const worksheet = utils.aoa_to_sheet(xlsxContent);
-  const workbook = utils.book_new();
-  utils.book_append_sheet(workbook, worksheet, "Sheet1");
-
-  // Create a Blob from the workbook
-  const file = write(workbook, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([file], { type: "application/octet-stream" });
-
-  // Create a download link and click it programmatically
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${state.fileName.split('.')[0]}.xlsx`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-
-
-const btnCsvClick = async () => {
-  const val = await get(state.fileName);
-  const {values_map, ids_arr, standard_name, string_id_arr} = getNameMap(val);
-
-  let csvContent = 'UID,STRING Name,STRING id,' + Object.keys(val['vectorsValues']).join(',') + '\n';
-  // Add rows for each ID
-  standard_name.forEach((name, index) => {
-    const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
-    Object.keys(val['vectorsValues']).forEach((vectorName) => {
-      const value = values_map[vectorName][name] || '';
-      row.push(value);
-    });
-    csvContent += row.join(',') + '\n'; // Join the row values and append to CSV content
-  });
-
-  // Create a downloadable CSV file
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${state.fileName.split('.')[0]}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
 const btnJsonClick = () => {
   const cy = cyRef.current;
   if (cy) {
-    const jsonData = cy.json();
-    
-    // Convert the JSON object to a string
-    const jsonString = JSON.stringify(jsonData, null, 2); // 2 spaces for indentation
-
-    // Create a Blob from the JSON string
-    const jsonBlob = new Blob([jsonString], { type: 'application/json' });
-
-    const a = document.createElement('a');
-
-    // Set the href attribute with the Blob URL
-    a.href = URL.createObjectURL(jsonBlob);
-
-    // Set the download attribute for the file name
-    a.download =state.fileName.split('.')[0] + '_' + clickedVector + '.json';
-
-    // Append the anchor to the document body
-    document.body.appendChild(a);
-
-    // Programmatically click the anchor to trigger the download
-    a.click();
-    
-}}
+    const jsonBlob = new Blob([JSON.stringify(cy.json())], { type: 'application/json' });
+    saveAs(jsonBlob,state.fileName.split('.')[0] + '_' + clickedVector + '.json');
+  }
+}
 
   const btnPngClick = () =>{
     const cy = cyRef.current;
@@ -579,12 +443,60 @@ const btnJsonClick = () => {
   const btnSVGExportClick = () => {
     const cy = cyRef.current;
     if (cy) {
-      const jsonData = cy.json();
+      const blob = new Blob([cy.svg({scale: 1, full: true})], {type: 'image/svg+xml'});
+      saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.svg');
+
+      // const jsonData = cy.json();
       
-      saveAsSvg(jsonData);
+      // saveAsSvg(jsonData);
       // const pngBlob = cy.png({ output: "base64uri", full: true });
       // saveAs(pngBlob, 'graph.png');
     };
+  };
+
+  const applyPresetPositions = async () => {
+    const val = await get(state.fileName);
+    const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{},elements:[]};
+    var elementsVector = clickedVectors.elements || [];
+
+    if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
+      elementsVector = clickedVectors[clickedVector].elements[0]
+      const positions = clickedVectors[clickedVector].positions;
+      if (positions != undefined) {
+        if (positions != undefined) {
+          setElements(elementsVector);
+          setNodePositions(positions);
+
+          layout.positions = positions.reduce((positionsObj: any, node: any) => {
+            const nodeId = Object.keys(node)[0];
+            const position = node[nodeId];
+            positionsObj[nodeId] = position;
+            return positionsObj;
+          }, {});
+
+          console.log("position setting successfull");
+          // cyRef.current?.layout(layout).run();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  const applyLayout = async (name: string) => {
+    if (cyRef.current) {
+
+      if (name === 'preset') {
+        if (!await applyPresetPositions()) {
+          alert("there is no saved layout.\nto save a layout to preset move one of its nodes");
+          return;
+        }
+      }
+
+      layout.name = name;
+      layout.animate = true;
+      cyRef.current?.layout(layout).run();
+    }
   };
 
 // right click menu
@@ -596,57 +508,19 @@ const contextMenuItems: MenuItem[] = [
       { label: '.svg', icon: faDownload, onClick: btnSVGExportClick },
       { label: '.png', icon: faDownload, onClick: btnPngClick },
       { label: '.json', icon: faDownload, onClick: btnJsonClick },
-      { label: '.csv', icon: faDownload, onClick: btnCsvClick },
-      { label: '.xlsx', icon: faDownload, onClick: btnXLSXClick },
     ],
   },
   {
     label: 'Layout',
     icon: faDiagramProject,
     submenu: [
-      {label: 'random', icon: faDiagramProject, onClick: () => {
-        layout.name = 'random';
-        cyRef.current?.layout(layout).run();
-      }},
-      {label: 'preset', icon: faDiagramProject, onClick: async () => {
-        const val = await get(state.fileName);
-        const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{},elements:[]};
-        var elementsVector = clickedVectors.elements || [];
-        
-        if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
-          elementsVector = clickedVectors[clickedVector].elements[0]
-          const positions = clickedVectors[clickedVector].positions;
-          if (positions != undefined) {
-            fetchData();
-            return
-          }
-        }
-        alert("there is no saved layout.\n to save a layout to preset move one of its nodes");
-      }},
-      // {label: 'grid', icon: faDiagramProject, onClick: () => {
-      //   layout.name = 'grid';
-      //   cyRef.current?.layout(layout).run();
-      // }},
-      {label: 'Circle', icon: faDiagramProject, onClick: () => {
-        layout.name = 'circle';
-        layout.animate = true;
-        cyRef.current?.layout(layout).run();
-      }},
-      {label: 'FCose', icon: faDiagramProject, onClick: () => {
-        layout.name = 'fcose';
-        layout.animate = true;
-        cyRef.current?.layout(layout).run();
-      }},
-      {label: 'elk', icon: faDiagramProject, onClick: () => {
-        layout.name = 'elk';
-        layout.animate = true;
-        cyRef.current?.layout(layout).run();
-      }},
-      {label: 'cise', icon: faDiagramProject, onClick: () => {
-        layout.name = 'cise';
-        layout.animate = true;
-        cyRef.current?.layout(layout).run();
-      }}
+      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random')}},
+      {label: 'preset', icon: faDiagramProject, onClick: () => {applyLayout('preset')}},
+      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid')}},
+      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle')}},
+      {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose')}},
+      {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk')}},
+      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise')}}
     ],
   },
   {

@@ -1,0 +1,24 @@
+
+.SaveGraphWrapper {
+    background-color: blue;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.ApplyAllMenu {
+    background-color: aqua;
+    width: 100%;
+    height: 15%;
+    min-height: fit-content;
+    padding: 10px;
+}
+
+.IndividualMenu{
+    background-color: purple;
+    width: 100%;
+    height: 90%;
+}

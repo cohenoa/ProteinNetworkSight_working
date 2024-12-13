@@ -13,7 +13,7 @@ enum SaveMode {
 
 const SaveResults: FC<formRefProps> = ({ formRef }) => {
 
-    const [mode, setMode] = useState(SaveMode.data);
+    const [mode, setMode] = useState(SaveMode.graphs);
 
     console.log("save results ref: ", formRef);
 
@@ -25,7 +25,7 @@ const SaveResults: FC<formRefProps> = ({ formRef }) => {
                 return <SaveData ref={formRef} />
             case SaveMode.graphs:
                 console.log("Save Graphs");
-                return <SaveGraphs />
+                return <SaveGraphs ref={formRef} />
             default:
                 console.log("Error")
                 return <></>
