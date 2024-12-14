@@ -330,6 +330,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
                 setSelectedOption(option as OptionType);
               }}
               windowThreshold={20}
+              maxMenuHeight={140}
               options={organism.organisms}
               styles={{
                 option: (base) => ({
