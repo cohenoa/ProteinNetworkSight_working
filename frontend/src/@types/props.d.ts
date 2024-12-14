@@ -86,6 +86,7 @@ interface MenuItem {
 
 interface ContextMenuProps {
   position: { x: number; y: number };
+  depth: number;
   items: MenuItem[];
 }
 

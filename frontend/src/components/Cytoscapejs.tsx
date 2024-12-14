@@ -14,7 +14,7 @@ import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { headers } from "../assets/DefualtFile";
-import { faDiagramProject, faDownload,faPencil } from '@fortawesome/free-solid-svg-icons';
+import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
 import cise from 'cytoscape-cise';
@@ -120,18 +120,17 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       
       
       cy.on('free', 'node', (event) => {
-        // const node = event.target;
-        // const dropTarget = event.target.droppable.dropTarget;
-        console.log('Node dropped:', event.target.id());
-        savePositionsToIndexedDB()
-        // Perform actions when the node is dropped onto another element
+        // node dropped
+
+        // console.log('Node dropped:', event.target.id());
+        // savePositionsToIndexedDB()
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
       });
-      window.addEventListener('contextmenu', (event) => {
-        console.log(event)
-      })
+      // window.addEventListener('contextmenu', (event) => {
+      //   console.log(event)
+      // })
 
       cyRef.current.on("click", "node", (event) => {
         const node = event.target;
@@ -257,7 +256,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         var sourceY = sourceNode?.getAttribute('cy');
         var targetX = targetNode?.getAttribute('cx');
         var targetY = targetNode?.getAttribute('cy');
-        console.log(edgeColor)
+
         // Create a new line element (edge)
         if(sourceNode != null&& typeof sourceX == 'string' && typeof sourceY == 'string'&& typeof targetX == 'string'&& typeof targetY == 'string'){
           var line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -267,8 +266,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
           line.setAttribute('y2', targetY);
           line.setAttribute('stroke', edgeData.data.color || 'black');
           line.setAttribute('stroke-width', '2.5');
-          // console.log(myStyle[1].style.opacity)
-          // console.log(myStyle[1])
+
           line.setAttribute('opacity', String(myStyle[1].style.opacity));
 
           // Append the new line element to the SVG
@@ -295,15 +293,10 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
   }
   
   function saveAsSvg (jsonBlob: any): void{
-    // const jsonString = JSON.stringify(jsonBlob, null, 2);
-    // console.log(jsonBlob);
     var nodes = jsonBlob.elements.nodes;
     var edges = jsonBlob.elements.edges;
-
-    // var jsonArray = jsonString.split("{\n\"data\": ");
-    // console.log(edges);
     var svgOutPut = convertArrayToSvg(nodes);
-    // console.log(svgOutPut);
+    
     svgOutPut = addEdgesToSVG(svgOutPut, edges);
     var a = document.createElement("a");
     var file = new Blob([svgOutPut], {type: "image/svg+xml"});
@@ -385,16 +378,11 @@ const getLinkColor = (score: Number) => {
 
 const savePositionsToIndexedDB = async () => {
 
-  let nodes = cyRef.current?.nodes()
-
-  console.log("map nodes: \n", nodes)
-
   const nodePositions = cyRef.current?.nodes().map((node) => {
     let positionObj = node.position();
     return {[node.id()]: {x: positionObj.x, y: positionObj.y}};
   });
-  console.log("node positions: ", nodePositions)
-  console.log(cyRef.current?.nodes())
+
   if (nodePositions && nodePositions.length > 0) {
     try {
       const val = await get(state.fileName);
@@ -412,11 +400,16 @@ const savePositionsToIndexedDB = async () => {
       clickedVectors[clickedVector].positions = [
         ...nodePositions,
       ];
-      clickedVectors[clickedVector].threshold = thresholds
-      clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1
-      clickedVectors[clickedVector].elements = elementsVector
-      console.log(clickedVectors) 
+      clickedVectors[clickedVector].threshold = thresholds;
+      clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1;
+      clickedVectors[clickedVector].elements = elementsVector;
+      clickedVectors[clickedVector].nodeSize = curNodeSize;
+      clickedVectors[clickedVector].opacity = myStyle[1].opacity;
+
+      
       // Update the clicked_vectors and nodePositions in the existing data
+      console.log(clickedVectors) 
+
       val.clicked_vectors = clickedVectors;
       set(state.fileName, val);
     } catch (error) {
@@ -443,14 +436,11 @@ const btnJsonClick = () => {
   const btnSVGExportClick = () => {
     const cy = cyRef.current;
     if (cy) {
-      const blob = new Blob([cy.svg({scale: 1, full: true})], {type: 'image/svg+xml'});
-      saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.svg');
+      // const blob = new Blob([cy.svg({scale: 1, full: true})], {type: 'image/svg+xml'});
+      // saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.svg');
 
-      // const jsonData = cy.json();
-      
-      // saveAsSvg(jsonData);
-      // const pngBlob = cy.png({ output: "base64uri", full: true });
-      // saveAs(pngBlob, 'graph.png');
+      const jsonData = cy.json();
+      saveAsSvg(jsonData);
     };
   };
 
@@ -466,6 +456,8 @@ const btnJsonClick = () => {
         if (positions != undefined) {
           setElements(elementsVector);
           setNodePositions(positions);
+          setNodeSize(clickedVectors[clickedVector].nodeSize);
+          setOpacity(clickedVectors[clickedVector].opacity);
 
           layout.positions = positions.reduce((positionsObj: any, node: any) => {
             const nodeId = Object.keys(node)[0];
@@ -488,7 +480,7 @@ const btnJsonClick = () => {
 
       if (name === 'preset') {
         if (!await applyPresetPositions()) {
-          alert("there is no saved layout.\nto save a layout to preset move one of its nodes");
+          alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
           return;
         }
       }
@@ -515,7 +507,15 @@ const contextMenuItems: MenuItem[] = [
     icon: faDiagramProject,
     submenu: [
       {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random')}},
-      {label: 'preset', icon: faDiagramProject, onClick: () => {applyLayout('preset')}},
+      // {label: 'preset', icon: faDiagramProject, onClick: () => {applyLayout('preset')}},
+      {
+        label: 'preset',
+        icon: faDiagramProject,
+        submenu: [
+          {label: 'save current', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
+          {label: 'load preset', icon: faSpinner, onClick: () => {applyLayout('preset')}},
+        ]
+      },
       {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid')}},
       {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle')}},
       {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose')}},
@@ -550,7 +550,6 @@ const contextMenuItems: MenuItem[] = [
   },
 ];
 const setNodeSize = (size: number) => {
-  console.log(size);
   // elements.forEach((element) => {
   //   element.data.size = element.data.size * size;
   //   setCurNodeSize(size);
@@ -563,28 +562,9 @@ const setNodeSize = (size: number) => {
   setCurNodeSize(size);
 }
 const setOpacity = (op: number) => {
-  setMyStyle([
-    {
-      selector: "node",
-      style: {
-        "background-color": "data(color)",
-        label: "data(label)",
-        width: "data(size)",
-        height: "data(size)",
-        "background-image": '#FFFFFF', 
-      },
-    },
-    {
-      selector: "edge",
-      style: {
-        "line-color": "data(color)",
-        "background-image": '#FFFFFF',
-        opacity: op
-      },
-    },
-    
-  ])
-  // myStyle[1].style.opacity = op;
+  const newStyle = [myStyle[0], {...(myStyle[1])}];
+  newStyle[1].style.opacity = op;
+  setMyStyle(newStyle);
 }
 
 return (
@@ -599,6 +579,7 @@ return (
         {openContextMenu && (
           <ContextMenu
             position={menuPosition}
+            depth={0}
             items={contextMenuItems}
           />
         )}
