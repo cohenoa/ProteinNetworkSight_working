@@ -58,7 +58,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       style: {
         "line-color": "data(color)",
         "background-image": '#FFFFFF',
-        opacity:0.15
+        opacity: 0.15
       },
     },
     
@@ -73,9 +73,9 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
   const [layout, setLayout] = useState<any>({
     name: 'circle',
     fit: true, // whether to fit the viewport to the graph
-    padding: 30, // padding used on fit
+    padding: 30 * curNodeSize, // padding used on fit
     avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
-    avoidOverlapPadding: 30, // extra spacing around nodes when avoidOverlap: true
+    avoidOverlapPadding: 30 * curNodeSize, // extra spacing around nodes when avoidOverlap: true
     nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
     condense: true, // uses all available space on false, uses minimal space on true
     animate: false,
@@ -226,9 +226,9 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
 
   }, [ graphData.nodes, graphData.links, state.fileName]);
 
-  // useEffect(() => {
-  //   cyRef.current?.layout(layout).run();
-  // }, [layout])
+  useEffect(() => {
+    cyRef.current?.layout(layout).run();
+  }, [layout, curNodeSize]);
 
   function convertArrayToSvg(nodesData: any[]): string {
     const svgContent = `
@@ -404,7 +404,7 @@ const savePositionsToIndexedDB = async () => {
       clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1;
       clickedVectors[clickedVector].elements = elementsVector;
       clickedVectors[clickedVector].nodeSize = curNodeSize;
-      clickedVectors[clickedVector].opacity = myStyle[1].opacity;
+      clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
 
       
       // Update the clicked_vectors and nodePositions in the existing data
@@ -444,13 +444,12 @@ const btnJsonClick = () => {
     };
   };
 
-  const applyPresetPositions = async () => {
+  const applySavedGraph = async () => {
     const val = await get(state.fileName);
-    const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{},elements:[]};
-    var elementsVector = clickedVectors.elements || [];
+    const clickedVectors = val['clicked_vectors'] || {};
 
     if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
-      elementsVector = clickedVectors[clickedVector].elements[0]
+      const elementsVector = clickedVectors[clickedVector].elements[0]
       const positions = clickedVectors[clickedVector].positions;
       if (positions != undefined) {
         if (positions != undefined) {
@@ -467,7 +466,6 @@ const btnJsonClick = () => {
           }, {});
 
           console.log("position setting successfull");
-          // cyRef.current?.layout(layout).run();
           return true;
         }
       }
@@ -479,15 +477,24 @@ const btnJsonClick = () => {
     if (cyRef.current) {
 
       if (name === 'preset') {
-        if (!await applyPresetPositions()) {
+        if (!await applySavedGraph()) {
           alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
           return;
         }
       }
 
-      layout.name = name;
-      layout.animate = true;
-      cyRef.current?.layout(layout).run();
+      const newLayout = {
+        ...layout,
+        name: name,
+        animate: true,
+      };
+
+      setLayout(newLayout);
+
+      // layout.name = name;
+      // layout.animate = true;
+
+      // cyRef.current?.layout(layout).run();
     }
   };
 
@@ -527,10 +534,12 @@ const contextMenuItems: MenuItem[] = [
     label: 'Opacity',
     icon: faPencil,
     submenu: [
-      { label: '0.1', icon: faPencil, onClick: () => {setOpacity(0.1)} },
-      { label: '0.15', icon: faPencil, onClick: () => {setOpacity(0.15)} },
-      { label: '0.25', icon: faPencil, onClick: () => {setOpacity(0.25)} },
+      { label: '0.05', icon: faPencil, onClick: () => {setOpacity(0.05)} },
+      { label: '0.2', icon: faPencil, onClick: () => {setOpacity(0.2)} },
+      { label: '0.35', icon: faPencil, onClick: () => {setOpacity(0.35)} },
       { label: '0.5', icon: faPencil, onClick: () => {setOpacity(0.5)} },
+      { label: '0.75', icon: faPencil, onClick: () => {setOpacity(0.75)} },
+      { label: '0.9', icon: faPencil, onClick: () => {setOpacity(0.9)} },
     ],
   },
   {
@@ -555,9 +564,10 @@ const setNodeSize = (size: number) => {
   //   setCurNodeSize(size);
   // });
   // setElements(elements);
+
   cyRef.current?.nodes().forEach(function(node){
     node.data('size', parseInt(node.data('size'))/curNodeSize*size); 
-    console.log(node.data('size'))
+    // node.data('size', 10 * size);
   });
   setCurNodeSize(size);
 }

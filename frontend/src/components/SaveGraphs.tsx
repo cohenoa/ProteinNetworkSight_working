@@ -33,7 +33,7 @@ const SaveGraphs = forwardRef((props, ref) => {
             if (header in clickedVectors) {
                 newGraphStatus[header] = {
                     layout: "circle",
-                    nodeSize: 10,
+                    nodeSize: 1,
                     opacity: 0.5,
                 }
             }
