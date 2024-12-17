@@ -73,9 +73,9 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
   const [layout, setLayout] = useState<any>({
     name: 'circle',
     fit: true, // whether to fit the viewport to the graph
-    padding: 30 * curNodeSize, // padding used on fit
+    padding: 30, // padding used on fit
     avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
-    avoidOverlapPadding: 30 * curNodeSize, // extra spacing around nodes when avoidOverlap: true
+    avoidOverlapPadding: 50 * curNodeSize, // extra spacing around nodes when avoidOverlap: true
     nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
     condense: true, // uses all available space on false, uses minimal space on true
     animate: false,
@@ -514,7 +514,6 @@ const contextMenuItems: MenuItem[] = [
     icon: faDiagramProject,
     submenu: [
       {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random')}},
-      // {label: 'preset', icon: faDiagramProject, onClick: () => {applyLayout('preset')}},
       {
         label: 'preset',
         icon: faDiagramProject,
