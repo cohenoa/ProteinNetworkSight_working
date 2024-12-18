@@ -68,7 +68,7 @@
 }
 
 .usePresetCheckboxWrapper {
-    width: 30%;
+    width: 60px;
     display: flex;
     flex-direction: row;
 }

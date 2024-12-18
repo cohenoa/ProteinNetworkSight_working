@@ -58,7 +58,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       style: {
         "line-color": "data(color)",
         "background-image": '#FFFFFF',
-        opacity: 0.15
+        opacity: 0.35
       },
     },
     

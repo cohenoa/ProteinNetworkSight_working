@@ -111,7 +111,6 @@ const SaveGraphs = forwardRef((props, ref) => {
     const [graphsStatus, setGraphsStatus] = useState<GraphsStatus>({});
     const [usePresetWhenPossible, setUsePresetWhenPossible] = useState<boolean>(false);
     // TODO: add usePreset state + button for other settings
-    
 
     const getData = async () => {
         const val = await get(state.fileName);
@@ -126,9 +125,16 @@ const SaveGraphs = forwardRef((props, ref) => {
 
                 newGraphStatus[header].Layout.options.push(presetOption);
                 newGraphStatus[header].Layout.current = presetOption;
+                newGraphStatus[header].Layout.default = presetOption;
 
-                newGraphStatus[header].NodeSize.current = {label: String(clickedVectors[header].nodeSize), value: Number(clickedVectors[header].node_size)};
-                newGraphStatus[header].Opacity.current = {label: String(clickedVectors[header].opacity), value: Number(clickedVectors[header].opacity)};
+                const nodeSizeOption = {label: String(clickedVectors[header].nodeSize), value: Number(clickedVectors[header].node_size)};
+                const opacityOption = {label: String(clickedVectors[header].opacity), value: Number(clickedVectors[header].opacity)};
+
+                newGraphStatus[header].NodeSize.current = nodeSizeOption;
+                newGraphStatus[header].NodeSize.default = nodeSizeOption;
+
+                newGraphStatus[header].Opacity.current = opacityOption;
+                newGraphStatus[header].Opacity.default = opacityOption;
             }
             else {
                 newGraphStatus[header] = copySettings(baseGraphSetting, false);
@@ -185,10 +191,12 @@ const SaveGraphs = forwardRef((props, ref) => {
         const newGraphStatus: GraphsStatus = {};
 
         Object.entries(graphsStatus).forEach(([header, item]) => {
-            newGraphStatus[header] = copySettings(applyAllStatus, true);
-            if (key === "Layout" && usePresetWhenPossible && graphsStatus[header][key].options.includes(presetOption)){
-                newGraphStatus[header][key].current = presetOption;
-                // TODO: account for NodeSize and Opacity
+            newGraphStatus[header] = copySettings(graphsStatus[header], false);
+            if (usePresetWhenPossible && graphsStatus[header][key].options.includes(presetOption)){
+                newGraphStatus[header].Layout.current = presetOption;
+
+                newGraphStatus[header].NodeSize.current = graphsStatus[header].NodeSize.default;
+                newGraphStatus[header].Opacity.current = graphsStatus[header].Opacity.default;           
             }
             else{
                 newGraphStatus[header][key].current = applyAllStatus[key].current;
@@ -227,21 +235,18 @@ const SaveGraphs = forwardRef((props, ref) => {
                         />
                         <div className="ApplyAllButtonsWrapper">
                             <button className="btn btn--outline btn--medium" onClick={() => {handleApplyAllSubmit(key as keyof GraphSettings)}}>Apply</button>
-
-                            {index === 0 &&
-                            <div className="usePresetCheckboxWrapper">
-                                <input
-                                    type="checkbox"
-                                    checked={usePresetWhenPossible}
-                                    onChange={() => setUsePresetWhenPossible(!usePresetWhenPossible)}
-                                    className="usePresetCheckbox"
-                                />
-                                <label className="usePresetLabel">{" Use Preset when available"}</label>
-                            </div>
-                            }
                         </div>
                     </div>
                 ))}
+                <div className="usePresetCheckboxWrapper">
+                    <input
+                        type="checkbox"
+                        checked={usePresetWhenPossible}
+                        onChange={() => setUsePresetWhenPossible(!usePresetWhenPossible)}
+                        className="usePresetCheckbox"
+                    />
+                    <label className="usePresetLabel">{" Use Preset when available"}</label>
+                </div>
             </div>
         )
     }
