@@ -203,7 +203,7 @@ const SaveGraphs = forwardRef((props, ref) => {
             });
             console.log(body);
 
-            makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
+            // makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
 
             return "downloaded graphs";
         }
@@ -332,8 +332,10 @@ const SaveGraphs = forwardRef((props, ref) => {
 
     return (
         <div className="SaveGraphWrapper">
-            {renderApplyAllMenu()}
-            {renderGraphsSettings()}
+            {/* {renderApplyAllMenu()}
+            {renderGraphsSettings()} */}
+            <h1>Save Graphs feature not yet available.</h1>
+            <h1>Stay tuned for future updates</h1>
         </div>
     )
 });
