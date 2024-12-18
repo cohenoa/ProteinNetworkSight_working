@@ -2,7 +2,10 @@ import React, { useEffect, useState, useImperativeHandle, forwardRef } from "rea
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
+import { makePostRequest } from "../common/PostRequest";
 import WindowedSelect from "react-windowed-select";
+import { ICustomAllGraphData } from "../@types/graphs";
+import CytoscapejsComponentself from "../components/Cytoscapejs";
 import "../styles/SaveGraphs.css";
 
 interface optionItem {
@@ -160,9 +163,48 @@ const SaveGraphs = forwardRef((props, ref) => {
         console.log(applyAllStatus);
     }, [applyAllStatus]);
 
+
+    const handleError = (err: string) => {
+        console.log("error in makePostRequest", err);
+        // setError(true);
+        actions.updateIsLoading({ isLoading: false });
+    };
+
+    const handleJsonGraphData = (jsonString: string) => {
+        const tempGraphData: ICustomAllGraphData = JSON.parse(jsonString);
+        console.log(tempGraphData);
+    };
+
     useImperativeHandle(ref, () => ({
         getFormData: async () => {
-            console.log("getFormData called");
+            const val = await get(state.fileName);
+
+            const headers = val['headers'];
+            const vectorsValues = val['vectorsValues'];
+
+            let body = {
+                user_id: state.uuid,
+                headers: {},
+            };
+
+            Object.entries(vectorsValues).forEach(([key, value]) => {
+                const values_arr = vectorsValues[key] || [];
+                const ids_arr = state.proteinsNames || [];
+                let values_map: { [key: string]: number } = {};
+                for (let i = 0; i < values_arr.length; i++) {
+                    values_map[ids_arr[i]] = values_arr[i];
+                }
+                (body.headers as { [key: string]: any })[key] = {
+                    values_map: values_map,
+                    thresh_pos: state.thresholds[key][0],
+                    thresh_neg: state.thresholds[key][1],
+                    score_thresh: state.scoreThreshold,
+                }
+            });
+            console.log(body);
+
+            makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
+
             return "downloaded graphs";
         }
     }));
@@ -192,11 +234,11 @@ const SaveGraphs = forwardRef((props, ref) => {
 
         Object.entries(graphsStatus).forEach(([header, item]) => {
             newGraphStatus[header] = copySettings(graphsStatus[header], false);
-            if (usePresetWhenPossible && graphsStatus[header][key].options.includes(presetOption)){
+            if (usePresetWhenPossible && graphsStatus[header].Layout.options.includes(presetOption)){
                 newGraphStatus[header].Layout.current = presetOption;
 
                 newGraphStatus[header].NodeSize.current = graphsStatus[header].NodeSize.default;
-                newGraphStatus[header].Opacity.current = graphsStatus[header].Opacity.default;           
+                newGraphStatus[header].Opacity.current = graphsStatus[header].Opacity.default;
             }
             else{
                 newGraphStatus[header][key].current = applyAllStatus[key].current;
