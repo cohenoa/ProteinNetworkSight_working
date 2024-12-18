@@ -184,7 +184,7 @@ const SaveGraphs = forwardRef((props, ref) => {
 
             let body = {
                 user_id: state.uuid,
-                headers: {},
+                headers_data: {},
             };
 
             Object.entries(vectorsValues).forEach(([key, value]) => {
@@ -194,7 +194,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                 for (let i = 0; i < values_arr.length; i++) {
                     values_map[ids_arr[i]] = values_arr[i];
                 }
-                (body.headers as { [key: string]: any })[key] = {
+                (body.headers_data as { [key: string]: any })[key] = {
                     values_map: values_map,
                     thresh_pos: state.thresholds[key][0],
                     thresh_neg: state.thresholds[key][1],

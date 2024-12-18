@@ -89,11 +89,11 @@ def cal_graph_data():
 def calc_all_graph_data():
     request_data = request.get_json()
     user_id = request_data["user_id"]
-    headers = request_data["headers_list"]
+    headers_data = request_data["headers_data"]
 
     allGraphs = {}
 
-    for header in headers:
+    for header in headers_data:
         values_map = request_data["values_map"]
         thresh_pos = request_data["thresh_pos"]
         thresh_neg = request_data["thresh_neg"]
