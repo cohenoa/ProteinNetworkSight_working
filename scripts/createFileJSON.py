@@ -3,8 +3,8 @@ import json
 
 # path to xlsx file
 
-src_path = 'C:/Users/omrin/Downloads/ex2.xlsx'
-dest_path = 'C:/Users/omrin/Downloads/example.tsx'
+src_path = 'C:/Users/omrin/OneDrive/Desktop/Work/proteinNetworkSight/for work/example_data/example_short1.xlsx'
+dest_path = 'C:/Users/omrin/OneDrive/Desktop/Work/proteinNetworkSight/for work/code/proteinnetworksight/frontend/src/assets/DefualtFile.tsx'
 
 df = pd.read_excel(src_path)
 
@@ -28,7 +28,7 @@ with open(dest_path, 'w') as outfile:
     outfile.write('];\n\n')
 
     # write json data to tsx file
-    outfile.write('export const data = [\n')
+    outfile.write('export const json = [\n')
     for row in jsonArr:
         outfile.write('\t[\"' + str(row[0]) + '\",\n')
         for i in range(1, len(row)):  
