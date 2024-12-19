@@ -1,4 +1,4 @@
-import { FC, useCallback, useRef, useState,useEffect, Dispatch, SetStateAction } from "react";
+import { FC, useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
 import { IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
@@ -29,11 +29,13 @@ cytoscape.use( elk );
  * The component create the graph, using cytoscape.js library.
  * The props are the graph data and the clikceed vector (for the files)
  */
-const CytoscapejsComponentself: FC<IGraphProps> = ({
-  graphData,
-  clickedVector,
-  thresholds,
-}) => {
+
+// const CytoscapejsComponentself: FC<IGraphProps> = ({
+//   graphData,
+//   clickedVector,
+//   thresholds,
+// }) => {
+const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
   const { state, actions } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<ICustomNode | null>(null);
@@ -80,9 +82,13 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
     condense: true, // uses all available space on false, uses minimal space on true
     animate: false,
     positions: false,
+    stop: function() {
+      setLayoutStop(true);
+    }
    });
 
-  // const [clicked_vectors, set_clicked_vectors] = useState([])
+   const [layoutStop, setLayoutStop] = useState(false);
+   const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [nodePositions, setNodePositions] = useState<Array<any>>([]);
 
@@ -140,6 +146,8 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         setOpenPanel(true);
         setSelectedNode(clickedNode);
       });
+
+      // setFullyLoaded({layoutStop: fullyLoaded.Layout, positions: fullyLoaded.positions, cyref: true, notLoading: fullyLoaded.notLoading});
       try {
         const val = await get(state.fileName);
   
@@ -158,7 +166,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       } catch (error) {
         console.error("Error fetching data from IndexedDB", error);
       }
-  },
+    },
     [graphData,clickedVector, state.fileName]
   );
 
@@ -190,6 +198,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         }
       } else {
         console.log("Setting the elements for the first time");
+        // console.log()
 
 
         if (clickedVector in clickedVectors){
@@ -212,6 +221,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
     finally {
       // Set loading to false when the operation is complete
       setIsLoading(false);
+      setDataLoaded(true);
     }
   };
   
@@ -229,6 +239,18 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
   useEffect(() => {
     cyRef.current?.layout(layout).run();
   }, [layout, curNodeSize]);
+
+  useEffect(() => {
+    if (layoutStop && dataLoaded) {
+      setTimeout(() => {
+        alertLoading();
+      }, 1000);
+      
+    }
+    else{
+      console.log(layoutStop, dataLoaded);
+    }
+  }, [layoutStop, dataLoaded])
 
   function convertArrayToSvg(nodesData: any[]): string {
     const svgContent = `
@@ -441,7 +463,10 @@ const btnJsonClick = () => {
 
       const jsonData = cy.json();
       saveAsSvg(jsonData);
-    };
+    }
+    else{
+      console.log("no cy");
+    }
   };
 
   const applySavedGraph = async () => {
@@ -473,7 +498,18 @@ const btnJsonClick = () => {
     return false;
   }
 
-  const applyLayout = async (name: string) => {
+  useImperativeHandle(ref, () => ({
+    fetchData,
+    applyLayout,
+    setOpacity,
+    setNodeSize,
+    btnSVGExportClick,
+    btnPngClick,
+    btnJsonClick,
+  }));
+
+
+  const applyLayout = async (name: string, animate: boolean) => {
     if (cyRef.current) {
 
       if (name === 'preset') {
@@ -486,17 +522,27 @@ const btnJsonClick = () => {
       const newLayout = {
         ...layout,
         name: name,
-        animate: true,
+        animate: animate,
       };
 
       setLayout(newLayout);
-
-      // layout.name = name;
-      // layout.animate = true;
-
-      // cyRef.current?.layout(layout).run();
     }
   };
+
+  const downloadFile = (file_type: string) => {
+    if (file_type === 'svg'){
+      btnSVGExportClick();
+    }
+    else if (file_type === 'png'){
+      btnPngClick();
+    }
+    else if (file_type === 'json'){
+      btnJsonClick();
+    }
+    else{
+      console.log("invalid file type");
+    }
+  }
 
 // right click menu
 const contextMenuItems: MenuItem[] = [
@@ -513,20 +559,20 @@ const contextMenuItems: MenuItem[] = [
     label: 'Layout',
     icon: faDiagramProject,
     submenu: [
-      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random')}},
+      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle', true)}},
       {
         label: 'preset',
         icon: faDiagramProject,
         submenu: [
-          {label: 'save current', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
-          {label: 'load preset', icon: faSpinner, onClick: () => {applyLayout('preset')}},
+          {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
+          {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
         ]
       },
-      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid')}},
-      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle')}},
-      {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose')}},
-      {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk')}},
-      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise')}}
+      {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose', true)}},
+      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
+      {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
+      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
+      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
     ],
   },
   {
@@ -564,13 +610,16 @@ const setNodeSize = (size: number) => {
   // });
   // setElements(elements);
 
+  console.log("setting node size");
+
   cyRef.current?.nodes().forEach(function(node){
+    console.log("inside setting");
     node.data('size', parseInt(node.data('size'))/curNodeSize*size); 
-    // node.data('size', 10 * size);
   });
   setCurNodeSize(size);
 }
 const setOpacity = (op: number) => {
+  console.log("setting opacity");
   const newStyle = [myStyle[0], {...(myStyle[1])}];
   newStyle[1].style.opacity = op;
   setMyStyle(newStyle);
@@ -604,7 +653,7 @@ return (
     )}
   </div>
 );
-};
+});
 
 
 export default CytoscapejsComponentself;

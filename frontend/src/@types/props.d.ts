@@ -18,6 +18,16 @@ export interface formRef {
   getFormData: () => Record<string, string>;
 }
 
+export interface graphRef extends React.RefObject<HTMLDivElement>{
+  applyLayout: (name: string, animate: boolean) => void,
+  setOpacity: (op: number) => void,
+  setNodeSize: (size: number) => void,
+  fetchData: () => void,
+  btnSVGExportClick: () => void,
+  btnPngClick: () => void,
+  btnJsonClick: () => void,
+}
+
 // Interface for props of Father and ButtonComponent that includes formRef
 export interface formRefProps {
   formRef: RefObject<formRef>;
@@ -95,4 +105,27 @@ interface IButtonConfig {
   type: "button" | "submit";
   className: string;
   onClick: () => void;
+}
+
+export interface optionItem {
+  label: string;
+  value: string | number,
+}
+
+export interface SettingItem {
+  title: string;
+  default: optionItem;
+  current: optionItem | null;
+  options: optionItem[];
+}
+
+export interface GraphSettings {
+  Layout: SettingItem,
+  NodeSize: SettingItem,
+  Opacity: SettingItem,
+  fileType: SettingItem,
+}
+
+export interface GraphsStatus {
+  [key: string]: GraphSettings;
 }

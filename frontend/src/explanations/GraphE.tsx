@@ -29,7 +29,10 @@ const GraphExplanation: FC = () => {
         The information can be download as a json file for further analysis in Cytoscape
       </p>
       <p className="please">
-        To save the current layout of the network move one of the nodes.
+        To save the current layout of the network right click -{">"} Layout -{">"} preset -{">"} save current.
+      </p>
+      <p className="please">
+        To load the saved layout right click -{">"} Layout -{">"} preset -{">"} load preset.
       </p>
       <p className="please">
         You can change the layout of the network by selecting one of the layout options inside of the right click menu under layouts.

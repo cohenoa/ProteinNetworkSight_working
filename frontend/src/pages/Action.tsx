@@ -5,6 +5,7 @@ import { IStepProps, IButtonConfig, formRef, formRefProps } from "../@types/prop
 import FileDetailsExplanation from "../explanations/FileDetailsE";
 import FileUploadExplanation from "../explanations/FileUploadE";
 import StringSuggestionsExplanation from "../explanations/StringSuggestionsE";
+import SaveResultsExplanations from "../explanations/SaveResultsE";
 import GraphExplanation from "../explanations/GraphE";
 import FileUploadStep from "../steps/FileUploadS";
 import FileDetailsStep from "../steps/FileDetailsS";
@@ -73,7 +74,7 @@ export const ActionPage: FC = () => {
       case 5:
         return <GraphExplanation />;
       case 6:
-        return <></>;
+        return <SaveResultsExplanations/>;
       default:
         return <></>;
     }

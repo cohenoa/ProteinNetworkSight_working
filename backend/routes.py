@@ -89,18 +89,19 @@ def cal_graph_data():
 def calc_all_graph_data():
     request_data = request.get_json()
     user_id = request_data["user_id"]
+    
     headers_data = request_data["headers_data"]
 
     allGraphs = {}
 
-    for header in headers_data:
-        values_map = request_data["values_map"]
-        thresh_pos = request_data["thresh_pos"]
-        thresh_neg = request_data["thresh_neg"]
-        score_thresh = request_data["score_thresh"]
+    for key, data in headers_data.items():
+        values_map = data["values_map"]
+        thresh_pos = data["thresh_pos"]
+        thresh_neg = data["thresh_neg"]
+        score_thresh = data["score_thresh"]
         nodes_list, links_list = make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh)
 
-        allGraphs[header] = {
+        allGraphs[key] = {
             "nodes": [ob.__dict__ for ob in nodes_list],
             "links": [ob.__dict__ for ob in links_list],
         }
