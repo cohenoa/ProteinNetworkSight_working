@@ -526,13 +526,23 @@ const btnJsonClick = () => {
       };
 
       setLayout(newLayout);
-
-      // layout.name = name;
-      // layout.animate = true;
-
-      // cyRef.current?.layout(layout).run();
     }
   };
+
+  const downloadFile = (file_type: string) => {
+    if (file_type === 'svg'){
+      btnSVGExportClick();
+    }
+    else if (file_type === 'png'){
+      btnPngClick();
+    }
+    else if (file_type === 'json'){
+      btnJsonClick();
+    }
+    else{
+      console.log("invalid file type");
+    }
+  }
 
 // right click menu
 const contextMenuItems: MenuItem[] = [
@@ -549,20 +559,20 @@ const contextMenuItems: MenuItem[] = [
     label: 'Layout',
     icon: faDiagramProject,
     submenu: [
-      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
+      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle', true)}},
       {
         label: 'preset',
         icon: faDiagramProject,
         submenu: [
-          {label: 'save current', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
-          {label: 'load preset', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
+          {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
+          {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
         ]
       },
-      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
-      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle', true)}},
       {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose', true)}},
+      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
       {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
-      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}}
+      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
+      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
     ],
   },
   {

@@ -91,8 +91,6 @@ const SaveGraphs = forwardRef((props, ref) => {
     });
 
     const [graphRefs, setGraphRefs] = useState<graphRef[]>([]);
-    const [graphApplied, setGraphApplied] = useState<boolean[]>([]);
-    // const [finishedDownload]
 
     const [applyAllStatus, setApplyAllStatus] = useState<GraphSettings>(copySettings(baseGraphSetting, false));
     const [graphsStatus, setGraphsStatus] = useState<GraphsStatus>({});
@@ -100,7 +98,7 @@ const SaveGraphs = forwardRef((props, ref) => {
     const [allGraphData, setAllGraphData] = useState<ICustomAllGraphData>({});
 
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [reset, setReset] = useState<boolean>(false);
     const [completedLayouts, setCompletedLayouts] = useState(0);
     const [isBuildingGraphs, setIsBuildingGraphs] = useState(false);
     const [error, setError] = useState<boolean>(false);
@@ -156,24 +154,44 @@ const SaveGraphs = forwardRef((props, ref) => {
     }, [graphsStatus]);
 
     useEffect(() => {
+        console.log("reseting parameters");
+        setAllGraphData({});
+        setIsBuildingGraphs(false);
+        setCompletedLayouts(0);
+        setGraphRefs([]);
+        actions.updateIsLoading({ isLoading: false });
+    }, [reset])
+
+    useEffect(() => {
         if (!isBuildingGraphs && graphRefs.length > 0) {
             console.log("in downloading phase");
-            for (let i = 0; i < graphRefs.length; i++) {
-                const thisGraph = graphsStatus[state.vectorsHeaders[i] as keyof GraphsStatus];
-                const thisGraphRef = graphRefs[i].current as graphRef;
 
-                if (thisGraph.fileType.current.value === "svg") {
-                    thisGraphRef.btnSVGExportClick();
-                }
-                else if (thisGraph.fileType.current.value === "png") {
-                    thisGraphRef.btnPngClick();
-                }
-                else if (thisGraph.fileType.current.value === "json") {
-                    thisGraphRef.btnJsonClick();
-                }
+            for (let i = 0; i < graphRefs.length; i += 10) {
+
+                setTimeout((batchNum: number) => {
+                    for (let i = 0; i + batchNum < graphRefs.length && i < 10; i++) {
+                        let graphIdx = i + batchNum;
+                        console.log("downloading graph ", graphIdx);
+                        const thisGraph = graphsStatus[state.vectorsHeaders[graphIdx] as keyof GraphsStatus];
+                        const thisGraphRef = graphRefs[graphIdx].current as graphRef;
+            
+                        if (thisGraph.fileType.current.value === "svg") {
+                            thisGraphRef.btnSVGExportClick();
+                        }
+                        else if (thisGraph.fileType.current.value === "png") {
+                            thisGraphRef.btnPngClick();
+                        }
+                        else if (thisGraph.fileType.current.value === "json") {
+                            thisGraphRef.btnJsonClick();
+                        }
+                    }
+
+                    if (batchNum + 10 >= graphRefs.length){
+                        setReset(!reset);
+                    }
+
+                }, i * 100, i);
             }
-            actions.updateIsLoading({ isLoading: false });
-            setGraphRefs([]);
         }
         else {
             console.log("still building graphs");
@@ -197,7 +215,6 @@ const SaveGraphs = forwardRef((props, ref) => {
             thisGraphRef.setNodeSize(Number(thisGraph.NodeSize.current.value));
 
             setCompletedLayouts((prev: number) => {
-                console.log((prev + 1) + " == " + graphRefs.length);
                 if (prev + 1 === graphRefs.length) {
                   setIsBuildingGraphs(false);
                 }
@@ -228,7 +245,6 @@ const SaveGraphs = forwardRef((props, ref) => {
             // setIsLoading(true);
             actions.updateIsLoading({ isLoading: true });
             setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, () => React.createRef<HTMLDivElement>()));
-            setGraphApplied(Array.from({ length: Object.keys(state.vectorsHeaders).length }, () => false));
             const val = await get(state.fileName);
 
             const headers = val['headers'];
