@@ -1,35 +1,16 @@
-import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useState, useRef, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
 import { makePostRequest } from "../common/PostRequest";
 import WindowedSelect from "react-windowed-select";
-import { ICustomAllGraphData } from "../@types/graphs";
+import { ICustomAllGraphData, ICustomGraphData } from "../@types/graphs";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
 import "../styles/SaveGraphs.css";
-
-interface optionItem {
-    label: string;
-    value: string | number,
-}
-
-interface SettingItem {
-    title: string;
-    default: optionItem;
-    current: optionItem | null;
-    options: optionItem[];
-}
-
-interface GraphSettings {
-    Layout: SettingItem,
-    NodeSize: SettingItem,
-    Opacity: SettingItem,
-    fileType: SettingItem,
-}
-
-interface GraphsStatus {
-    [key: string]: GraphSettings;
-}
+import { IGraphProps, graphRef, optionItem, SettingItem, GraphSettings, GraphsStatus } from "../@types/props";
+import { threshMap } from "../@types/global";
+import { render, fireEvent } from '@testing-library/react';
+import LoadingComponent from "./Loading";
 
 const copySettings = (settings: GraphSettings, fullCopy: boolean = false): GraphSettings => {
     const layoutOptions = fullCopy? [...settings.Layout.options]: settings.Layout.options;
@@ -89,12 +70,12 @@ const baseGraphSetting: GraphSettings = {
     },
     fileType: {
         title: "File Type",
-        default: {label: "svg", value: "svg"},
+        default: { label: "png", value: "png" },
         current: null,
         options: [
             { label: "svg", value: "svg" }, 
             { label: "png", value: "png" }, 
-            { label: "jpeg", value: "jpeg" }
+            { label: "json", value: "json" }
         ]
     }
 }
@@ -109,11 +90,20 @@ const SaveGraphs = forwardRef((props, ref) => {
         updateShowError,
     });
 
+    const [graphRefs, setGraphRefs] = useState<graphRef[]>([]);
+    const [graphApplied, setGraphApplied] = useState<boolean[]>([]);
+    // const [finishedDownload]
 
     const [applyAllStatus, setApplyAllStatus] = useState<GraphSettings>(copySettings(baseGraphSetting, false));
     const [graphsStatus, setGraphsStatus] = useState<GraphsStatus>({});
     const [usePresetWhenPossible, setUsePresetWhenPossible] = useState<boolean>(false);
-    // TODO: add usePreset state + button for other settings
+    const [allGraphData, setAllGraphData] = useState<ICustomAllGraphData>({});
+
+
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [completedLayouts, setCompletedLayouts] = useState(0);
+    const [isBuildingGraphs, setIsBuildingGraphs] = useState(false);
+    const [error, setError] = useState<boolean>(false);
 
     const getData = async () => {
         const val = await get(state.fileName);
@@ -130,7 +120,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                 newGraphStatus[header].Layout.current = presetOption;
                 newGraphStatus[header].Layout.default = presetOption;
 
-                const nodeSizeOption = {label: String(clickedVectors[header].nodeSize), value: Number(clickedVectors[header].node_size)};
+                const nodeSizeOption = {label: String(clickedVectors[header].nodeSize), value: Number(clickedVectors[header].nodeSize)};
                 const opacityOption = {label: String(clickedVectors[header].opacity), value: Number(clickedVectors[header].opacity)};
 
                 newGraphStatus[header].NodeSize.current = nodeSizeOption;
@@ -138,9 +128,15 @@ const SaveGraphs = forwardRef((props, ref) => {
 
                 newGraphStatus[header].Opacity.current = opacityOption;
                 newGraphStatus[header].Opacity.default = opacityOption;
+
+                newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default
             }
             else {
                 newGraphStatus[header] = copySettings(baseGraphSetting, false);
+                newGraphStatus[header].Layout.current = newGraphStatus[header].Layout.default;
+                newGraphStatus[header].NodeSize.current = newGraphStatus[header].NodeSize.default;
+                newGraphStatus[header].Opacity.current = newGraphStatus[header].Opacity.default;
+                newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default;
             }
         });
 
@@ -160,23 +156,79 @@ const SaveGraphs = forwardRef((props, ref) => {
     }, [graphsStatus]);
 
     useEffect(() => {
-        console.log(applyAllStatus);
-    }, [applyAllStatus]);
+        if (!isBuildingGraphs && graphRefs.length > 0) {
+            console.log("in downloading phase");
+            for (let i = 0; i < graphRefs.length; i++) {
+                const thisGraph = graphsStatus[state.vectorsHeaders[i] as keyof GraphsStatus];
+                const thisGraphRef = graphRefs[i].current as graphRef;
+
+                if (thisGraph.fileType.current.value === "svg") {
+                    thisGraphRef.btnSVGExportClick();
+                }
+                else if (thisGraph.fileType.current.value === "png") {
+                    thisGraphRef.btnPngClick();
+                }
+                else if (thisGraph.fileType.current.value === "json") {
+                    thisGraphRef.btnJsonClick();
+                }
+            }
+            actions.updateIsLoading({ isLoading: false });
+            setGraphRefs([]);
+        }
+        else {
+            console.log("still building graphs");
+        }
+    }, [isBuildingGraphs]);
+
+    const buildGraph = (key: string, index: number) => {
+        console.log("building graph " + key);
+        if (graphRefs[index] && graphRefs[index].current) {
+            const thisGraph = graphsStatus[key as keyof GraphsStatus];
+            const thisGraphRef = graphRefs[index].current as graphRef;
+
+            if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
+                console.log("graph not ready");
+                console.log(thisGraph);
+                return;
+            }
+
+            thisGraphRef.applyLayout(String(thisGraph.Layout.current.value), false);
+            thisGraphRef.setOpacity(Number(thisGraph.Opacity.current.value));
+            thisGraphRef.setNodeSize(Number(thisGraph.NodeSize.current.value));
+
+            setCompletedLayouts((prev: number) => {
+                console.log((prev + 1) + " == " + graphRefs.length);
+                if (prev + 1 === graphRefs.length) {
+                  setIsBuildingGraphs(false);
+                }
+                return prev + 1;
+            });
+        }
+        else{
+            // console.log(graphRefs);
+        }
+    }
 
 
     const handleError = (err: string) => {
         console.log("error in makePostRequest", err);
         // setError(true);
         actions.updateIsLoading({ isLoading: false });
+        actions.updateShowError({ showError: true });
     };
 
     const handleJsonGraphData = (jsonString: string) => {
         const tempGraphData: ICustomAllGraphData = JSON.parse(jsonString);
-        console.log(tempGraphData);
+        setAllGraphData(tempGraphData);
+        setIsBuildingGraphs(true);
     };
 
     useImperativeHandle(ref, () => ({
         getFormData: async () => {
+            // setIsLoading(true);
+            actions.updateIsLoading({ isLoading: true });
+            setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, () => React.createRef<HTMLDivElement>()));
+            setGraphApplied(Array.from({ length: Object.keys(state.vectorsHeaders).length }, () => false));
             const val = await get(state.fileName);
 
             const headers = val['headers'];
@@ -184,7 +236,7 @@ const SaveGraphs = forwardRef((props, ref) => {
 
             let body = {
                 user_id: state.uuid,
-                headers: {},
+                headers_data: {},
             };
 
             Object.entries(vectorsValues).forEach(([key, value]) => {
@@ -194,16 +246,15 @@ const SaveGraphs = forwardRef((props, ref) => {
                 for (let i = 0; i < values_arr.length; i++) {
                     values_map[ids_arr[i]] = values_arr[i];
                 }
-                (body.headers as { [key: string]: any })[key] = {
+                (body.headers_data as { [key: string]: any })[key] = {
                     values_map: values_map,
                     thresh_pos: state.thresholds[key][0],
                     thresh_neg: state.thresholds[key][1],
                     score_thresh: state.scoreThreshold,
                 }
             });
-            console.log(body);
 
-            // makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
+            makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
 
             return "downloaded graphs";
         }
@@ -218,12 +269,6 @@ const SaveGraphs = forwardRef((props, ref) => {
     const handleIndividualChange = (option: any, key: keyof GraphSettings, header: keyof GraphsStatus) => {
         console.log("inside handleIndividualChange");
         const newGraphStatus = {...graphsStatus}
-
-        console.log("header: " + header);
-        console.log("key: " + key);
-        console.log(newGraphStatus[header]);
-        console.log(newGraphStatus[header][key]);
-        console.log(newGraphStatus[header][key].current)
 
         newGraphStatus[header][key].current = option;
         setGraphsStatus(newGraphStatus);
@@ -245,8 +290,6 @@ const SaveGraphs = forwardRef((props, ref) => {
             }
         })
 
-        console.log("in handleApplyAllSubmit");
-
         setGraphsStatus(newGraphStatus);
     }
 
@@ -258,7 +301,6 @@ const SaveGraphs = forwardRef((props, ref) => {
                         <div className="ApplyAllMenuOptiontitle">{"Apply " + item.title + " to all graphs"}</div>
                         <WindowedSelect
                             className="select"
-                            // value={item.options}
                             onChange={(option) => {handleChangeApplyAll(option, key as keyof GraphSettings)}}
                             windowThreshold={20}
                             options={item.options}
@@ -330,13 +372,49 @@ const SaveGraphs = forwardRef((props, ref) => {
         )
     }
 
-    return (
+    const renderInvisibleGraph = () => {
+        return (
+            <div className="InvisibleComponent">
+                {Object.entries(allGraphData).map(([key, value], index) => {
+                    return (
+                        <CytoscapejsComponentself 
+                            key={key}
+                            graphData={value as ICustomGraphData} 
+                            clickedVector={key} 
+                            thresholds={{ 
+                                pos: state.thresholds[key][0], 
+                                neg: state.thresholds[key][1]
+                            }}
+                            alertLoading={() => {buildGraph(key, index)}} 
+                            ref={graphRefs[index]}
+                        />
+                    )
+            })}
+            </div>
+        )
+    }
+
+    return state.isLoading ? (
         <div className="SaveGraphWrapper">
-            {/* {renderApplyAllMenu()}
-            {renderGraphsSettings()} */}
-            <h1>Save Graphs feature not yet available.</h1>
-            <h1>Stay tuned for future updates</h1>
+            <LoadingComponent />
+            {renderInvisibleGraph()}
         </div>
+    ) : (
+        <div className="SaveGraphWrapper">
+            {renderApplyAllMenu()}
+            {renderGraphsSettings()}
+            {/* {renderInvisibleGraph()} */}
+        </div>
+        
+        // <div className="SaveGraphWrapper">
+        //     {state.isLoading ? (
+        //         <LoadingComponent />
+        //     ) :
+        //             {renderApplyAllMenu()}
+        //             {renderGraphsSettings()}
+        //             {renderInvisibleGraph()}
+        //     }
+        // </div>
     )
 });
 

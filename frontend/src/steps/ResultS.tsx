@@ -164,6 +164,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
                 graphData={graphData}
                 clickedVector={clickedVector}
                 thresholds={thresholds}
+                alertLoading={() => {}}
               />
             )}
           </div>
