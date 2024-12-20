@@ -4,8 +4,7 @@ import "../styles/Home.css";
 import "../styles/Button.css";
 import { openLink } from "../common/GeneralCommon";
 import backgroundVideo from "../assets/video.mp4";
-const gitLink =
-  "https://github.com/cohenoa/MedicalMolecularNetworks-MedMolNet";
+const gitLink = "https://github.com/1laggerman/ProteinNetworkSight";
 
 export const HomePage: FC = () => {
   return (
@@ -44,6 +43,9 @@ export const HomePage: FC = () => {
           here
         </button>
         .
+      </h5>
+      <h5>
+        We provide free and open access to all users, including commercial users. 
       </h5>
       <h5>Contact details are below:</h5>
       <div className="detailsContainer">
