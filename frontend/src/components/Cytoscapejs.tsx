@@ -498,6 +498,7 @@ const btnJsonClick = () => {
     return false;
   }
 
+  {/* @ts-ignore */}
   useImperativeHandle(ref, () => ({
     fetchData,
     applyLayout,
