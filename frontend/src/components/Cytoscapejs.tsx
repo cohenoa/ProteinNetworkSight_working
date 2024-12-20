@@ -35,7 +35,7 @@ cytoscape.use( elk );
 //   clickedVector,
 //   thresholds,
 // }) => {
-const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
+const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
   const { state, actions } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<ICustomNode | null>(null);
