@@ -9,6 +9,7 @@ const FooterComponent: FC = () => {
 
       <div className="leftFooter">
         <div className="name">
+          {/* <p>This website was developed by Tohar Tsivtman & Ayelet Gibli (2022), Aviv Eldad (2023), Omri Nahor & Nitzan Migdal (2023-2024).</p> */}
           <p className="names">Tohar Tsivtman and Ayelet Gibli</p>
           <p className="names">Nitzan Migdal and Omri Nahor</p>
 
@@ -23,6 +24,7 @@ const FooterComponent: FC = () => {
     <div className="years">
     <p className="year">2022</p>
     <p className="year">2023</p>
+    <p className="year">2024</p>
   </div>
   </div>
   );
