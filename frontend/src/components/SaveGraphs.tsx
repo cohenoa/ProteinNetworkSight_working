@@ -173,7 +173,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                         let graphIdx = i + batchNum;
                         console.log("downloading graph ", graphIdx);
                         const thisGraph = graphsStatus[state.vectorsHeaders[graphIdx] as keyof GraphsStatus];
-                        const thisGraphRef = graphRefs[graphIdx] as graphRef;
+                        const thisGraphRef = graphRefs[graphIdx].current as graphRef;
 
                         if (!thisGraph.fileType.current) return;
             
@@ -204,7 +204,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         console.log("building graph " + key);
         if (graphRefs[index] && graphRefs[index].current) {
             const thisGraph = graphsStatus[key as keyof GraphsStatus];
-            const thisGraphRef = graphRefs[index] as graphRef;
+            const thisGraphRef = graphRefs[index].current as graphRef;
 
             if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
                 console.log("graph not ready");
