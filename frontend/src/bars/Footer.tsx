@@ -9,15 +9,15 @@ const FooterComponent: FC = () => {
 
       <div className="leftFooter">
         <div className="name">
-          {/* <p>This website was developed by Tohar Tsivtman & Ayelet Gibli (2022), Aviv Eldad (2023), Omri Nahor & Nitzan Migdal (2023-2024).</p> */}
-          <p className="names">Tohar Tsivtman and Ayelet Gibli</p>
+          <p>This website was developed by Tohar Tsivtman & Ayelet Gibli (2022), Aviv Eldad (2023), Omri Nahor & Nitzan Migdal (2023-2024).</p>
+          {/* <p className="names">Tohar Tsivtman and Ayelet Gibli</p>
           <p className="names">Nitzan Migdal and Omri Nahor</p>
 
-          <p className="names">Aviv Eldad</p>  
+          <p className="names">Aviv Eldad</p>   */}
         </div>
         <div className="update">
-          <p className="update">Last database update:</p>
-          <p className="update">{lastUpdate}</p>
+          <p className="update">Last database update: {lastUpdate}</p>
+          {/* <p className="update">{lastUpdate}</p> */}
         </div>
     </div>
     
