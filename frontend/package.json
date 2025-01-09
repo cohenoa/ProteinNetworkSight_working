@@ -34,7 +34,7 @@
     "jspdf": "^2.5.1",
     "little-state-machine": "^4.8.0",
     "pkg": "^5.8.0",
-    "react": "^18.2.0",
+    "react": "^16.14.0",
     "react-cytoscapejs": "^2.0.0",
     "react-dom": "^18.2.0",
     "react-force-graph": "^1.41.17",

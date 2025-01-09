@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
@@ -7,9 +7,7 @@ import WindowedSelect from "react-windowed-select";
 import { ICustomAllGraphData, ICustomGraphData } from "../@types/graphs";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
 import "../styles/SaveGraphs.css";
-import { IGraphProps, graphRef, optionItem, SettingItem, GraphSettings, GraphsStatus } from "../@types/props";
-import { threshMap } from "../@types/global";
-import { render, fireEvent } from '@testing-library/react';
+import { graphRef, optionItem, GraphSettings, GraphsStatus } from "../@types/props";
 import LoadingComponent from "./Loading";
 
 const copySettings = (settings: GraphSettings, fullCopy: boolean = false): GraphSettings => {
