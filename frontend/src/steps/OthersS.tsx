@@ -20,12 +20,12 @@ const OthersS: FC<IStepProps> = ({ step, goNextStep }) => {
   const { handleSubmit } = useForm<namesFormValues>({});
 
   useEffect(() => {
-    const others: string[] = [];
+    const others: string[] = state.suggestionsObj.no_match;
 
-    Object.keys(state.namesStringMap).forEach((orgName) => {
-      const match = state.namesStringMap[orgName]?.stringId;
-      if (match === "0") others.push(orgName);
-    });
+    // Object.keys(state.namesStringMap).forEach((orgName) => {
+    //   const match = state.namesStringMap[orgName]?.stringId;
+    //   if (match === "0") others.push(orgName);
+    // });
 
     others.sort();
     setOthersNames(others);

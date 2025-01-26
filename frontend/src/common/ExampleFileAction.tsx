@@ -11,7 +11,6 @@ export function downloadExampleFile(): void {
     row.forEach((cell, cell_index) => {
       new_row[example_headers[cell_index]] = cell;
     });
-    // console.log(new_row);
     download_json[row_index] = new_row;
   });
 

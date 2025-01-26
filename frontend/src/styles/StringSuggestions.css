@@ -1,125 +1,53 @@
 
-/*   Overlay -> The layer that covers every item when item is active.
-
-    *------*-----------------*
-    | On   |                 |
-    |      |                 |
-    *------*-----------------*
-*/
-.abg-switch__overlay {
-  position: absolute;
-  height: 100%;
-  border-radius: 100px;
-  box-shadow: 0 0 4px 1px var(--primary) !important;
-  border: 1px solid transparent;
-  box-sizing: border-box;
-  transition: all 0.4s ease;
-    max-width: 100px;
-
-  outline: none; }
-
-/*  Item -> Every Item inside the container 
-
-    *------*-----------------*
-    | Item |                 |
-    |      |                 |
-    *------*-----------------*
-*/
-
-.abg-switch__item {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  letter-spacing: inherit;
-  cursor: pointer;
-  min-width: 100px;
-  height: 100%;
-  padding: 5px;
-  font-size: var(--small-text)!important;
-  background: transparent;
-  overflow: visible;
-  border: none;
-  outline: none; }
-  .abg-switch__item:not(.switch__item--disable):hover {
-    color: var(--primary)!important; }
-  .abg-switch__item input {
-    display: none; }
-
-.abg-switch__item.abg-switch__item--on {
-  z-index: 2;
-  color: var(--text-blue) !important;
-  outline: none; }
-  .abg-switch__item.abg-switch__item--on:hover {
-    color: var(--text-blue) !important; }
-
-.abg-switch__item.abg-switch__item--disable {
-  opacity: 0.3; }
-  .abg-switch__item.abg-switch__item--disable:hover {
-    color: inherit; }
-
-/*  Switch -> The container
-
-    *------------------------*
-    |                        |
-    |                        |
-    *------------------------*
-*/
-
-.abg-switch {
-  width: 100%;
-  min-height: 30px;
-  box-sizing: border-box;
-  margin: 5px;
-  outline: none; 
-background-color: #b3d2fb6f !important;}
-
-.abg-switch__container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  max-width: fit-content;
-  height: 100%;
-  min-height: 30px;
-  border: 1px solid white;
-  border-radius: 100px;
-  z-index: 1;
-  outline: none; }
-
-.abg-switch--disable {
-  opacity: 0.3; }
-
 
 
 .suggestions-scroll {
-    overflow-y: scroll;
-    width: 100%;
-    height: 100%;
-    padding:20px;
+  overflow-y: scroll;
+  width: 100%;
+  height: 70%;
+  padding: 100px;
+  /* padding-bottom: 50px; */
+}
+
+.suggestions-form{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 100%;
+  width: 100%;
+  padding-bottom: 30px;
 }
 
 .fieldset-container{
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 110px;
-    padding: 15px;
+    height: 100px;
+    padding: 20px;
     font-size: var(--small-text);
-    overflow: hidden;
+    /* overflow: hidden; */
     align-items: center;
-
 }
+
 .protein-label{
   font-weight: bold;
   margin: 5px;
 }
 .suggestions-stats{
+  background-color: var(--soft-gray);
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
   text-align: center;
   width: 100%;
-  height: 10%;
+  height: 40px;
+}
+
+.suggestions-buffer {
+  height: 100px;
+  background-color: black;
 }
 
 /*

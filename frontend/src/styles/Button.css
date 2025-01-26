@@ -49,10 +49,10 @@
 }
 
 .btn--medium {
-  height: 40px;
-  width: 100px;
+  height: 60px;
+  width: 120px;
   font-size: var(--small-text);
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .btn--large {

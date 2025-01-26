@@ -1,9 +1,9 @@
 .action-page {
   display: flex;
   width: 100%;
-  background-image:var(  --background-light-gradient);
+  background-image:var(--background-light-gradient);
   height: var(--container-height);
-  padding: 1% 5%;
+  padding: 1% 4%;
 }
 
 .explanation-wrapper {
@@ -13,38 +13,56 @@
   background-color: white;
   padding: 35px;
   margin-right: 30px;
-  /* background-color: antiquewhite; */
-  /* border: 1px solid var(--primary); */
 }
 .result {
-    border-radius: 10px;
-  width: 85%;
-  height: 100%;
+  border-radius: 5px;
+  width: 100%;
+  height: 150%;
 }
+
 .steps {
-    border-radius: 10px;
-  width: 70%;
+  background-color: white;
+  border-radius: 10px;
+  width: 100%;
   height: 100%;
-    /* border: 1px solid var(--primary); */
-
-    background-color: white;
-
+  overflow-y: hidden;
 }
-.step-bar {
-    border-radius: 10px;
 
+.step-bar {
+  border-radius: 10px;
   height: 10%;
+  max-height: 100px;
+  overflow-y: scroll;
   width: 100%;
 }
 
 .step-content {
-    border-radius: 10px;
+  border-radius: 10px;
   width: 100%;
-  height: 70%;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.full {
+  height: 100%;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .buttons-bar {
-    border-radius: 10px;
-  height: 15%;
+  margin-top: 10px;
+  border-radius: 10px;
+  height: 70px;
   width: 100%;
+}
+
+.main-wrapper{
+  border-radius: 10px;
+  width: 100%;
+  height: calc(100% + 80px);
+  display: flex;
+  flex-direction: column;
 }

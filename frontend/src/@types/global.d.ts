@@ -4,11 +4,10 @@ import { ISuggestionsJson, OptionType } from "./json";
 
 export interface INamesStringMap {
   [key: string]:
-    | {
-        stringName: string;
-        stringId: string;
-      }
-    | undefined;
+    {
+      stringName: string;
+      stringId: string;
+    };
 }
 
 export interface IVectorsValues {

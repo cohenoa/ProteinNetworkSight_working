@@ -313,7 +313,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
           
           <div className="button-container">
-            <button className="button" onClick={() => openModal()}>Manual Thresholds</button>
+            <button className="btn btn--primary btn--medium" onClick={() => openModal()}>Manual Thresholds</button>
           </div>
         </div>
 
@@ -330,6 +330,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
                 setSelectedOption(option as OptionType);
               }}
               windowThreshold={20}
+              maxMenuHeight={140}
               options={organism.organisms}
               styles={{
                 option: (base) => ({
@@ -347,7 +348,14 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
           )}
         </div>
 
-        <Modal isOpen={isModalOpen} onClose={closeModal} onConfirm={collectThresholds} length={state.headers.length - 1} headers={state.headers.slice(1)}/>
+        <Modal 
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          onConfirm={collectThresholds}
+          length={state.headers.length - 1}
+          headers={state.headers.slice(1)}
+          defaultValues={[state.positiveThreshold, state.negativeThreshold]}
+        />
       </form>
   );
 

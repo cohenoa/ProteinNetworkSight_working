@@ -19,9 +19,18 @@
   padding: 12px;
 }
 
+.leftFooter {
+  display: flex;
+  flex-direction: row;
+  width: 40%;
+}
+
 .update{
   color: var(--text-gray);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  padding-right: 200px;
 }
 
 .year{

@@ -1,4 +1,4 @@
-import { FC, useCallback, useRef, useState,useEffect, Dispatch, SetStateAction } from "react";
+import { FC, useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
 import { IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
@@ -8,13 +8,14 @@ import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
 import  { layoutTester }  from "./layoutAlgorithms";
+import { write, utils } from "xlsx";
 import { saveAs } from 'file-saver';
 import { get, set, update } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { headers } from "../assets/DefualtFile";
-import { faDiagramProject, faDownload,faPencil } from '@fortawesome/free-solid-svg-icons';
+import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
 import cise from 'cytoscape-cise';
@@ -29,11 +30,13 @@ cytoscape.use( elk );
  * The component create the graph, using cytoscape.js library.
  * The props are the graph data and the clikceed vector (for the files)
  */
-const CytoscapejsComponentself: FC<IGraphProps> = ({
-  graphData,
-  clickedVector,
-  thresholds,
-}) => {
+
+// const CytoscapejsComponentself: FC<IGraphProps> = ({
+//   graphData,
+//   clickedVector,
+//   thresholds,
+// }) => {
+const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
   const { state, actions } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<ICustomNode | null>(null);
@@ -58,7 +61,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       style: {
         "line-color": "data(color)",
         "background-image": '#FFFFFF',
-        opacity:0.15
+        opacity: 0.35
       },
     },
     
@@ -75,14 +78,18 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
     fit: true, // whether to fit the viewport to the graph
     padding: 30, // padding used on fit
     avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
-    avoidOverlapPadding: 30, // extra spacing around nodes when avoidOverlap: true
+    avoidOverlapPadding: 50 * curNodeSize, // extra spacing around nodes when avoidOverlap: true
     nodeDimensionsIncludeLabels: false, // Excludes the label when calculating node bounding boxes for the layout algorithm
     condense: true, // uses all available space on false, uses minimal space on true
-    animate: true,
+    animate: false,
     positions: false,
+    stop: function() {
+      setLayoutStop(true);
+    }
    });
 
-  // const [clicked_vectors, set_clicked_vectors] = useState([])
+   const [layoutStop, setLayoutStop] = useState(false);
+   const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   //Create a ref to the cy core, and an on click function for the nodes
@@ -119,21 +126,17 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
       
       
       cy.on('free', 'node', (event) => {
-        // const node = event.target;
-        // const dropTarget = event.target.droppable.dropTarget;
-        console.log('Node dropped:', event.target.id());
-        savePositionsToIndexedDB()
-        // Perform actions when the node is dropped onto another element
+        // node dropped
+
+        // console.log('Node dropped:', event.target.id());
+        // savePositionsToIndexedDB()
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
       });
-      window.addEventListener('contextmenu', (event) => {
-        console.log(event)
-        // if (event.target){
-          // event.preventDefault();
-        // }
-      })
+      // window.addEventListener('contextmenu', (event) => {
+      //   console.log(event)
+      // })
 
       cyRef.current.on("click", "node", (event) => {
         const node = event.target;
@@ -143,6 +146,8 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         setOpenPanel(true);
         setSelectedNode(clickedNode);
       });
+
+      // setFullyLoaded({layoutStop: fullyLoaded.Layout, positions: fullyLoaded.positions, cyref: true, notLoading: fullyLoaded.notLoading});
       try {
         const val = await get(state.fileName);
   
@@ -193,8 +198,8 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         }
       } else {
         console.log("Setting the elements for the first time");
-        layout.name = 'circle';
-        layout.positions = false;
+        // console.log()
+
 
         if (clickedVector in clickedVectors){
           delete val.clicked_vectors[clickedVector];
@@ -216,6 +221,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
     finally {
       // Set loading to false when the operation is complete
       setIsLoading(false);
+      setDataLoaded(true);
     }
   };
   
@@ -232,7 +238,19 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
 
   useEffect(() => {
     cyRef.current?.layout(layout).run();
-  }, [layout])
+  }, [layout, curNodeSize]);
+
+  useEffect(() => {
+    if (layoutStop && dataLoaded) {
+      setTimeout(() => {
+        alertLoading();
+      }, 1000);
+      
+    }
+    else{
+      console.log(layoutStop, dataLoaded);
+    }
+  }, [layoutStop, dataLoaded])
 
   function convertArrayToSvg(nodesData: any[]): string {
     const svgContent = `
@@ -260,7 +278,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
         var sourceY = sourceNode?.getAttribute('cy');
         var targetX = targetNode?.getAttribute('cx');
         var targetY = targetNode?.getAttribute('cy');
-        console.log(edgeColor)
+
         // Create a new line element (edge)
         if(sourceNode != null&& typeof sourceX == 'string' && typeof sourceY == 'string'&& typeof targetX == 'string'&& typeof targetY == 'string'){
           var line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -270,8 +288,7 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
           line.setAttribute('y2', targetY);
           line.setAttribute('stroke', edgeData.data.color || 'black');
           line.setAttribute('stroke-width', '2.5');
-          // console.log(myStyle[1].style.opacity)
-          // console.log(myStyle[1])
+
           line.setAttribute('opacity', String(myStyle[1].style.opacity));
 
           // Append the new line element to the SVG
@@ -298,15 +315,10 @@ const CytoscapejsComponentself: FC<IGraphProps> = ({
   }
   
   function saveAsSvg (jsonBlob: any): void{
-    // const jsonString = JSON.stringify(jsonBlob, null, 2);
-    // console.log(jsonBlob);
     var nodes = jsonBlob.elements.nodes;
     var edges = jsonBlob.elements.edges;
-
-    // var jsonArray = jsonString.split("{\n\"data\": ");
-    // console.log(edges);
     var svgOutPut = convertArrayToSvg(nodes);
-    // console.log(svgOutPut);
+    
     svgOutPut = addEdgesToSVG(svgOutPut, edges);
     var a = document.createElement("a");
     var file = new Blob([svgOutPut], {type: "image/svg+xml"});
@@ -396,16 +408,11 @@ const getLinkColor = (score: Number) => {
 
 const savePositionsToIndexedDB = async () => {
 
-  let nodes = cyRef.current?.nodes()
-
-  console.log("map nodes: \n", nodes)
-
   const nodePositions = cyRef.current?.nodes().map((node) => {
     let positionObj = node.position();
     return {[node.id()]: {x: positionObj.x, y: positionObj.y}};
   });
-  console.log("node positions: ", nodePositions)
-  console.log(cyRef.current?.nodes())
+
   if (nodePositions && nodePositions.length > 0) {
     try {
       const val = await get(state.fileName);
@@ -423,11 +430,16 @@ const savePositionsToIndexedDB = async () => {
       clickedVectors[clickedVector].positions = [
         ...nodePositions,
       ];
-      clickedVectors[clickedVector].threshold = thresholds
-      clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1
-      clickedVectors[clickedVector].elements = elementsVector
-      console.log(clickedVectors) 
+      clickedVectors[clickedVector].threshold = thresholds;
+      clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1;
+      clickedVectors[clickedVector].elements = elementsVector;
+      clickedVectors[clickedVector].nodeSize = curNodeSize;
+      clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
+
+      
       // Update the clicked_vectors and nodePositions in the existing data
+      console.log(clickedVectors) 
+
       val.clicked_vectors = clickedVectors;
       set(state.fileName, val);
     } catch (error) {
@@ -435,102 +447,14 @@ const savePositionsToIndexedDB = async () => {
     }
   }
 };
-const btnCsvClick = async () => {
-  const val = await get(state.fileName);
-  let values_map: { [key: string]: { [id: string]: string } } = {};
-  const ids_arr: string[] = [];
-  const standard_name: string[] = [];
-  const string_id_arr: string[] = [];
 
-  // Log the keys of namesStringMap
-  console.log("state.namesStringMap: \n", Object.keys(state.namesStringMap));
-
-  // Build ids_arr, standard_name, and string_id_arr arrays from namesStringMap
-  for (const objName in state.namesStringMap) {
-    const obj = state.namesStringMap[objName];
-    
-    if (obj?.stringId !== '0' && obj?.stringName && obj?.stringId) {
-      ids_arr.push(obj.stringName);
-      standard_name.push(objName);
-      string_id_arr.push(obj.stringId);
-    }
+const btnJsonClick = () => {
+  const cy = cyRef.current;
+  if (cy) {
+    const jsonBlob = new Blob([JSON.stringify(cy.json())], { type: 'application/json' });
+    saveAs(jsonBlob,state.fileName.split('.')[0] + '_' + clickedVector + '.json');
   }
-  console.log("ids_arr: \n", ids_arr);
-
-  // Prepare values_map where keys are vectorNames and ids
-  for (const vectorName in val['vectorsValues']) {
-    const values_arr = val['vectorsValues'][vectorName] || [];
-    if (!values_map[vectorName]) {
-      values_map[vectorName] = {};
-    }
-    for (let i = 0; i < values_arr.length; i++) {
-      values_map[vectorName][standard_name[i]] = values_arr[i];
-    }
-  }
-
-  // Add string names and string IDs to values_map
-  for (let i = 0; i < ids_arr.length; i++) {
-    if (!values_map['String Name']) {
-      values_map['String Name'] = {};
-    }
-    if (!values_map['String Id']) {
-      values_map['String Id'] = {};
-    }
-    values_map['String Name'][standard_name[i]] = ids_arr[i];
-    values_map['String Id'][standard_name[i]] = string_id_arr[i];
-  }
-
-  // Prepare CSV content
-  let csvContent = 'UID,String Name,String Id,' + Object.keys(val['vectorsValues']).join(',') + '\n';
-
-  // Add rows for each ID
-  standard_name.forEach((name, index) => {
-    const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
-    Object.keys(val['vectorsValues']).forEach((vectorName) => {
-      const value = values_map[vectorName][name] || '';
-      row.push(value);
-    });
-    csvContent += row.join(',') + '\n'; // Join the row values and append to CSV content
-  });
-
-  // Create a downloadable CSV file
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${state.fileName.split('.')[0]}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-  const btnJsonClick = () => {
-    const cy = cyRef.current;
-    if (cy) {
-      const jsonData = cy.json();
-      
-      // Convert the JSON object to a string
-      const jsonString = JSON.stringify(jsonData, null, 2); // 2 spaces for indentation
-  
-      // Create a Blob from the JSON string
-      const jsonBlob = new Blob([jsonString], { type: 'application/json' });
-  
-      const a = document.createElement('a');
-  
-      // Set the href attribute with the Blob URL
-      a.href = URL.createObjectURL(jsonBlob);
-  
-      // Set the download attribute for the file name
-      a.download =state.fileName.split('.')[0] + '_' + clickedVector + '.json';
-  
-      // Append the anchor to the document body
-      document.body.appendChild(a);
-  
-      // Programmatically click the anchor to trigger the download
-      a.click();
-      
-  }}
+}
 
   const btnPngClick = () =>{
     const cy = cyRef.current;
@@ -542,13 +466,91 @@ const btnCsvClick = async () => {
   const btnSVGExportClick = () => {
     const cy = cyRef.current;
     if (cy) {
+      // const blob = new Blob([cy.svg({scale: 1, full: true})], {type: 'image/svg+xml'});
+      // saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.svg');
+
       const jsonData = cy.json();
-      
       saveAsSvg(jsonData);
-      // const pngBlob = cy.png({ output: "base64uri", full: true });
-      // saveAs(pngBlob, 'graph.png');
-    };
+    }
+    else{
+      console.log("no cy");
+    }
   };
+
+  const applySavedGraph = async () => {
+    const val = await get(state.fileName);
+    const clickedVectors = val['clicked_vectors'] || {};
+
+    if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
+      const elementsVector = clickedVectors[clickedVector].elements[0]
+      const positions = clickedVectors[clickedVector].positions;
+      if (positions != undefined) {
+        if (positions != undefined) {
+          setElements(elementsVector);
+          setNodePositions(positions);
+          setNodeSize(clickedVectors[clickedVector].nodeSize);
+          setOpacity(clickedVectors[clickedVector].opacity);
+
+          layout.positions = positions.reduce((positionsObj: any, node: any) => {
+            const nodeId = Object.keys(node)[0];
+            const position = node[nodeId];
+            positionsObj[nodeId] = position;
+            return positionsObj;
+          }, {});
+
+          console.log("position setting successfull");
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  useImperativeHandle(ref, () => ({
+    fetchData,
+    applyLayout,
+    setOpacity,
+    setNodeSize,
+    btnSVGExportClick,
+    btnPngClick,
+    btnJsonClick,
+  }));
+
+
+  const applyLayout = async (name: string, animate: boolean) => {
+    if (cyRef.current) {
+
+      if (name === 'preset') {
+        if (!await applySavedGraph()) {
+          alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
+          return;
+        }
+      }
+
+      const newLayout = {
+        ...layout,
+        name: name,
+        animate: animate,
+      };
+
+      setLayout(newLayout);
+    }
+  };
+
+  const downloadFile = (file_type: string) => {
+    if (file_type === 'svg'){
+      btnSVGExportClick();
+    }
+    else if (file_type === 'png'){
+      btnPngClick();
+    }
+    else if (file_type === 'json'){
+      btnJsonClick();
+    }
+    else{
+      console.log("invalid file type");
+    }
+  }
 
 // right click menu
 const contextMenuItems: MenuItem[] = [
@@ -559,70 +561,45 @@ const contextMenuItems: MenuItem[] = [
       { label: '.svg', icon: faDownload, onClick: btnSVGExportClick },
       { label: '.png', icon: faDownload, onClick: btnPngClick },
       { label: '.json', icon: faDownload, onClick: btnJsonClick },
-      { label: '.tsv', icon: faDownload, onClick: btnCsvClick },
     ],
   },
   {
     label: 'Layout',
     icon: faDiagramProject,
     submenu: [
-      {label: 'random', icon: faDiagramProject, onClick: () => {
-        layout.name = 'random';
-        cyRef.current?.layout(layout).run();
-      }},
-      {label: 'preset', icon: faDiagramProject, onClick: async () => {
-        const val = await get(state.fileName);
-        const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{},elements:[]};
-        var elementsVector = clickedVectors.elements || [];
-        
-        if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
-          elementsVector = clickedVectors[clickedVector].elements[0]
-          const positions = clickedVectors[clickedVector].positions;
-          if (positions != undefined) {
-            fetchData();
-            return
-          }
-        }
-        alert("there is no saved layout.\n to save a layout to preset move one of its nodes");
-      }},
-      // {label: 'grid', icon: faDiagramProject, onClick: () => {
-      //   layout.name = 'grid';
-      //   cyRef.current?.layout(layout).run();
-      // }},
-      {label: 'Circle', icon: faDiagramProject, onClick: () => {
-        layout.name = 'circle';
-        cyRef.current?.layout(layout).run();
-        console.log('here');
-        // console.log(graphData.nodes);
-        // console.log(graphData.links);
-        layoutTester(graphData);
-        console.log('here');
-      }},
-      {label: 'FCose', icon: faDiagramProject, onClick: () => {
-        layout.name = 'fcose';
-        cyRef.current?.layout(layout).run();
-      }},
-      {label: 'elk', icon: faDiagramProject, onClick: () => {
-        layout.name = 'elk';
-        cyRef.current?.layout(layout).run();
-      }}
+      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle', true)}},
+      {
+        label: 'preset',
+        icon: faDiagramProject,
+        submenu: [
+          {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
+          {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
+        ]
+      },
+      {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose', true)}},
+      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
+      {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
+      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
+      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
     ],
   },
   {
     label: 'Opacity',
     icon: faPencil,
     submenu: [
-      { label: '0.1', icon: faPencil, onClick: () => {setOpacity(0.1)} },
-      { label: '0.15', icon: faPencil, onClick: () => {setOpacity(0.15)} },
-      { label: '0.25', icon: faPencil, onClick: () => {setOpacity(0.25)} },
+      { label: '0.05', icon: faPencil, onClick: () => {setOpacity(0.05)} },
+      { label: '0.2', icon: faPencil, onClick: () => {setOpacity(0.2)} },
+      { label: '0.35', icon: faPencil, onClick: () => {setOpacity(0.35)} },
       { label: '0.5', icon: faPencil, onClick: () => {setOpacity(0.5)} },
+      { label: '0.75', icon: faPencil, onClick: () => {setOpacity(0.75)} },
+      { label: '0.9', icon: faPencil, onClick: () => {setOpacity(0.9)} },
     ],
   },
   {
     label: 'Node Size',
     icon: faPencil,
     submenu: [
-      { label: '0.1', icon: faPencil, onClick: () => {setNodeSize(0.1)}},
+      // { label: '0.1', icon: faPencil, onClick: () => {setNodeSize(0.1)}},
       { label: '0.25', icon: faPencil, onClick: () => {setNodeSize(0.25)}},
       { label: '0.5', icon: faPencil, onClick: () => {setNodeSize(0.5)}},
       { label: '1', icon: faPencil, onClick: () => {setNodeSize(1)}},
@@ -635,41 +612,25 @@ const contextMenuItems: MenuItem[] = [
   },
 ];
 const setNodeSize = (size: number) => {
-  console.log(size);
   // elements.forEach((element) => {
   //   element.data.size = element.data.size * size;
   //   setCurNodeSize(size);
   // });
   // setElements(elements);
+
+  console.log("setting node size");
+
   cyRef.current?.nodes().forEach(function(node){
+    console.log("inside setting");
     node.data('size', parseInt(node.data('size'))/curNodeSize*size); 
-    console.log(node.data('size'))
   });
   setCurNodeSize(size);
 }
 const setOpacity = (op: number) => {
-  setMyStyle([
-    {
-      selector: "node",
-      style: {
-        "background-color": "data(color)",
-        label: "data(label)",
-        width: "data(size)",
-        height: "data(size)",
-        "background-image": '#FFFFFF', 
-      },
-    },
-    {
-      selector: "edge",
-      style: {
-        "line-color": "data(color)",
-        "background-image": '#FFFFFF',
-        opacity: op
-      },
-    },
-    
-  ])
-  // myStyle[1].style.opacity = op;
+  console.log("setting opacity");
+  const newStyle = [myStyle[0], {...(myStyle[1])}];
+  newStyle[1].style.opacity = op;
+  setMyStyle(newStyle);
 }
 
 return (
@@ -684,6 +645,7 @@ return (
         {openContextMenu && (
           <ContextMenu
             position={menuPosition}
+            depth={0}
             items={contextMenuItems}
           />
         )}
@@ -699,7 +661,7 @@ return (
     )}
   </div>
 );
-};
+});
 
 
 export default CytoscapejsComponentself;

@@ -23,6 +23,10 @@ export interface ICustomGraphData extends GraphData {
   links: ICustomLink[];
 }
 
+export interface ICustomAllGraphData {
+  [key: string]: ICustomGraphData;
+}
+
 export interface IObjectNode {
   nodeCanvasObjectMode:
     | string

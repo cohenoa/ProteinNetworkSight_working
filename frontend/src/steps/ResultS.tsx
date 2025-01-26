@@ -17,8 +17,9 @@ import {
   IVectorsValues,
 } from "../@types/global";
 import { threshMap } from "../@types/global";
+import { IStepProps } from "../@types/props";
 
-const Result: FC = () => {
+const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
     updateIsLoading,
     updateShowError,
@@ -111,16 +112,17 @@ const Result: FC = () => {
           values_map[ids_arr[i]] = values_arr[i];
           // console.log(ids_arr[i])
         }
-        const body = JSON.stringify({
+        const body = {
           user_id: state.uuid,
           values_map: values_map,
           thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
           thresh_neg: state.thresholds[clickedVector][1],//^
           score_thresh: state.scoreThreshold,
-        });
+        };
+        console.log("body", body);
         actions.updateIsLoading({isLoading: true});
         // console.log(body);
-        makePostRequest(body, "graphs", handleJsonGraphData, handleError);
+        makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
       
   })};
 
@@ -162,6 +164,7 @@ const Result: FC = () => {
                 graphData={graphData}
                 clickedVector={clickedVector}
                 thresholds={thresholds}
+                alertLoading={() => {}}
               />
             )}
           </div>

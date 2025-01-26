@@ -1,0 +1,138 @@
+.saveData {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.SectionWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    height: 100%;
+    border: 5px solid black;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.SectionContent {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100% - 115px);
+    overflow-y: scroll;
+}
+
+.SectionTitle {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+    overflow-y: hidden;
+    font-size: var(--medium-text);
+}
+
+.SectionFooter {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    overflow-y: hidden;
+    margin: 5px
+}
+
+.ItemContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 5px);
+    height: 60px;
+    overflow-y: hidden;
+    margin: 5px
+}
+
+.replaceName{
+    font-size: var(--small-text);
+    padding: 2px;
+    padding-top: 8px;
+    margin: 2px;
+    width: 45%;
+    height: 65%;
+    text-align: center;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transition: all 0.35s ease-in-out;
+}
+
+.originalName{
+    background-color: var(--primary);
+    color: white;
+}
+
+.cancledOriginalName{
+    background-color: rgba(220, 0, 0, 0.5);
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.STRINGName{
+    /* background-color: var(--primary);
+    color: white; */
+
+    background-color: #75ea9c;
+    color: rgba(0, 0, 0, 1);
+}
+
+.chosenSTRINGName{
+    /* option 1: confirmed */
+    /* background-color: #75ea9c;
+    color: rgba(0, 0, 0, 1); */
+
+    /* option 2: stay the same */
+    background-color: var(--primary);
+    color: white;
+}
+
+.ItemBtn {
+    display: block;
+    width: 50px;
+    border: none;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 8px 4px;
+    cursor: pointer;
+    height: 80%;
+    border-radius: 100%;
+    background-color: var(--background-gray);
+    border-color: var(--border-color);
+    font-size: large;
+    transition: all 0.35s ease-in-out;
+}
+
+.removeBtn {
+    margin-right: 20px;
+}
+
+.unMatchedName {
+    font-size: var(--small-text);
+    padding: 2px;
+    padding-top: 8px;
+    margin: 2px;
+    width: 90%;
+    height: 65%;
+    text-align: center;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transition: all 0.35s ease-in-out;
+}

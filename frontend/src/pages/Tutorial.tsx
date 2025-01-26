@@ -10,6 +10,12 @@ import table from "../assets/tutorial images/table.png";
 import manual_thresholds from "../assets/tutorial images/manual_thresholds.png";
 import graph_layout from "../assets/tutorial images/graph_layout.png";
 import right_click_menu from "../assets/tutorial images/right_click_menu.png";
+import basic_graph_layout from "../assets/tutorial images/basic_graph_layout.png";
+import cluster_graph_layout from "../assets/tutorial images/cluster_graph_layout.png";
+import download_data from "../assets/tutorial images/download_data.png";
+import download_graphs from "../assets/tutorial images/download_graphs.png";
+import save_graph_layout from "../assets/tutorial images/save_graph_layout.png";
+import save_results_menu from "../assets/tutorial images/save_results_menu.png";
 import { openLink } from "../common/GeneralCommon";
 import { downloadExampleFile } from "../common/ExampleFileAction";
 
@@ -175,18 +181,6 @@ const Tutorial: FC = () => {
           </p>
           <img className="t-img" src={graph} alt="graph"/>
           <p className="t-p">
-            The Right click menu in the graph is used to change the layout of the graph.<br/>
-            The user can also download the graph as a SVG/PNG/JSON file.<br/>
-            You can download the json file for further analysis of this current graph in Cytoscape.<br/>
-          </p>
-          <img className="t-img" src={right_click_menu} alt="right_click_menu"/>
-          <p className="t-p">
-            In the right click menu you can order your graphs in the following orders.<br/>
-            To save the current layout of the graph you can move any of the nodes and it will be saved until you move another node.<br/>
-            if you want to change the layout back to the original layout you can click on the preset layout button.<br/>
-          </p>
-          <img className="t-img" src={graph_layout} alt="graph_layout"/>
-          <p className="t-p">
             In this figure we see several interactions. For example, we can see
             that TIGAR has a positive (blue color) large value and it interacts
             with LKB1 (positive, smaller value) and with GAPDH which has a
@@ -195,6 +189,35 @@ const Tutorial: FC = () => {
             probability of interaction (based on the thicker edge connecting the
             two proteins).
           </p>
+          <p className="t-p">
+            The Right click menu in the graph is used to change the layout of the graph.<br/>
+            The user can also download the graph as a SVG/PNG/JSON file.<br/>
+          </p>
+          <img className="t-img" src={right_click_menu} alt="right_click_menu"/>
+          <p className="t-p">
+            In the right click menu you can order your graphs in several ways.<br/>
+            Below are 3 static options that are generally usefull in any graph.<br/>
+          </p>
+          <img className="t-img" src={basic_graph_layout} alt="basic_graph_layout"/>
+
+          <p className="t-p">
+            There are also advanced options that position the nodes using different cluster-finding algorithms.<br/>
+            We recommand trying each at least once, as they can reveal important attributes of the graph.<br/>
+          </p>
+          <img className="t-img" src={cluster_graph_layout} alt="cluster_graph_layout"/>
+
+          <p className="t-p">
+            If you would like to see more information about the layouts, you can find them at <a href="https://blog.js.cytoscape.org/2020/05/11/layouts/#choice-of-layout">cytoscape.js layouts</a>.
+            <br/>
+            If you would like for us to add a new Layout, please contact us!<br/>
+          </p>
+
+          <p className="t-p">
+            You can also modify the graph by interacting with the nodes.<br/>
+            Once you have reached the desired state, you can save your manual layout by using the "preset" Layout option<br/>
+          </p>
+          <img className="t-img" src={save_graph_layout} alt="cluster_graph_layout"/>
+          
           <h3 className="t-h3">Table representation</h3>
           <p className="t-p">
             The table representation contain the following columns:
@@ -235,6 +258,36 @@ const Tutorial: FC = () => {
             </li>
           </ul>
           <img className="t-img" src={table} alt="table"/>
+
+          <p className="t-p">
+            There are also several ways to save or download your work so you can keep working offline or with other tools<br/>
+            click Save in the bottom of the Results window to enter the Saving page
+          </p>
+          <img className="t-img" src={save_results_menu} alt="save_table"/>
+
+          <ul>
+            <li className="t-li">
+              <p>
+                Saving your Data - in this mode you can make final changes before downloading your modified data file.<br/>
+                In the left list, you can see all of your names with alternative or manual matches to the STRING DB as defined in steps 3 and 4.<br/>
+                If you would like to stop using your original name, you can replace it with the STRING match by clicking the arrow button<br/>
+                In the right list are the names in your files that dont ccurrently have a match in the STRING DB<br/>
+                Since they dont appear in the graphs, if you are happy with it you can remove them from the data by pressing the X button<br/>
+              </p>
+            </li>
+            <img className="t-img" src={download_data} alt="save_table"/>
+
+            <li className="t-li">
+              <p>
+                Saving your Graphs - in this mode you can make final changes before downloading all of the networks.<br/>
+                You can apply a setting to all the graphs by using the top menu<br/>
+                Mark "use preset when available" to use that setting only on graph without a saved layout<br/>
+                Notice that the page is initialized with preset values for every graph that you have saved<br/>
+              </p>
+            </li>
+            <img className="t-img" src={download_graphs} alt="save_table"/>
+          </ul>
+
         </div>
         {/* Browser compatibility DIV */}
         <div>

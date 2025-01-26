@@ -76,14 +76,38 @@ def cal_graph_data():
     thresh_pos = request_data["thresh_pos"]
     thresh_neg = request_data["thresh_neg"]
     score_thresh = request_data["score_thresh"]
-    nodes_list, links_list = make_graph_data(
-        user_id, values_map, thresh_pos, thresh_neg, score_thresh)
+    nodes_list, links_list = make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh)
     return json.dumps(
         {
             "nodes": [ob.__dict__ for ob in nodes_list],
             "links": [ob.__dict__ for ob in links_list],
         }
     )
+
+@app.route("/api/saveGraphs", methods=["POST"])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+def calc_all_graph_data():
+    request_data = request.get_json()
+    user_id = request_data["user_id"]
+    
+    headers_data = request_data["headers_data"]
+
+    allGraphs = {}
+
+    for key, data in headers_data.items():
+        values_map = data["values_map"]
+        thresh_pos = data["thresh_pos"]
+        thresh_neg = data["thresh_neg"]
+        score_thresh = data["score_thresh"]
+        nodes_list, links_list = make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh)
+
+        allGraphs[key] = {
+            "nodes": [ob.__dict__ for ob in nodes_list],
+            "links": [ob.__dict__ for ob in links_list],
+        }
+    
+    return json.dumps(allGraphs)
+
 
 
 if __name__ == '__main__':

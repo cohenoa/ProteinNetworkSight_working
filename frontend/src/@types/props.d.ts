@@ -5,6 +5,34 @@ import { threshMap } from "./global";
   This file define all the props interface - the argument for components.
 */
 
+export interface nameStatus {
+  accepted: boolean,
+}
+
+export interface replaceNameStatus extends nameStatus {
+  string_name: string,
+  string_id: string,
+}
+
+export interface formRef {
+  getFormData: () => Record<string, string>;
+}
+
+export interface graphRef extends React.RefObject<HTMLDivElement>{
+  applyLayout: (name: string, animate: boolean) => void,
+  setOpacity: (op: number) => void,
+  setNodeSize: (size: number) => void,
+  fetchData: () => void,
+  btnSVGExportClick: () => void,
+  btnPngClick: () => void,
+  btnJsonClick: () => void,
+}
+
+// Interface for props of Father and ButtonComponent that includes formRef
+export interface formRefProps {
+  formRef: RefObject<formRef>;
+}
+
 export interface IErrorInputTextProps {
   orgName: string;
 }
@@ -30,9 +58,9 @@ export interface IStepsBarProps {
   step: number;
 }
 
-export interface IButtonsProps extends IStepProps {
+export interface IButtonsProps{
   formId: string;
-  goBackStep: () => void;
+  buttons: IButtonConfig[];
 }
 
 export interface IVectorsButtonsProp {
@@ -68,9 +96,40 @@ interface MenuItem {
 
 interface ContextMenuProps {
   position: { x: number; y: number };
+  depth: number;
   items: MenuItem[];
 }
 
 interface position {
   [nodeId: string]: { x: number, y: number }
+}
+
+interface IButtonConfig {
+  label: string;
+  type: "button" | "submit";
+  className: string;
+  onClick: () => void;
+}
+
+export interface optionItem {
+  label: string;
+  value: string | number,
+}
+
+export interface SettingItem {
+  title: string;
+  default: optionItem;
+  current: optionItem | null;
+  options: optionItem[];
+}
+
+export interface GraphSettings {
+  Layout: SettingItem,
+  NodeSize: SettingItem,
+  Opacity: SettingItem,
+  fileType: SettingItem,
+}
+
+export interface GraphsStatus {
+  [key: string]: GraphSettings;
 }
