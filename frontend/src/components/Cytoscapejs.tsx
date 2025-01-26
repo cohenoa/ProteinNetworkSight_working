@@ -487,7 +487,7 @@ const btnJsonClick = () => {
       if (positions != undefined) {
         if (positions != undefined) {
           setElements(elementsVector);
-          setNodePositions(positions);
+          // setNodePositions(positions);
           setNodeSize(clickedVectors[clickedVector].nodeSize);
           setOpacity(clickedVectors[clickedVector].opacity);
 
@@ -519,6 +519,10 @@ const btnJsonClick = () => {
 
   const applyLayout = async (name: string, animate: boolean) => {
     if (cyRef.current) {
+
+      if (name === 'test'){
+        layoutTester()
+      }
 
       if (name === 'preset') {
         if (!await applySavedGraph()) {
@@ -581,6 +585,7 @@ const contextMenuItems: MenuItem[] = [
       {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
       {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
       {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
+      {label: 'test', icon: faDiagramProject, onClick: () => {applyLayout('test', true)}},
     ],
   },
   {
