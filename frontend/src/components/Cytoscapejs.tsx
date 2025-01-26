@@ -487,7 +487,7 @@ const btnJsonClick = () => {
       if (positions != undefined) {
         if (positions != undefined) {
           setElements(elementsVector);
-          // setNodePositions(positions);
+          setNodePositions(positions);
           setNodeSize(clickedVectors[clickedVector].nodeSize);
           setOpacity(clickedVectors[clickedVector].opacity);
 
