@@ -1,16 +1,16 @@
 import { position } from "../@types/props";
-import { ICustomGraphData, ICustomNode } from "../@types/graphs";
+import { ICustomGraphData, ICustomNode, ICustomLink } from "../@types/graphs";
 import { assert } from "console";
 
 export function layoutTester(graphData: ICustomGraphData): Array<position> {
-
-    layerdClusters(graphData);
-
+    console.log(graphData);
+    let newGraphData = preProcessing(graphData);
+    layerdClusters(newGraphData);
     return [];
 }
 
 interface LayeredCluster {
-    layers: ClusterLayer[];
+    layers: Map<number, ClusterLayer>;
     rank: number;
     maxLayerRank: number;
 }
@@ -20,26 +20,72 @@ interface ClusterLayer {
     rank: number;
 }
 
-function layerdClusters(graphData: ICustomGraphData) {
+interface ILinkedGraphData{
+    nodes: Map<String, ICustomNode>;
+    links: ICustomLinkedLink[];
+}
+
+interface ICustomLinkedLink extends ICustomLink {
+    sourceNode: ICustomNode;
+    targetNode: ICustomNode;
+}
+
+function preProcessing(graphData: ICustomGraphData): ILinkedGraphData {
+    const nodes = graphData.nodes;
+    const links = graphData.links;
+
+    let nodeMap = new Map<String, ICustomNode>();
+    for (let i = 0; i < nodes.length; i++) {
+        nodeMap.set(String(nodes[i].id), nodes[i]);
+    }
+
+    let newGraphData = { nodes: nodeMap, links: [...links] } as ILinkedGraphData;
+
+    console.log(newGraphData);
+
+    return newGraphData;
+}
+
+function layerdClusters(graphData: ILinkedGraphData) {
     const clusters: LayeredCluster[] = [];
-    let workData: ICustomGraphData = { nodes: [...graphData.nodes], links: [...graphData.links] };
 
     let clusterRank = 0;
     
-    while (workData.nodes.length > 0) {
-        const head = getHead(workData);
-        const neighbors = getNeighbors(head, workData);
+    while (graphData.nodes.size > 0) {
+        console.log(graphData);
+        const head = getHead(graphData);
+        console.log(head);
+        const neighbors = getNeighbors(head, graphData);
+        console.log(neighbors);
         let {avg, std} = getStatistics(neighbors);
+        console.log(avg, std);
 
-        let clusterLayers: ClusterLayer[] = [];
         let maxLayerRank = 0;
+        let clusterLayers = new Map<number, ClusterLayer>();
+
+        clusterLayers.set(0, {nodes: [head], rank: 0});
+
         for (let i = 0; i < neighbors.length; i++) {
-            
+            let layer = getLayer(neighbors[i], head, std);
+            if (layer > maxLayerRank) {
+                maxLayerRank = layer;
+            }
+            if (!clusterLayers.has(layer)) {
+                clusterLayers.set(layer, {nodes: [], rank: layer});
+            }
+            clusterLayers.get(layer)?.nodes.push(neighbors[i]);
         }
-        clusters.push({layers: [], rank: clusterRank, maxLayerRank: maxLayerRank = 0});
-        
+        clusters.push({layers: clusterLayers, rank: clusterRank, maxLayerRank: maxLayerRank = 0});
         clusterRank++;
+
+        for (let i = 0; i < neighbors.length; i++) {
+            graphData.nodes.delete(String(neighbors[i].id));
+        }
+        graphData.nodes.delete(String(head.id));
+
+        // break;
     }
+    console.log(clusters);
 }
 
 function getLayer(node: ICustomNode, head: ICustomNode, step: number): number {
@@ -54,23 +100,41 @@ function getLayer(node: ICustomNode, head: ICustomNode, step: number): number {
     return layer;
 }
 
-function getHead(graphData: ICustomGraphData): ICustomNode {
-    let head = graphData.nodes[0];
-    for (let i = 1; i < graphData.nodes.length; i++) {
-        let node = graphData.nodes[i];
-        if (head.linksWeights && node.linksWeights && node.linksWeights > head.linksWeights) {
-            head = graphData.nodes[i];
+function getHead(graphData: ILinkedGraphData): ICustomNode {
+    let head: ICustomNode | undefined = undefined;
+    console.log("getting head");
+
+    graphData.nodes.forEach((node: ICustomNode) => {
+        console.log(node)
+        if (head === undefined) {
+            head = node;
+            return;
         }
+        else if (head.linksWeights === undefined || node.linksWeights === undefined) {
+            console.log("error: head.linksWeights or node.linksWeights is undefined");
+            return;
+        }
+        if (node.linksWeights > head.linksWeights) {
+            head = node;
+        }
+    });
+
+    if (head === undefined) {
+        throw new Error("No head node found in graph data");
     }
+
     return head;
 }
 
-function getNeighbors(node: ICustomNode, graphData: ICustomGraphData): ICustomNode[] {
+
+function getNeighbors(node: ICustomNode, graphData: ILinkedGraphData): ICustomNode[] {
     let neighbors: ICustomNode[] = [];
+
     for (let i = 0; i < graphData.links.length; i++) {
         let link = graphData.links[i];
         if (link.source == node.id || link.target == node.id) {
-            neighbors.push(graphData.nodes[link.target]);
+            let otherNode = link.source == node.id ? link.target : link.source;
+            neighbors.push(graphData.nodes.get(String(otherNode)) as ICustomNode);
         }
     }
     return neighbors;
@@ -79,6 +143,11 @@ function getNeighbors(node: ICustomNode, graphData: ICustomGraphData): ICustomNo
 function getStatistics(nodes: ICustomNode[]): { avg: number, std: number } {
     let avg = 0;
     let std = 0;
+
+    if (nodes.length === 0) {
+        console.log("error: nodes is empty");
+        return { avg, std };
+    }
 
     for (let i = 0; i < nodes.length; i++) {
         let node = nodes[i];
