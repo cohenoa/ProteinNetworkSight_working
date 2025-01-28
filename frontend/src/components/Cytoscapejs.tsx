@@ -91,7 +91,7 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
    const [layoutStop, setLayoutStop] = useState(false);
    const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [nodePositions, setNodePositions] = useState<Array<any>>([]);
+  // const [nodePositions, setNodePositions] = useState<Array<any>>([]);
 
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
@@ -151,6 +151,11 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
       // setFullyLoaded({layoutStop: fullyLoaded.Layout, positions: fullyLoaded.positions, cyref: true, notLoading: fullyLoaded.notLoading});
       try {
         const val = await get(state.fileName);
+        console.log("------------------------");
+        console.log("2222222222222222");
+        console.log(clickedVector);
+        console.log(val);
+        console.log("------------------------");
   
         if (val) {
           const clickedVectors = val.clicked_vectors || {};
@@ -164,6 +169,12 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
             }
           }
         }
+
+        console.log("------------------------");
+        console.log("44444444444444444444");
+        console.log(clickedVector);
+        console.log(val);
+        console.log("------------------------");
       } catch (error) {
         console.error("Error fetching data from IndexedDB", error);
       }
@@ -175,16 +186,19 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
     try {
       setIsLoading(true);
       const val = await get(state.fileName);
-      const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{},elements:[]};
+      const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{}, elements:[]};
       
       var elementsVector = clickedVectors.elements || [];
-      if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg && clickedVectors[clickedVector].positions.length === graphData.nodes.length) {
+      // console.log(clickedVectors);
+      // console.log(graphData.nodes);
+      
+      if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
 
         elementsVector = clickedVectors[clickedVector].elements[0]
         const positions = clickedVectors[clickedVector].positions;
         if (positions != undefined) {
           setElements(elementsVector);
-          setNodePositions(positions);
+          // setNodePositions(positions);
 
           // Create a layout with saved positions
           console.log("positions: \n", positions)
@@ -206,7 +220,6 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
           delete  val.clicked_vectors[clickedVector];
           await set(state.fileName,val);
           console.log(val.clicked_vectors)
-         
         }
         createNodes(elements, graphData.nodes);
         createLinks(elements, graphData.links);
@@ -245,7 +258,7 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
     if (layoutStop && dataLoaded) {
       setTimeout(() => {
         alertLoading();
-      }, 1000);
+      }, 2000);
       
     }
     else{
@@ -480,7 +493,7 @@ const btnJsonClick = () => {
       if (positions != undefined) {
         if (positions != undefined) {
           setElements(elementsVector);
-          setNodePositions(positions);
+          // setNodePositions(positions);
           setNodeSize(clickedVectors[clickedVector].nodeSize);
           setOpacity(clickedVectors[clickedVector].opacity);
 
@@ -514,6 +527,8 @@ const btnJsonClick = () => {
     if (cyRef.current) {
 
       if (name === 'test'){
+        console.log("current positions: ");
+        console.log(layout.positions);
         layoutTester(graphData);
         return;
       }

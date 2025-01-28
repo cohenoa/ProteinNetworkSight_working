@@ -100,8 +100,13 @@ interface ContextMenuProps {
   items: MenuItem[];
 }
 
+interface nodePositions {
+  [key: string]: position;
+}
+
 interface position {
-  [nodeId: string]: { x: number, y: number }
+  x: number, 
+  y: number,
 }
 
 interface IButtonConfig {
