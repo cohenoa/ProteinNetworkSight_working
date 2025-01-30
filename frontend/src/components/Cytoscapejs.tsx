@@ -513,7 +513,7 @@ const btnJsonClick = () => {
           return;
         }
       }
-      else if (name === 'test'){
+      else if (name === 'LCC'){
         name = 'preset';
         layout.positions = layoutTester(graphData, AllMethods.randomStart);
       }
