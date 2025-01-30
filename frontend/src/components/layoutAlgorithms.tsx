@@ -2,12 +2,20 @@ import { position, nodePositions } from "../@types/props";
 import { ICustomGraphData, ICustomNode, ICustomLink } from "../@types/graphs";
 import { assert } from "console";
 
-export function layoutTester(graphData: ICustomGraphData): nodePositions {
+export function layoutTester(graphData: ICustomGraphData, method: AllMethods): nodePositions {
     console.log(graphData);
     let newGraphData = preProcessing(graphData);
     let clusters: LayeredCluster[] = calcLayerdClusters(newGraphData);
-    let positions: nodePositions = calcLayeredPosition(clusters, 1, 100, AllClusterMethods.linear);
+    let positions: nodePositions = calcLayeredPosition(clusters, 4, 70, method);
     return positions;
+}
+
+export enum AllMethods {
+    spiral,
+    no_overlap,
+    simple,
+    randomStart,
+    random,
 }
 
 interface LayeredCluster {
@@ -47,7 +55,7 @@ function preProcessing(graphData: ICustomGraphData): ILinkedGraphData {
     return newGraphData;
 }
 
-function calcLayeredPosition(clusters: LayeredCluster[], outerSpacingFactor: number = 1, innerSpacingFactor: number = 100, method: ClusterLevelMethods): nodePositions {
+function calcLayeredPosition(clusters: LayeredCluster[], outerSpacingFactor: number = 1, innerSpacingFactor: number = 100, method: AllMethods): nodePositions {
     let positions: nodePositions = {};
     let maxLayerRank = 0;
 
@@ -85,27 +93,9 @@ function toCartezian(r: number, theta: number): position {
     return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
 }
 
-
-enum AllClusterMethods {
-    linear = 'linear',
-    no_overlap = 'no_overlap',
-}
-enum AllLayerMethods {
-    simple = 'simple',
-    randomStart = 'randomStart',
-}
-enum AllNodeMethods {
-    random = 'random',
-}
-
-type ClusterLevelMethods = AllClusterMethods | AllLayerMethods | AllNodeMethods;
-type LayerLevelMethods = AllLayerMethods | AllNodeMethods;
-type NodeLevelMethods = AllNodeMethods;
-
-function getClusterLevelPositions(cluster: LayeredCluster, center: position, spacingFactor: number, method: ClusterLevelMethods): nodePositions {
+function getClusterLevelPositions(cluster: LayeredCluster, center: position, spacingFactor: number, method: AllMethods): nodePositions {
     console.log("getting cluster level positions");
     let positions: nodePositions = {};
-    let allNodes: ICustomNode[] = [];
 
     let centerNode = cluster.layers.get(0)?.nodes[0];
     if (centerNode === undefined || centerNode.id === undefined) {
@@ -114,34 +104,41 @@ function getClusterLevelPositions(cluster: LayeredCluster, center: position, spa
 
     positions[centerNode.id] = {x: center.x, y: center.y} as position;
 
-    if (method === 'linear') {
+    if (method === AllMethods.spiral) {
         console.log("cluster layout method: linear");
+        let allNodes: ICustomNode[] = [];
+
         cluster.layers.forEach((layer: ClusterLayer) => {
             if (layer.rank !== 0) {
-                allNodes.concat(layer.nodes);
+                allNodes = allNodes.concat(layer.nodes);
             }
         });
+        console.log("allNodes: ");
+        console.log(allNodes);
+        console.log(cluster.layers);
 
         cluster.layers.forEach((layer: ClusterLayer) => {
             let layerRadius = layer.rank * spacingFactor;
             layer.nodes.forEach((node: ICustomNode) => {
-                let theta = (2 * Math.PI * allNodes.indexOf(node)) / allNodes.length;
-                let relativePos = toCartezian(layerRadius, theta);
-                positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
+                if (layer.rank !== 0){
+                    let theta = (2 * Math.PI * allNodes.indexOf(node)) / allNodes.length;
+                    console.log("theta: " + theta);
+                    let relativePos = toCartezian(layerRadius, theta);
+                    positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
+                }
             })
         })
     }
-    else if (method === 'no_overlap') {
+    else if (method === AllMethods.no_overlap) {
         console.log("cluster layout method: no overlap");
         console.log("no overlap not implemented yet");
     }
-    else if (!(method in AllClusterMethods)){
-
+    else {
         cluster.layers.forEach((layer: ClusterLayer) => {
             let layerRadius = layer.rank * spacingFactor;
             positions = {
                 ...positions,
-                ...getLayerLevelPositions(layer, center, layerRadius, method as LayerLevelMethods)
+                ...getLayerLevelPositions(layer, center, layerRadius, method)
             }
         });
     }
@@ -149,13 +146,13 @@ function getClusterLevelPositions(cluster: LayeredCluster, center: position, spa
     return positions;
 }
 
-function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadius: number, method: LayerLevelMethods): nodePositions {
+function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadius: number, method: AllMethods): nodePositions {
     let positions: nodePositions = {};
 
     let theta = 0;
     let relativePos = { x: 0, y: 0 };
 
-    if (method === AllLayerMethods.randomStart){
+    if (method === AllMethods.randomStart){
         console.log("cluster layout method: randomStart");
         theta = Math.random() * 2 * Math.PI;
         layer.nodes.forEach((node: ICustomNode) => {
@@ -164,7 +161,7 @@ function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadi
             positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
         });
     }
-    else if (method === AllLayerMethods.simple) {
+    else if (method === AllMethods.simple) {
         console.log("cluster layout method: simple");
         layer.nodes.forEach((node: ICustomNode) => {
             theta = (2 * Math.PI * layer.nodes.indexOf(node)) / layer.nodes.length;
@@ -172,25 +169,23 @@ function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadi
             positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
         });
     }
-    else if (!(method in AllLayerMethods)){
+    else {
         layer.nodes.forEach((node: ICustomNode) => {
             positions = {
                 ...positions,
-                ...getNodeLevelPosition(node, center, layerRadius, method as NodeLevelMethods)
+                ...getNodeLevelPosition(node, center, layerRadius, method)
             }
         });
-    }
-    else {
-        console.log("unknown method");
     }
 
     return positions;
 }
 
-function getNodeLevelPosition(node: ICustomNode, center: position, layerRadius: number, method: NodeLevelMethods): nodePositions {
+function getNodeLevelPosition(node: ICustomNode, center: position, layerRadius: number, method: AllMethods): nodePositions {
     let positions: nodePositions = {};
     let theta = 0;
-    if (method === 'random') {
+    if (method === AllMethods.random) {
+        console.log("node layout method: random");
         theta = Math.random() * 2 * Math.PI;
     }
     else {

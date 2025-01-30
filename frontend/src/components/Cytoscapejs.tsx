@@ -7,7 +7,7 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
-import { layoutTester } from "./layoutAlgorithms";
+import { layoutTester, AllMethods } from "./layoutAlgorithms";
 import { write, utils } from "xlsx";
 import { saveAs } from 'file-saver';
 import { get, set, update } from 'idb-keyval';
@@ -30,12 +30,6 @@ cytoscape.use( elk );
  * The component create the graph, using cytoscape.js library.
  * The props are the graph data and the clikceed vector (for the files)
  */
-
-// const CytoscapejsComponentself: FC<IGraphProps> = ({
-//   graphData,
-//   clickedVector,
-//   thresholds,
-// }) => {
 const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
   const { state, actions } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
@@ -522,10 +516,10 @@ const btnJsonClick = () => {
       else if (name === 'test'){
         console.log("current positions: ");
         console.log(layout.positions);
-        layoutTester(graphData);
-        return;
-        // name = 'preset';
-        // layout.positions = layoutTester(graphData);
+        // layoutTester(graphData);
+        // return;
+        name = 'preset';
+        layout.positions = layoutTester(graphData, AllMethods.randomStart);
         console.log("new positions: ");
         console.log(layout.positions);
       }
