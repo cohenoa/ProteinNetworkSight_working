@@ -549,9 +549,9 @@ const contextMenuItems: MenuItem[] = [
     label: 'Download',
     icon: faDownload,
     submenu: [
-      { label: '.svg', icon: faDownload, onClick: btnSVGExportClick },
-      { label: '.png', icon: faDownload, onClick: btnPngClick },
-      { label: '.json', icon: faDownload, onClick: btnJsonClick },
+      { label: '.svg', icon: faDownload, onClick: () => downloadFile('svg') },
+      { label: '.png', icon: faDownload, onClick: () => downloadFile('png') },
+      { label: '.json', icon: faDownload, onClick: () => downloadFile('json') },
     ],
   },
   {
@@ -567,12 +567,12 @@ const contextMenuItems: MenuItem[] = [
           {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
         ]
       },
+      {label: 'LCC', icon: faDiagramProject, onClick: () => {applyLayout('LCC', true)}},
       {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose', true)}},
       {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
       {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
       {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
       {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
-      {label: 'test', icon: faDiagramProject, onClick: () => {applyLayout('test', true)}},
     ],
   },
   {
@@ -591,7 +591,6 @@ const contextMenuItems: MenuItem[] = [
     label: 'Node Size',
     icon: faPencil,
     submenu: [
-      // { label: '0.1', icon: faPencil, onClick: () => {setNodeSize(0.1)}},
       { label: '0.25', icon: faPencil, onClick: () => {setNodeSize(0.25)}},
       { label: '0.5', icon: faPencil, onClick: () => {setNodeSize(0.5)}},
       { label: '1', icon: faPencil, onClick: () => {setNodeSize(1)}},
@@ -599,7 +598,6 @@ const contextMenuItems: MenuItem[] = [
       { label: '3', icon: faPencil, onClick: () => {setNodeSize(3)}},
       { label: '5', icon: faPencil, onClick: () => {setNodeSize(5)}},
       { label: '10', icon: faPencil, onClick: () => {setNodeSize(10)}},
-
     ],
   },
 ];
