@@ -3,7 +3,6 @@ import { ICustomGraphData, ICustomNode, ICustomLink } from "../@types/graphs";
 import { assert } from "console";
 
 export function layoutTester(graphData: ICustomGraphData, method: AllMethods): nodePositions {
-    console.log(graphData);
     let newGraphData = preProcessing(graphData);
     let clusters: LayeredCluster[] = calcLayerdClusters(newGraphData);
     let positions: nodePositions = calcLayeredPosition(clusters, 4, 70, method);
@@ -94,7 +93,6 @@ function toCartezian(r: number, theta: number): position {
 }
 
 function getClusterLevelPositions(cluster: LayeredCluster, center: position, spacingFactor: number, method: AllMethods): nodePositions {
-    console.log("getting cluster level positions");
     let positions: nodePositions = {};
 
     let centerNode = cluster.layers.get(0)?.nodes[0];
@@ -105,7 +103,6 @@ function getClusterLevelPositions(cluster: LayeredCluster, center: position, spa
     positions[centerNode.id] = {x: center.x, y: center.y} as position;
 
     if (method === AllMethods.spiral) {
-        console.log("cluster layout method: linear");
         let allNodes: ICustomNode[] = [];
 
         cluster.layers.forEach((layer: ClusterLayer) => {
@@ -122,7 +119,6 @@ function getClusterLevelPositions(cluster: LayeredCluster, center: position, spa
             layer.nodes.forEach((node: ICustomNode) => {
                 if (layer.rank !== 0){
                     let theta = (2 * Math.PI * allNodes.indexOf(node)) / allNodes.length;
-                    console.log("theta: " + theta);
                     let relativePos = toCartezian(layerRadius, theta);
                     positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
                 }
@@ -130,7 +126,6 @@ function getClusterLevelPositions(cluster: LayeredCluster, center: position, spa
         })
     }
     else if (method === AllMethods.no_overlap) {
-        console.log("cluster layout method: no overlap");
         console.log("no overlap not implemented yet");
     }
     else {
@@ -153,7 +148,6 @@ function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadi
     let relativePos = { x: 0, y: 0 };
 
     if (method === AllMethods.randomStart){
-        console.log("cluster layout method: randomStart");
         theta = Math.random() * 2 * Math.PI;
         layer.nodes.forEach((node: ICustomNode) => {
             theta = (theta + (2 * Math.PI * layer.nodes.indexOf(node))) / layer.nodes.length;
@@ -162,7 +156,6 @@ function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadi
         });
     }
     else if (method === AllMethods.simple) {
-        console.log("cluster layout method: simple");
         layer.nodes.forEach((node: ICustomNode) => {
             theta = (2 * Math.PI * layer.nodes.indexOf(node)) / layer.nodes.length;
             relativePos = toCartezian(layerRadius, theta);
@@ -185,7 +178,6 @@ function getNodeLevelPosition(node: ICustomNode, center: position, layerRadius: 
     let positions: nodePositions = {};
     let theta = 0;
     if (method === AllMethods.random) {
-        console.log("node layout method: random");
         theta = Math.random() * 2 * Math.PI;
     }
     else {
@@ -202,20 +194,15 @@ function calcLayerdClusters(graphData: ILinkedGraphData) {
     let clusterRank = 0;
     
     while (graphData.nodes.size > 0) {
-        console.log(graphData);
         const head = getHead(graphData);
-        console.log(head);
         const neighbors = getNeighbors(head, graphData);
-        console.log(neighbors);
         let {avg, std} = getStatistics(neighbors);
-        console.log(avg, std);
 
         let maxLayerRank = 0;
         let clusterLayers = new Map<number, ClusterLayer>();
 
         clusterLayers.set(0, {nodes: [head], rank: 0});
 
-        console.log("organizing layers in cluster");
         for (let i = 0; i < neighbors.length; i++) {
             let layer = getLayer(neighbors[i], head, std);
             if (layer > maxLayerRank) {
@@ -229,7 +216,6 @@ function calcLayerdClusters(graphData: ILinkedGraphData) {
         clusters.push({layers: clusterLayers, rank: clusterRank, maxLayerRank: maxLayerRank});
         clusterRank++;
 
-        console.log("deleting nodes from graphData");
         for (let i = 0; i < neighbors.length; i++) {
             graphData.nodes.delete(String(neighbors[i].id));
         }
@@ -241,7 +227,6 @@ function calcLayerdClusters(graphData: ILinkedGraphData) {
 
 function getLayer(node: ICustomNode, head: ICustomNode, step: number): number {
     let layer = 1;
-    console.log("getting layer for node: " + node.id);
     if (step === 0) {
         return 1;
     }
@@ -258,7 +243,6 @@ function getLayer(node: ICustomNode, head: ICustomNode, step: number): number {
 
 function getHead(graphData: ILinkedGraphData): ICustomNode {
     let head: ICustomNode | undefined = undefined;
-    console.log("getting head");
 
     graphData.nodes.forEach((node: ICustomNode) => {
         if (head === undefined) {
@@ -284,7 +268,6 @@ function getHead(graphData: ILinkedGraphData): ICustomNode {
 
 function getNeighbors(node: ICustomNode, graphData: ILinkedGraphData): ICustomNode[] {
     let neighbors: ICustomNode[] = [];
-    console.log("getting neighbors");
 
     for (let i = 0; i < graphData.links.length; i++) {
         let link = graphData.links[i];
@@ -304,7 +287,6 @@ function getNeighbors(node: ICustomNode, graphData: ILinkedGraphData): ICustomNo
 function getStatistics(nodes: ICustomNode[]): { avg: number, std: number } {
     let avg = 0;
     let std = 0;
-    console.log("getting statistics");
 
     if (nodes.length === 0) {
         console.log("error: nodes is empty");

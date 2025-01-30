@@ -514,14 +514,8 @@ const btnJsonClick = () => {
         }
       }
       else if (name === 'test'){
-        console.log("current positions: ");
-        console.log(layout.positions);
-        // layoutTester(graphData);
-        // return;
         name = 'preset';
         layout.positions = layoutTester(graphData, AllMethods.randomStart);
-        console.log("new positions: ");
-        console.log(layout.positions);
       }
 
       const newLayout = {
