@@ -1,6 +1,6 @@
 import { FC, useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
-import { IGraphProps } from "../@types/props";
+import { IGraphProps, nodePositions } from "../@types/props";
 import "../styles/Graph.css";
 import "../styles/Button.css";
 import CytoscapeComponent from "react-cytoscapejs";
@@ -151,11 +151,6 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
       // setFullyLoaded({layoutStop: fullyLoaded.Layout, positions: fullyLoaded.positions, cyref: true, notLoading: fullyLoaded.notLoading});
       try {
         const val = await get(state.fileName);
-        console.log("------------------------");
-        console.log("2222222222222222");
-        console.log(clickedVector);
-        console.log(val);
-        console.log("------------------------");
   
         if (val) {
           const clickedVectors = val.clicked_vectors || {};
@@ -169,12 +164,6 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
             }
           }
         }
-
-        console.log("------------------------");
-        console.log("44444444444444444444");
-        console.log(clickedVector);
-        console.log(val);
-        console.log("------------------------");
       } catch (error) {
         console.error("Error fetching data from IndexedDB", error);
       }
@@ -189,8 +178,8 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
       const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{}, elements:[]};
       
       var elementsVector = clickedVectors.elements || [];
-      // console.log(clickedVectors);
-      // console.log(graphData.nodes);
+
+      console.log("clicker vector: ", clickedVector);
       
       if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
 
@@ -213,8 +202,6 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
         }
       } else {
         console.log("Setting the elements for the first time");
-        // console.log()
-
 
         if (clickedVector in clickedVectors){
           delete  val.clicked_vectors[clickedVector];
@@ -526,18 +513,21 @@ const btnJsonClick = () => {
   const applyLayout = async (name: string, animate: boolean) => {
     if (cyRef.current) {
 
-      if (name === 'test'){
-        console.log("current positions: ");
-        console.log(layout.positions);
-        layoutTester(graphData);
-        return;
-      }
-
       if (name === 'preset') {
         if (!await applySavedGraph()) {
           alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
           return;
         }
+      }
+      else if (name === 'test'){
+        console.log("current positions: ");
+        console.log(layout.positions);
+        layoutTester(graphData);
+        return;
+        // name = 'preset';
+        // layout.positions = layoutTester(graphData);
+        console.log("new positions: ");
+        console.log(layout.positions);
       }
 
       const newLayout = {

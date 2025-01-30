@@ -2,12 +2,12 @@ import { position, nodePositions } from "../@types/props";
 import { ICustomGraphData, ICustomNode, ICustomLink } from "../@types/graphs";
 import { assert } from "console";
 
-export function layoutTester(graphData: ICustomGraphData): Array<position> {
+export function layoutTester(graphData: ICustomGraphData): nodePositions {
     console.log(graphData);
     let newGraphData = preProcessing(graphData);
     let clusters: LayeredCluster[] = calcLayerdClusters(newGraphData);
-    let positions: Array<position> = calcLayeredPosition(clusters);
-    return [];
+    let positions: nodePositions = calcLayeredPosition(clusters, 1, 100, AllClusterMethods.linear);
+    return positions;
 }
 
 interface LayeredCluster {
@@ -47,8 +47,8 @@ function preProcessing(graphData: ICustomGraphData): ILinkedGraphData {
     return newGraphData;
 }
 
-function calcLayeredPosition(clusters: LayeredCluster[], outerSpacingFactor = 2, innerSpacingFactor = 20): Array<position> {
-    let positions: Array<position> = [];
+function calcLayeredPosition(clusters: LayeredCluster[], outerSpacingFactor: number = 1, innerSpacingFactor: number = 100, method: ClusterLevelMethods): nodePositions {
+    let positions: nodePositions = {};
     let maxLayerRank = 0;
 
     console.log("finding maxLayerRank");
@@ -70,35 +70,134 @@ function calcLayeredPosition(clusters: LayeredCluster[], outerSpacingFactor = 2,
 
     for (let i = 0; i < clusters.length; i++) {
         let clusterCenter = toCartezian(outerRadius, (2 * Math.PI * clusters[i].rank) / clusters.length);
-        positions.concat(calcLayeredClusterLayout(clusters[i], clusterCenter, innerSpacingFactor));
-        break;
+        positions = {
+            ...positions,
+            ...getClusterLevelPositions(clusters[i], clusterCenter, innerSpacingFactor, method)
+        } as nodePositions;
     }
+
+    console.log(positions);
 
     return positions;
 }
 
-function toCartezian(r: number, theta: number): { x: number, y: number } {
+function toCartezian(r: number, theta: number): position {
     return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
 }
 
-function toPolar(x: number, y: number): { r: number, theta: number } {
-    return { r: Math.sqrt(x * x + y * y), theta: Math.atan2(y, x) };
+
+enum AllClusterMethods {
+    linear = 'linear',
+    no_overlap = 'no_overlap',
+}
+enum AllLayerMethods {
+    simple = 'simple',
+    randomStart = 'randomStart',
+}
+enum AllNodeMethods {
+    random = 'random',
 }
 
-function calcLayeredClusterLayout(cluster: LayeredCluster, center: { x: number, y: number }, spacingFactor = 50): nodePositions {
+type ClusterLevelMethods = AllClusterMethods | AllLayerMethods | AllNodeMethods;
+type LayerLevelMethods = AllLayerMethods | AllNodeMethods;
+type NodeLevelMethods = AllNodeMethods;
+
+function getClusterLevelPositions(cluster: LayeredCluster, center: position, spacingFactor: number, method: ClusterLevelMethods): nodePositions {
+    console.log("getting cluster level positions");
     let positions: nodePositions = {};
-    console.log("calculating cluster layout");
-    console.log("center: " + center);
-    console.log("spacingFactor: " + spacingFactor);
+    let allNodes: ICustomNode[] = [];
 
     let centerNode = cluster.layers.get(0)?.nodes[0];
     if (centerNode === undefined || centerNode.id === undefined) {
         throw new Error("centerNode is undefined");
     }
-    else{
-        positions[centerNode.id] = {x: center.x, y: center.y} as position;
+
+    positions[centerNode.id] = {x: center.x, y: center.y} as position;
+
+    if (method === 'linear') {
+        console.log("cluster layout method: linear");
+        cluster.layers.forEach((layer: ClusterLayer) => {
+            if (layer.rank !== 0) {
+                allNodes.concat(layer.nodes);
+            }
+        });
+
+        cluster.layers.forEach((layer: ClusterLayer) => {
+            let layerRadius = layer.rank * spacingFactor;
+            layer.nodes.forEach((node: ICustomNode) => {
+                let theta = (2 * Math.PI * allNodes.indexOf(node)) / allNodes.length;
+                let relativePos = toCartezian(layerRadius, theta);
+                positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
+            })
+        })
+    }
+    else if (method === 'no_overlap') {
+        console.log("cluster layout method: no overlap");
+        console.log("no overlap not implemented yet");
+    }
+    else if (!(method in AllClusterMethods)){
+
+        cluster.layers.forEach((layer: ClusterLayer) => {
+            let layerRadius = layer.rank * spacingFactor;
+            positions = {
+                ...positions,
+                ...getLayerLevelPositions(layer, center, layerRadius, method as LayerLevelMethods)
+            }
+        });
     }
     
+    return positions;
+}
+
+function getLayerLevelPositions(layer: ClusterLayer, center: position, layerRadius: number, method: LayerLevelMethods): nodePositions {
+    let positions: nodePositions = {};
+
+    let theta = 0;
+    let relativePos = { x: 0, y: 0 };
+
+    if (method === AllLayerMethods.randomStart){
+        console.log("cluster layout method: randomStart");
+        theta = Math.random() * 2 * Math.PI;
+        layer.nodes.forEach((node: ICustomNode) => {
+            theta = (theta + (2 * Math.PI * layer.nodes.indexOf(node))) / layer.nodes.length;
+            relativePos = toCartezian(layerRadius, theta);
+            positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
+        });
+    }
+    else if (method === AllLayerMethods.simple) {
+        console.log("cluster layout method: simple");
+        layer.nodes.forEach((node: ICustomNode) => {
+            theta = (2 * Math.PI * layer.nodes.indexOf(node)) / layer.nodes.length;
+            relativePos = toCartezian(layerRadius, theta);
+            positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
+        });
+    }
+    else if (!(method in AllLayerMethods)){
+        layer.nodes.forEach((node: ICustomNode) => {
+            positions = {
+                ...positions,
+                ...getNodeLevelPosition(node, center, layerRadius, method as NodeLevelMethods)
+            }
+        });
+    }
+    else {
+        console.log("unknown method");
+    }
+
+    return positions;
+}
+
+function getNodeLevelPosition(node: ICustomNode, center: position, layerRadius: number, method: NodeLevelMethods): nodePositions {
+    let positions: nodePositions = {};
+    let theta = 0;
+    if (method === 'random') {
+        theta = Math.random() * 2 * Math.PI;
+    }
+    else {
+        console.log("unknown method");
+    }
+    let relativePos = toCartezian(layerRadius, theta);
+    positions[String(node.id)] = { x: center.x + relativePos.x, y: center.y + relativePos.y };
     return positions;
 }
 
