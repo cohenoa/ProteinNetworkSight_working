@@ -515,7 +515,7 @@ const btnJsonClick = () => {
       }
       else if (name === 'LCC'){
         name = 'preset';
-        layout.positions = layoutTester(graphData, AllMethods.randomStart);
+        layout.positions = layoutTester(graphData, AllMethods.spiral);
       }
 
       const newLayout = {

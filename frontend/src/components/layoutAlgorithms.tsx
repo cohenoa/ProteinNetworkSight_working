@@ -5,7 +5,7 @@ import { assert } from "console";
 export function layoutTester(graphData: ICustomGraphData, method: AllMethods): nodePositions {
     let newGraphData = preProcessing(graphData);
     let clusters: LayeredCluster[] = calcLayerdClusters(newGraphData);
-    let positions: nodePositions = calcLayeredPosition(clusters, 4, 70, method);
+    let positions: nodePositions = calcLayeredPosition(clusters, 1, 60, method);
     return positions;
 }
 
@@ -226,6 +226,7 @@ function calcLayerdClusters(graphData: ILinkedGraphData) {
 }
 
 function getLayer(node: ICustomNode, head: ICustomNode, step: number): number {
+    // get pair wise weights between node and head
     let layer = 1;
     if (step === 0) {
         return 1;
