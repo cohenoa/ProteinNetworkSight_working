@@ -15,6 +15,7 @@ import { MenuItem } from "../@types/props";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { headers } from "../assets/DefualtFile";
 import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
+import svg from 'cytoscape-svg';
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
 import cise from 'cytoscape-cise';
@@ -24,6 +25,7 @@ import elk from 'cytoscape-elk';
 cytoscape.use( fcose );
 cytoscape.use( cise );
 cytoscape.use( elk );
+cytoscape.use( svg );
 
 /**
  * The component create the graph, using cytoscape.js library.
@@ -458,11 +460,9 @@ const btnJsonClick = () => {
   const btnSVGExportClick = () => {
     const cy = cyRef.current;
     if (cy) {
-      // const blob = new Blob([cy.svg({scale: 1, full: true})], {type: 'image/svg+xml'});
-      // saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.svg');
-
-      const jsonData = cy.json();
-      saveAsSvg(jsonData);
+      cy.svg();
+      // const jsonData = cy.json();
+      // saveAsSvg(jsonData);
     }
     else{
       console.log("no cy");

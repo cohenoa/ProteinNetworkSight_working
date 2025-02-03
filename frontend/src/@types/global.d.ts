@@ -1,5 +1,6 @@
 import { IVectorsValues } from './global.d';
 import "little-state-machine";
+import "cytoscape-svg";
 import { ISuggestionsJson, OptionType } from "./json";
 
 export interface INamesStringMap {
@@ -12,6 +13,13 @@ export interface INamesStringMap {
 
 export interface IVectorsValues {
   [key: string]: number[];
+}
+
+declare module 'cytoscape-svg' {
+  import { Ext } from 'cytoscape';
+
+  const svg: Ext;
+  export default svg;
 }
 
 declare module "little-state-machine" {
