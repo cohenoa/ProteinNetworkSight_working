@@ -1,7 +1,21 @@
 import { IVectorsValues } from './global.d';
 import "little-state-machine";
-import "cytoscape-svg";
+// import "cytoscape-svg";
+import cytoscape = require("cytoscape");
 import { ISuggestionsJson, OptionType } from "./json";
+
+declare module 'cytoscape-svg' {
+  import cytoscape from 'cytoscape';
+
+  const svg: cytoscape.Ext;
+  export default svg;
+}
+
+declare module 'cytoscape' {
+  interface Core {
+      svg(options?: any): string;
+  }
+}
 
 export interface INamesStringMap {
   [key: string]:
@@ -15,12 +29,18 @@ export interface IVectorsValues {
   [key: string]: number[];
 }
 
-declare module 'cytoscape-svg' {
-  import { Ext } from 'cytoscape';
+// declare module 'cytoscape-svg' {
+//   import cytoscape from 'cytoscape';
 
-  const svg: Ext;
-  export default svg;
-}
+//   const svg: cytoscape.Ext;
+//   export default svg;
+// }
+
+// declare module 'cytoscape' {
+//   interface Core {
+//     svg(options?: any): string; // Modify `options` type if needed
+//   }
+// }
 
 declare module "little-state-machine" {
   interface GlobalState {

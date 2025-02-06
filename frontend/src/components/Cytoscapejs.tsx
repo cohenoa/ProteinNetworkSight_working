@@ -15,7 +15,7 @@ import { MenuItem } from "../@types/props";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { headers } from "../assets/DefualtFile";
 import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
-import svg from 'cytoscape-svg';
+import svg from "cytoscape-svg";
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
 import cise from 'cytoscape-cise';
@@ -460,7 +460,10 @@ const btnJsonClick = () => {
   const btnSVGExportClick = () => {
     const cy = cyRef.current;
     if (cy) {
-      cy.svg();
+      
+      var svgContent = cy.svg();
+      var blob = new Blob([svgContent], {type:"image/svg+xml;charset=utf-8"});
+			saveAs(blob, "demo.svg");
       // const jsonData = cy.json();
       // saveAsSvg(jsonData);
     }
