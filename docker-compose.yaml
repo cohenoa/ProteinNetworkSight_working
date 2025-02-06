@@ -1,4 +1,4 @@
-version: '3'
+version: '4.1.0'
 
 services:
   medmolnet-front:
@@ -26,11 +26,12 @@ services:
     restart: unless-stopped
     image: nginx
     ports:
-      - 80:80
+        - 80:80
+        - 8080:8080
     volumes:
-      - ./nginx:/etc/nginx
-      # - ./certbot/conf:/etc/letsencrypt
-      # - ./certbot/www:/var/www/certbot
+        - ./nginx:/etc/nginx
+        - ./certbot/conf:/etc/letsencrypt
+        - ./certbot/www:/var/www/certbot
     networks:
       - medmolnet-network
 

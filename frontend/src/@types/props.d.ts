@@ -51,7 +51,7 @@ export interface IGraphProps {
   graphData: ICustomGraphData;
   clickedVector: string;
   thresholds: threshMap;
-  // font: Font;
+  alertLoading: () => any;
 }
 
 export interface IStepsBarProps {

@@ -172,6 +172,8 @@ const SaveGraphs = forwardRef((props, ref) => {
                         console.log("downloading graph ", graphIdx);
                         const thisGraph = graphsStatus[state.vectorsHeaders[graphIdx] as keyof GraphsStatus];
                         const thisGraphRef = graphRefs[graphIdx].current as graphRef;
+
+                        if (!thisGraph.fileType.current) return;
             
                         if (thisGraph.fileType.current.value === "svg") {
                             thisGraphRef.btnSVGExportClick();
@@ -242,7 +244,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         getFormData: async () => {
             // setIsLoading(true);
             actions.updateIsLoading({ isLoading: true });
-            setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, () => React.createRef<HTMLDivElement>()));
+            setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, (): graphRef => React.createRef<graphRef>() as graphRef));
             const val = await get(state.fileName);
 
             const headers = val['headers'];
