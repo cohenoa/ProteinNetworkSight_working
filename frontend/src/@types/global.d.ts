@@ -1,15 +1,6 @@
 import { IVectorsValues } from './global.d';
 import "little-state-machine";
-// import "cytoscape-svg";
-import cytoscape = require("cytoscape");
 import { ISuggestionsJson, OptionType } from "./json";
-
-declare module 'cytoscape-svg' {
-  import cytoscape from 'cytoscape';
-
-  const svg: cytoscape.Ext;
-  export default svg;
-}
 
 declare module 'cytoscape' {
   interface Core {

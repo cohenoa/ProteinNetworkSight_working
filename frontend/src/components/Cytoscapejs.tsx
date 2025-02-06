@@ -1,19 +1,17 @@
-import { FC, useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
-import { graphRef, IGraphProps } from "../@types/props";
+import { IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
 import "../styles/Button.css";
 import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
-import { write, utils } from "xlsx";
 import { saveAs } from 'file-saver';
-import { get, set, update } from 'idb-keyval';
+import { get, set } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
-import { updateIsLoading, updateShowError } from "../common/UpdateActions";
-import { headers } from "../assets/DefualtFile";
+import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity } from "../common/GraphSettings";
 import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
 import svg from "cytoscape-svg";
 import fcose from 'cytoscape-fcose';
@@ -254,80 +252,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     }
   }, [layoutStop, dataLoaded])
 
-  function convertArrayToSvg(nodesData: any[]): string {
-    const svgContent = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" fit="true">
-        ${nodesData.map(nodeData => convertNodeToSvg(nodeData)).join('\n')}
-      </svg>
-    `;
-    return svgContent;
-  }
-  function addEdgesToSVG(svgString:any, edgeArray:any[]) {
-    // Create a DOMParser
-    var parser = new DOMParser();
-
-    // Parse the SVG string into a DOM structure
-    var doc = parser.parseFromString(svgString, 'image/svg+xml');
-    // Iterate through each edge in the array
-    edgeArray.forEach(edgeData => {
-        // Get the positions of the source and target nodes
-        // node.id.split('_').join('')
-        var sourceNode = doc.getElementById(edgeData.data.source);
-        var targetNode =  doc.getElementById(edgeData.data.target);
-        var edgeColor = doc.getElementById(edgeData.data);
-        // console.log(sourceNode , targetNode);
-        var sourceX =  sourceNode?.getAttribute('cx');
-        var sourceY = sourceNode?.getAttribute('cy');
-        var targetX = targetNode?.getAttribute('cx');
-        var targetY = targetNode?.getAttribute('cy');
-
-        // Create a new line element (edge)
-        if(sourceNode != null&& typeof sourceX == 'string' && typeof sourceY == 'string'&& typeof targetX == 'string'&& typeof targetY == 'string'){
-          var line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', sourceX);
-          line.setAttribute('y1', sourceY);
-          line.setAttribute('x2',targetX);
-          line.setAttribute('y2', targetY);
-          line.setAttribute('stroke', edgeData.data.color || 'black');
-          line.setAttribute('stroke-width', '2.5');
-
-          line.setAttribute('opacity', String(myStyle[1].style.opacity));
-
-          // Append the new line element to the SVG
-          doc.documentElement.insertBefore(line,sourceNode);
-          doc.documentElement.insertBefore(line,targetNode);
-        }
-        
-    });
-
-    // Convert the modified DOM back to an SVG string
-    return new XMLSerializer().serializeToString(doc);
-}
-  function convertNodeToSvg(nodeData: any): string {
-    return `
-      <!-- Circle representing the node -->
-      <circle id = "${nodeData.data.label}" cx="${nodeData.position.x+50}" cy="${nodeData.position.y+50}" r="${nodeData.data.size/1.8}"
-              fill="${nodeData.data.color}" z-index="10" stroke="black"/>
-      <!-- Text label -->
-      <text x="${nodeData.position.x+50}" y="${nodeData.position.y - nodeData.data.size +45}"
-            font-size="12" fill="black" text-anchor="middle">
-        ${nodeData.data.label}
-      </text>
-    `;
-  }
   
-  function saveAsSvg (jsonBlob: any): void{
-    var nodes = jsonBlob.elements.nodes;
-    var edges = jsonBlob.elements.edges;
-    var svgOutPut = convertArrayToSvg(nodes);
-    
-    svgOutPut = addEdgesToSVG(svgOutPut, edges);
-    var a = document.createElement("a");
-    var file = new Blob([svgOutPut], {type: "image/svg+xml"});
-    a.href = URL.createObjectURL(file);
-    a.download =state.fileName.split('.')[0] + '_' + clickedVector + ".svg"
-    a.click();
-  }
   // The function handle a click on the close button on the panel
   const handleOnclickClosePanel = useCallback(() => {
     setOpenPanel(false);
@@ -442,30 +367,29 @@ const savePositionsToIndexedDB = async () => {
   }
 };
 
-const btnJsonClick = () => {
-  const cy = cyRef.current;
-  if (cy) {
-    const jsonBlob = new Blob([JSON.stringify(cy.json())], { type: 'application/json' });
-    saveAs(jsonBlob,state.fileName.split('.')[0] + '_' + clickedVector + '.json');
-  }
-}
-
-  const btnPngClick = () =>{
+  const downloadGraph = (type: SupportedFileType) => {
     const cy = cyRef.current;
-    if (cy) {
-      const pngBlob = cy.png({ output: "base64uri", full: true });
-      saveAs(pngBlob,state.fileName.split('.')[0] + '_' + clickedVector + '.png');
-  }}
+    if (cy){
+      let content = '';
+      let contentType = '';
+      if (type === 'svg') {
+        content = cy.svg();
+        contentType = "image/svg+xml;charset=utf-8";
+      } else if (type === 'png') {
+        content = cy.png();
+        contentType = "image/png";
+      } else if (type === 'json') {
+        content = JSON.stringify(cy.json());
+        contentType = "application/json";
+      }
+      else{
+        console.log("type not supported");
+        return;
+      }
 
-  const btnSVGExportClick = () => {
-    const cy = cyRef.current;
-    if (cy) {
-      
-      var svgContent = cy.svg();
-      var blob = new Blob([svgContent], {type:"image/svg+xml;charset=utf-8"});
-			saveAs(blob, "demo.svg");
-      // const jsonData = cy.json();
-      // saveAsSvg(jsonData);
+      const blob = new Blob([content], { type: contentType });
+      saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.' + type);
+
     }
     else{
       console.log("no cy");
@@ -507,9 +431,7 @@ const btnJsonClick = () => {
     applyLayout,
     setOpacity,
     setNodeSize,
-    btnSVGExportClick,
-    btnPngClick,
-    btnJsonClick,
+    downloadGraph
   }));
 
 
@@ -533,87 +455,46 @@ const btnJsonClick = () => {
     }
   };
 
-  const downloadFile = (file_type: string) => {
-    if (file_type === 'svg'){
-      btnSVGExportClick();
-    }
-    else if (file_type === 'png'){
-      btnPngClick();
-    }
-    else if (file_type === 'json'){
-      btnJsonClick();
-    }
-    else{
-      console.log("invalid file type");
-    }
-  }
-
 // right click menu
 const contextMenuItems: MenuItem[] = [
   {
     label: 'Download',
     icon: faDownload,
-    submenu: [
-      { label: '.svg', icon: faDownload, onClick: btnSVGExportClick },
-      { label: '.png', icon: faDownload, onClick: btnPngClick },
-      { label: '.json', icon: faDownload, onClick: btnJsonClick },
-    ],
+    submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
   },
   {
     label: 'Layout',
     icon: faDiagramProject,
-    submenu: [
-      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle', true)}},
-      {
-        label: 'preset',
-        icon: faDiagramProject,
-        submenu: [
-          {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
-          {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
-        ]
-      },
-      {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose', true)}},
-      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
-      {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
-      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
-      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
-    ],
+    submenu: Object.values(supportedSettings.layouts).map((option) => {
+        if (option === supportedSettings.layouts.PRESET){
+          return {
+            label: option,
+            icon: faDiagramProject,
+            submenu: [
+              {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
+              {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
+            ]
+          }
+        }
+        return {
+          label: option,
+          icon: faDiagramProject,
+          onClick: () => {applyLayout(option, true)},
+        }
+    })
   },
   {
     label: 'Opacity',
     icon: faPencil,
-    submenu: [
-      { label: '0.05', icon: faPencil, onClick: () => {setOpacity(0.05)} },
-      { label: '0.2', icon: faPencil, onClick: () => {setOpacity(0.2)} },
-      { label: '0.35', icon: faPencil, onClick: () => {setOpacity(0.35)} },
-      { label: '0.5', icon: faPencil, onClick: () => {setOpacity(0.5)} },
-      { label: '0.75', icon: faPencil, onClick: () => {setOpacity(0.75)} },
-      { label: '0.9', icon: faPencil, onClick: () => {setOpacity(0.9)} },
-    ],
+    submenu: Object.entries(supportedSettings.opacities).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setOpacity(value)}}))
   },
   {
     label: 'Node Size',
     icon: faPencil,
-    submenu: [
-      // { label: '0.1', icon: faPencil, onClick: () => {setNodeSize(0.1)}},
-      { label: '0.25', icon: faPencil, onClick: () => {setNodeSize(0.25)}},
-      { label: '0.5', icon: faPencil, onClick: () => {setNodeSize(0.5)}},
-      { label: '1', icon: faPencil, onClick: () => {setNodeSize(1)}},
-      { label: '1.5', icon: faPencil, onClick: () => {setNodeSize(1.5)}},
-      { label: '3', icon: faPencil, onClick: () => {setNodeSize(3)}},
-      { label: '5', icon: faPencil, onClick: () => {setNodeSize(5)}},
-      { label: '10', icon: faPencil, onClick: () => {setNodeSize(10)}},
-
-    ],
+    submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setNodeSize(value)}}))
   },
 ];
-const setNodeSize = (size: number) => {
-  // elements.forEach((element) => {
-  //   element.data.size = element.data.size * size;
-  //   setCurNodeSize(size);
-  // });
-  // setElements(elements);
-
+const setNodeSize = (size: SupportedNodeSize) => {
   console.log("setting node size");
 
   cyRef.current?.nodes().forEach(function(node){
@@ -622,7 +503,7 @@ const setNodeSize = (size: number) => {
   });
   setCurNodeSize(size);
 }
-const setOpacity = (op: number) => {
+const setOpacity = (op: SupportedOpacity) => {
   console.log("setting opacity");
   const newStyle = [myStyle[0], {...(myStyle[1])}];
   newStyle[1].style.opacity = op;
