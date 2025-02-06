@@ -18,7 +18,7 @@ export interface formRef {
   getFormData: () => Record<string, string>;
 }
 
-export interface graphRef extends React.RefObject<HTMLDivElement>{
+interface GraphExposedMethods extends HTMLDivElement {
   applyLayout: (name: string, animate: boolean) => void,
   setOpacity: (op: number) => void,
   setNodeSize: (size: number) => void,
@@ -26,6 +26,16 @@ export interface graphRef extends React.RefObject<HTMLDivElement>{
   btnSVGExportClick: () => void,
   btnPngClick: () => void,
   btnJsonClick: () => void,
+}
+export interface graphRef extends React.RefObject<HTMLDivElement>{
+  current: GraphExposedMethods | null;
+  // applyLayout: (name: string, animate: boolean) => void,
+  // setOpacity: (op: number) => void,
+  // setNodeSize: (size: number) => void,
+  // fetchData: () => void,
+  // btnSVGExportClick: () => void,
+  // btnPngClick: () => void,
+  // btnJsonClick: () => void,
 }
 
 // Interface for props of Father and ButtonComponent that includes formRef

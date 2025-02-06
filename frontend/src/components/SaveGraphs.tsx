@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useState, useImperativeHandle, forwardRef, LegacyRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
@@ -171,9 +171,9 @@ const SaveGraphs = forwardRef((props, ref) => {
                         let graphIdx = i + batchNum;
                         console.log("downloading graph ", graphIdx);
                         const thisGraph = graphsStatus[state.vectorsHeaders[graphIdx] as keyof GraphsStatus];
-                        const thisGraphRef = graphRefs[graphIdx].current as graphRef;
+                        const thisGraphRef = (graphRefs[graphIdx] as graphRef).current;
 
-                        if (!thisGraph.fileType.current) return;
+                        if (thisGraphRef === null || !thisGraph.fileType.current) return;
             
                         if (thisGraph.fileType.current.value === "svg") {
                             thisGraphRef.btnSVGExportClick();
@@ -202,13 +202,17 @@ const SaveGraphs = forwardRef((props, ref) => {
         console.log("building graph " + key);
         if (graphRefs[index] && graphRefs[index].current) {
             const thisGraph = graphsStatus[key as keyof GraphsStatus];
-            const thisGraphRef = graphRefs[index].current as graphRef;
+            const thisGraphRef = (graphRefs[index] as graphRef).current;
 
-            if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
+            if (thisGraphRef === null){
+                return;
+            }
+            else if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
                 console.log("graph not ready");
                 console.log(thisGraph);
                 return;
             }
+            
 
             thisGraphRef.applyLayout(String(thisGraph.Layout.current.value), false);
             thisGraphRef.setOpacity(Number(thisGraph.Opacity.current.value));
