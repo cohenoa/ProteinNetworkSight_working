@@ -108,7 +108,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
           newProtein[0] = firstPart + "_" + otherNames[1];
           // newProtein = newProtein + otherNames[1]
-          if(newProtein != undefined){
+          if(newProtein !== undefined){
             // proteins = [...proteins,newProtein];
             proteins.push(newProtein)
           } 

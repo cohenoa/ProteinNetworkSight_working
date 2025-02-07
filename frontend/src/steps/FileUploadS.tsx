@@ -34,6 +34,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const [hasError, setHasError] = useState<boolean>(false);
   useEffect(() => {
     // code to run on every refresh
+    console.log(file)
     actions.clearAction();
   }, []);
 
@@ -177,7 +178,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       for (let i = 0 ; i < dataParse.length; i++){
 
         // console.log(typeof dataParse[i][1]);
-        if (dataParse[i][1] != ""){
+        if (dataParse[i][1] !== ""){
           namesStringMap[dataParse[i][0]] = {
             stringId: dataParse[i][2],
             stringName: dataParse[i][1],

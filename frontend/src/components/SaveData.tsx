@@ -117,7 +117,7 @@ const SaveData = forwardRef((props, ref) => {
 
             if (name in state.suggestionsObj.alternative_match) {
                 altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId != "0") {
+            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
                 manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
             }
             else if (match.stringId === "0") {

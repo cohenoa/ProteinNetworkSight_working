@@ -17,7 +17,7 @@ const ContextMenu: FC<ContextMenuProps> = ({ position, depth, items }) => {
 
   const getPos = (index: Number) => {
     var element = document.getElementById("menuItem" + String(depth) + "_" + String(index));
-    if (element == null){ // couldn't get element, positioning at default location
+    if (element === null){ // couldn't get element, positioning at default location
       console.log("coudn't get pos");
       return {x: position.x + 50, y: position.y + 50};
     }

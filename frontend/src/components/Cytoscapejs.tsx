@@ -36,7 +36,7 @@ cytoscape.use( svg );
 //   thresholds,
 // }) => {
 const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
-  const { state, actions } = useStateMachine({});
+  const { state } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<ICustomNode | null>(null);
   const [openPanel, setOpenPanel] = useState(false);
@@ -90,7 +90,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
    const [layoutStop, setLayoutStop] = useState(false);
    const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [nodePositions, setNodePositions] = useState<Array<any>>([]);
+  // const [nodePositions, setNodePositions] = useState<Array<any>>([]);
 
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
@@ -170,7 +170,36 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     [graphData,clickedVector, state.fileName]
   );
 
-  const fetchData = async () => {
+  const createNodes = (elements: Array<any>, nodes: ICustomNode[]) => {
+    nodes.forEach((node) => 
+      elements.push({
+        data: {
+          id: node.id,
+          label: node.id === undefined || typeof node.id === "number"? node.id: node.id,
+          color: node.color,
+          size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
+        },
+      })
+    );
+    // setElements(elements)
+  };
+
+  // The function create the links data for the elements array
+  const createLinks = (elements: Array<any>, links: ICustomLink[]) => {
+    links.forEach((link) =>
+      elements.push({
+        data: {
+          source: link.source,
+          target: link.target,
+          label: `Edge from ${link.source} to ${link.target} `,
+          color: getLinkColor(link.score === undefined ? 1994 : link.score),
+        },
+      })
+    );
+    // setElements(elements)
+  };
+
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const val = await get(state.fileName);
@@ -181,9 +210,9 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
         elementsVector = clickedVectors[clickedVector].elements[0]
         const positions = clickedVectors[clickedVector].positions;
-        if (positions != undefined) {
+        if (positions !== undefined) {
           setElements(elementsVector);
-          setNodePositions(positions);
+          // setNodePositions(positions);
 
           // Create a layout with saved positions
           console.log("positions: \n", positions)
@@ -198,8 +227,6 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
         }
       } else {
         console.log("Setting the elements for the first time");
-        // console.log()
-
 
         if (clickedVector in clickedVectors){
           delete  val.clicked_vectors[clickedVector];
@@ -223,18 +250,11 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
       setIsLoading(false);
       setDataLoaded(true);
     }
-  };
+  }, []);
   
   useEffect(() => {
-
-    console.log(clickedVector);
-
     resetElements().then(() => fetchData());
-    
-    // fetchData();
-    console.log("elements: \n", elements)
-
-  }, [ graphData.nodes, graphData.links, state.fileName]);
+  }, [ graphData.nodes, graphData.links, state.fileName, fetchData]);
 
   useEffect(() => {
     cyRef.current?.layout(layout).run();
@@ -258,35 +278,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     setOpenPanel(false);
   }, []);
 
-  // The function create the nodes data for the elements array
-  const createNodes = (elements: Array<any>, nodes: ICustomNode[]) => {
-    nodes.forEach((node) => 
-      elements.push({
-        data: {
-          id: node.id,
-          label: node.id == undefined || typeof node.id === "number"? node.id: node.id,
-          color: node.color,
-          size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
-        },
-      })
-    );
-    // setElements(elements)
-  };
-
-  // The function create the links data for the elements array
-  const createLinks = (elements: Array<any>, links: ICustomLink[]) => {
-    links.forEach((link) =>
-      elements.push({
-        data: {
-          source: link.source,
-          target: link.target,
-          label: `Edge from ${link.source} to ${link.target} `,
-          color: getLinkColor(link.score === undefined ? 1994 : link.score),
-        },
-      })
-    );
-    // setElements(elements)
-  };
+  // The function create the nodes data for the elements arra
   
 // // The function return the color of the node based on the size
 // const getNodeColor = (size: number): string => {
@@ -403,10 +395,10 @@ const savePositionsToIndexedDB = async () => {
     if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
       const elementsVector = clickedVectors[clickedVector].elements[0]
       const positions = clickedVectors[clickedVector].positions;
-      if (positions != undefined) {
-        if (positions != undefined) {
+      if (positions !== undefined) {
+        if (positions !== undefined) {
           setElements(elementsVector);
-          setNodePositions(positions);
+          // setNodePositions(positions);
           setNodeSize(clickedVectors[clickedVector].nodeSize);
           setOpacity(clickedVectors[clickedVector].opacity);
 
