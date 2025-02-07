@@ -28,7 +28,7 @@
     "react": "^18.2.0",
     "react-cytoscapejs": "^2.0.0",
     "react-dom": "^18.2.0",
-    "react-force-graph": "^1.41.17",
+    "react-force-graph": "^1.29.3",
     "react-force-graph-2d": "^1.23.14",
     "react-force-graph-3d": "^1.21.16",
     "react-hook-form": "^7.41.0",
@@ -68,6 +68,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/cytoscape-fcose": "^2.2.4",
     "@types/react-toggle": "^4.0.3",
     "@types/three": "^0.141.0",
