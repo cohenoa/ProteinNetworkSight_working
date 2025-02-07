@@ -1,4 +1,4 @@
-from flask import Flask, request,redirect
+from flask import Flask, request, redirect, Response
 from src.validate import cal_string_id
 from src.graph_data import make_graph_data
 from src.organism_list import get_organism_list
@@ -16,7 +16,8 @@ app.config['EXECUTOR_MAX_WORKERS'] = 6
 @app.route('/api/', methods=["GET"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def index():
-    return 'Welcome to the backend server.'
+    content = 'Welcome to the backend server.'
+    return Response(content, status=200, headers={'Content-Length': str(len(content))})
 
 
 @app.route("/api/organism", methods=["GET"])
