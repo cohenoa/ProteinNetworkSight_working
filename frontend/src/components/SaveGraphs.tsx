@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useState, useImperativeHandle, forwardRef, LegacyRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
@@ -7,82 +7,12 @@ import WindowedSelect from "react-windowed-select";
 import { ICustomAllGraphData, ICustomGraphData } from "../@types/graphs";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
 import "../styles/SaveGraphs.css";
-import { IGraphProps, graphRef, optionItem, SettingItem, GraphSettings, GraphsStatus } from "../@types/props";
-import { threshMap } from "../@types/global";
-import { render, fireEvent } from '@testing-library/react';
+import { graphRef } from "../@types/props";
+import { GraphSettings, GraphsStatus, getWindowSelectItem } from "../common/GraphSettings";
 import LoadingComponent from "./Loading";
+import { copySettings, baseDownloadAllGraphSetting } from "../common/GraphSettings";
 
-const copySettings = (settings: GraphSettings, fullCopy: boolean = false): GraphSettings => {
-    const layoutOptions = fullCopy? [...settings.Layout.options]: settings.Layout.options;
-    return {
-        ...baseGraphSetting,
-        Layout: {
-            ...settings.Layout,
-            options: layoutOptions,
-        },
-        NodeSize: {...settings.NodeSize},
-        Opacity: {...settings.Opacity},
-        fileType: {...settings.fileType},
-    };
-}
-
-const baseGraphSetting: GraphSettings = {
-    Layout: {
-        title: "Layout",
-        default: {label: "circle", value: "circle"},
-        current: null,
-        options: [
-            { label: "random", value: "random" },
-            { label: "grid", value: "grid" },
-            { label: "circle", value: "circle" },
-            { label: "fcose", value: "fcose" },
-            { label: "elk", value: "elk" },
-            { label: "cise", value: "cise" },
-        ]
-    },
-    NodeSize: {
-        title: "Node Size",
-        default: {label: "1", value: 1},
-        current: null,
-        options: [
-            { label: "0.1", value: 0.1 }, 
-            { label: "0.25", value: 0.25 }, 
-            { label: "0.5", value: 0.5 }, 
-            { label: "1", value: 1 }, 
-            { label: "1.5", value: 1.5 }, 
-            { label: "3", value: 3 }, 
-            { label: "5", value: 5 }, 
-            { label: "10", value: 10 }
-        ]
-    },
-    Opacity: {
-        title: "Opacity",
-        default: {label: "0.35", value: 0.35},
-        current: null,
-        options: [
-            { label: "0.05", value: 0.05 }, 
-            { label: "0.2", value: 0.2 }, 
-            { label: "0.35", value: 0.35 }, 
-            { label: "0.5", value: 0.5 }, 
-            { label: "0.75", value: 0.75 }, 
-            { label: "0.9", value: 0.9 }
-        ]
-    },
-    fileType: {
-        title: "File Type",
-        default: { label: "png", value: "png" },
-        current: null,
-        options: [
-            { label: "svg", value: "svg" }, 
-            { label: "png", value: "png" }, 
-            { label: "json", value: "json" }
-        ]
-    }
-}
-
-const presetOption: optionItem = {label: "preset", value: "preset"}
-
-
+const presetOption = getWindowSelectItem('layouts', 'PRESET');
 
 const SaveGraphs = forwardRef((props, ref) => {
     const { state, actions } = useStateMachine({
@@ -92,7 +22,7 @@ const SaveGraphs = forwardRef((props, ref) => {
 
     const [graphRefs, setGraphRefs] = useState<graphRef[]>([]);
 
-    const [applyAllStatus, setApplyAllStatus] = useState<GraphSettings>(copySettings(baseGraphSetting, false));
+    const [applyAllStatus, setApplyAllStatus] = useState<GraphSettings>(copySettings(baseDownloadAllGraphSetting, false));
     const [graphsStatus, setGraphsStatus] = useState<GraphsStatus>({});
     const [usePresetWhenPossible, setUsePresetWhenPossible] = useState<boolean>(false);
     const [allGraphData, setAllGraphData] = useState<ICustomAllGraphData>({});
@@ -112,7 +42,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         state.vectorsHeaders.forEach((header: string) => {
             
             if (header in clickedVectors) {    
-                newGraphStatus[header] = copySettings(baseGraphSetting, true);
+                newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, true);
 
                 newGraphStatus[header].Layout.options.push(presetOption);
                 newGraphStatus[header].Layout.current = presetOption;
@@ -130,7 +60,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                 newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default
             }
             else {
-                newGraphStatus[header] = copySettings(baseGraphSetting, false);
+                newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, false);
                 newGraphStatus[header].Layout.current = newGraphStatus[header].Layout.default;
                 newGraphStatus[header].NodeSize.current = newGraphStatus[header].NodeSize.default;
                 newGraphStatus[header].Opacity.current = newGraphStatus[header].Opacity.default;
@@ -173,17 +103,11 @@ const SaveGraphs = forwardRef((props, ref) => {
                         let graphIdx = i + batchNum;
                         console.log("downloading graph ", graphIdx);
                         const thisGraph = graphsStatus[state.vectorsHeaders[graphIdx] as keyof GraphsStatus];
-                        const thisGraphRef = graphRefs[graphIdx].current as graphRef;
+                        const thisGraphRef = (graphRefs[graphIdx] as graphRef).current;
+
+                        if (thisGraphRef === null || !thisGraph.fileType.current) return;
             
-                        if (thisGraph.fileType.current.value === "svg") {
-                            thisGraphRef.btnSVGExportClick();
-                        }
-                        else if (thisGraph.fileType.current.value === "png") {
-                            thisGraphRef.btnPngClick();
-                        }
-                        else if (thisGraph.fileType.current.value === "json") {
-                            thisGraphRef.btnJsonClick();
-                        }
+                        thisGraphRef.downloadGraph(thisGraph.fileType.current.value);
                     }
 
                     if (batchNum + 10 >= graphRefs.length){
@@ -202,13 +126,17 @@ const SaveGraphs = forwardRef((props, ref) => {
         console.log("building graph " + key);
         if (graphRefs[index] && graphRefs[index].current) {
             const thisGraph = graphsStatus[key as keyof GraphsStatus];
-            const thisGraphRef = graphRefs[index].current as graphRef;
+            const thisGraphRef = (graphRefs[index] as graphRef).current;
 
-            if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
+            if (thisGraphRef === null){
+                return;
+            }
+            else if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
                 console.log("graph not ready");
                 console.log(thisGraph);
                 return;
             }
+            
 
             thisGraphRef.applyLayout(String(thisGraph.Layout.current.value), false);
             thisGraphRef.setOpacity(Number(thisGraph.Opacity.current.value));
@@ -244,7 +172,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         getFormData: async () => {
             // setIsLoading(true);
             actions.updateIsLoading({ isLoading: true });
-            setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, () => React.createRef<HTMLDivElement>()));
+            setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, (): graphRef => React.createRef<graphRef>() as graphRef));
             const val = await get(state.fileName);
 
             const headers = val['headers'];
@@ -312,7 +240,7 @@ const SaveGraphs = forwardRef((props, ref) => {
     const renderApplyAllMenu = () => {
         return (
             <div className="ApplyAllMenu">
-                {Object.entries(baseGraphSetting).map(([key, item], index) => (
+                {Object.entries(baseDownloadAllGraphSetting).map(([key, item], index) => (
                     <div className="ApplyAllMenuOption" key={"ApplyAllMenuOption-" + key}>
                         <div className="ApplyAllMenuOptiontitle">{"Apply " + item.title + " to all graphs"}</div>
                         <WindowedSelect
@@ -419,18 +347,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         <div className="SaveGraphWrapper">
             {renderApplyAllMenu()}
             {renderGraphsSettings()}
-            {/* {renderInvisibleGraph()} */}
         </div>
-        
-        // <div className="SaveGraphWrapper">
-        //     {state.isLoading ? (
-        //         <LoadingComponent />
-        //     ) :
-        //             {renderApplyAllMenu()}
-        //             {renderGraphsSettings()}
-        //             {renderInvisibleGraph()}
-        //     }
-        // </div>
     )
 });
 

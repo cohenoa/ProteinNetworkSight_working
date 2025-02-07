@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "cytoscape-cise": "^2.0.0",
-    "cytoscape-elk": "^2.2.0"
+    "cytoscape-elk": "^2.2.0",
+    "cytoscape-svg": "^0.4.0",
+    "react-spinners": "^0.15.0",
+    "react-switchable": "^0.4.8"
   }
 }

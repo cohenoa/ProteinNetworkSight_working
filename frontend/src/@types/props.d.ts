@@ -18,14 +18,24 @@ export interface formRef {
   getFormData: () => Record<string, string>;
 }
 
-export interface graphRef extends React.RefObject<HTMLDivElement>{
+export type downloadFileTypes = 'svg' | 'png' | 'json';
+
+interface GraphExposedMethods extends HTMLDivElement {
   applyLayout: (name: string, animate: boolean) => void,
   setOpacity: (op: number) => void,
   setNodeSize: (size: number) => void,
   fetchData: () => void,
-  btnSVGExportClick: () => void,
-  btnPngClick: () => void,
-  btnJsonClick: () => void,
+  downloadGraph: (type: downloadFileTypes) => void,
+}
+export interface graphRef extends React.RefObject<HTMLDivElement>{
+  current: GraphExposedMethods | null;
+  // applyLayout: (name: string, animate: boolean) => void,
+  // setOpacity: (op: number) => void,
+  // setNodeSize: (size: number) => void,
+  // fetchData: () => void,
+  // btnSVGExportClick: () => void,
+  // btnPngClick: () => void,
+  // btnJsonClick: () => void,
 }
 
 // Interface for props of Father and ButtonComponent that includes formRef
@@ -51,7 +61,7 @@ export interface IGraphProps {
   graphData: ICustomGraphData;
   clickedVector: string;
   thresholds: threshMap;
-  // font: Font;
+  alertLoading: () => any;
 }
 
 export interface IStepsBarProps {
@@ -107,25 +117,114 @@ interface IButtonConfig {
   onClick: () => void;
 }
 
-export interface optionItem {
-  label: string;
-  value: string | number,
+//___________________________________________
+// generic option types:
+//___________________________________________
+export enum LayoutOptions {
+  random = 'random',
+  grid = 'grid',
+  circle = 'circle',
+  fcose = 'fcose',
+  elk = 'elk',
+  cise = 'cise',
+  preset = 'preset',
 }
+export enum FileTypeOptions {
+  svg = 'svg',
+  png = 'png',
+  json = 'json',
+}
+export enum NodeSizeOptions {
+  '0.1' = 0.1,
+  '0.25' = 0.25,
+  '0.5' = 0.5,
+  '1' = 1,
+  '1.5' = 1.5,
+  '3' = 3,
+  '5' = 5,
+  '10' = 10,
+}
+export enum OpacityOptions {
+  '0.05' = 0.05,
+  '0.2' = 0.2,
+  '0.35' = 0.35,
+  '0.5' = 0.5,
+  '0.75' = 0.75,
+  '0.9' = 0.9,
+}
+// export type LayoutOptions = 'random' | 'grid' | 'circle' | 'fcose' | 'elk' | 'cise' | 'preset';
+// export type FileTypeOptions = 'svg' | 'png' | 'json';
+// export type NodeSizeOptions = 0.1 | 0.25 | 0.5 | 1 | 1.5 | 3 | 5 | 10;
+// export type OpacityOptions = 0.05 | 0.2 | 0.35 | 0.5 | 0.75 | 0.9;
 
-export interface SettingItem {
-  title: string;
-  default: optionItem;
-  current: optionItem | null;
-  options: optionItem[];
-}
+// export interface optionItem {
+//   label: string;
+//   value: any;
+// }
 
-export interface GraphSettings {
-  Layout: SettingItem,
-  NodeSize: SettingItem,
-  Opacity: SettingItem,
-  fileType: SettingItem,
-}
+// interface SettingItem {
+//   title: string;
+//   default: optionItem;
+//   current: optionItem | null;
+//   options: optionItem[];
+// }
 
-export interface GraphsStatus {
-  [key: string]: GraphSettings;
-}
+// export interface GraphSettings {
+//   Layout: LayoutSettingItem;
+//   NodeSize: NodeSizeSettingItem;
+//   Opacity: OpacitySettingItem;
+//   fileType: FileTypeSettingItem;
+// }
+
+// // export interface GraphSettings {
+// //   Layout: SettingItem,
+// //   NodeSize: SettingItem,
+// //   Opacity: SettingItem,
+// //   fileType: SettingItem,
+// // }
+
+// interface GraphsStatus {
+//   [key: string]: GraphSettings;
+// }
+
+// // ____________________________________________
+// // specific interfaces for each option
+// // ____________________________________________
+
+// // Layout option interfaces:
+// interface LayoutOptionItem extends optionItem {
+//   value: LayoutOptions;
+// }
+
+// interface LayoutSettingItem extends SettingItem {
+//   options: LayoutOptionItem[];
+// }
+
+// // NodeSize option interfaces:
+// interface NodeSizeOptionItem extends optionItem {
+//   value: NodeSizeOptions;
+// }
+
+// interface NodeSizeSettingItem extends SettingItem {
+//   options: NodeSizeOptionItem[];
+// }
+
+// // Opacity option interfaces:
+// interface OpacityOptionItem extends optionItem {
+//   value: OpacityOptions;
+// }
+
+// interface OpacitySettingItem extends SettingItem {
+//   options: OpacityOptionItem[];
+// }
+
+// // FileType option interfaces:
+// interface FileTypeOptionItem extends optionItem {
+//   value: FileTypeOptions;
+// }
+
+// interface FileTypeSettingItem extends SettingItem {
+//   options: FileTypeOptionItem[];
+// }
+
+
