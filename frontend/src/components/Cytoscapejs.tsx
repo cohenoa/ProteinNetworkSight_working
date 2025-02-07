@@ -177,7 +177,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
       const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{},elements:[]};
       
       var elementsVector = clickedVectors.elements || [];
-      if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg && clickedVectors[clickedVector].positions.length === graphData.nodes.length) {
+      if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
 
         elementsVector = clickedVectors[clickedVector].elements[0]
         const positions = clickedVectors[clickedVector].positions;
@@ -372,13 +372,13 @@ const savePositionsToIndexedDB = async () => {
     if (cy){
       let content = '';
       let contentType = '';
-      if (type === 'svg') {
+      if (type === supportedSettings.fileTypes.SVG) {
         content = cy.svg();
         contentType = "image/svg+xml;charset=utf-8";
-      } else if (type === 'png') {
+      } else if (type === supportedSettings.fileTypes.PNG) {
         content = cy.png();
         contentType = "image/png";
-      } else if (type === 'json') {
+      } else if (type === supportedSettings.fileTypes.JSON) {
         content = JSON.stringify(cy.json());
         contentType = "application/json";
       }
@@ -435,10 +435,10 @@ const savePositionsToIndexedDB = async () => {
   }));
 
 
-  const applyLayout = async (name: string, animate: boolean) => {
+  const applyLayout = async (name: SupportedLayout, animate: boolean) => {
     if (cyRef.current) {
 
-      if (name === 'preset') {
+      if (name === supportedSettings.layouts.PRESET) {
         if (!await applySavedGraph()) {
           alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
           return;
