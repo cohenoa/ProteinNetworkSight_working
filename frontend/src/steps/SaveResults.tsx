@@ -40,8 +40,8 @@ const SaveResults: FC<formRefProps> = ({ formRef }) => {
                 <Switch name="mode" onItemChanged={(value: String) => {
                     setMode(Number(value) as SaveMode);
                 }}>
-                    <Item value={SaveMode.data.toString()}>Save Data</Item>
-                    <Item value={SaveMode.graphs.toString()}>Save Graphs</Item>
+                    <Item key={1} value={SaveMode.data.toString()}>Save Data</Item>
+                    <Item key={2} value={SaveMode.graphs.toString()}>Save Graphs</Item>
                 </Switch>
             </div>
         )
