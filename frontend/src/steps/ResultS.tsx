@@ -9,7 +9,6 @@ import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { Font, FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import "../styles/Result.css";
-import "react-switchable/dist/main.css";
 import ErrorScreen from "../components/ErrorScreen";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
 import { get } from 'idb-keyval';
