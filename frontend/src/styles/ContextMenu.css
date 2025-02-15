@@ -27,5 +27,10 @@
 }
 
 .icon {
-    margin-right: 10px;
+  margin-right: 10px;
+  width: 1em;
+  height: 1em;
+  font-size: 1em; /* Ensures consistency */
+  display: inline-block; /* Helps with alignment */
+  vertical-align: middle; /* Aligns with text properly */
 }

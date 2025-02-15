@@ -100,16 +100,12 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     setError(false);
     get(state.fileName)
       .then((val) => {
-        const headers = val['headers'];
         vectorsValues = val['vectorsValues'];
-        // console.log("vectors values: ",vectorsValues);
-        // console.log(vectorsValues['G18']);
         const values_arr = vectorsValues[vectorName] || [];
         const ids_arr = state.proteinsNames || [];
         let values_map: { [key: string]: number } = {};
         for (let i = 0; i < values_arr.length; i++) {
           values_map[ids_arr[i]] = values_arr[i];
-          // console.log(ids_arr[i])
         }
         const body = {
           user_id: state.uuid,
@@ -120,7 +116,6 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
         };
         console.log("body", body);
         actions.updateIsLoading({isLoading: true});
-        // console.log(body);
         makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
       
   })};

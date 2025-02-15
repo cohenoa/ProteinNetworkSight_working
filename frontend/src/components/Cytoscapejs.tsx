@@ -11,8 +11,8 @@ import { saveAs } from 'file-saver';
 import { get, set } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
-import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity } from "../common/GraphSettings";
-import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
+import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity, SupportedNodeColor } from "../common/GraphSettings";
+import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner, faBrush, faPlus , faMinus } from '@fortawesome/free-solid-svg-icons';
 import svg from "cytoscape-svg";
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
@@ -25,16 +25,23 @@ cytoscape.use( cise );
 cytoscape.use( elk );
 cytoscape.use( svg );
 
+interface CytoscapeStyle {
+  selector: string;
+  style: {
+    "background-color"?: string;
+    label?: string;
+    width?: string;
+    height?: string;
+    "background-image"?: string;
+    "line-color"?: string;
+    opacity?: number;
+  };
+}
+
 /**
  * The component create the graph, using cytoscape.js library.
  * The props are the graph data and the clikceed vector (for the files)
  */
-
-// const CytoscapejsComponentself: FC<IGraphProps> = ({
-//   graphData,
-//   clickedVector,
-//   thresholds,
-// }) => {
 const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
   const { state } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
@@ -42,29 +49,29 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const [openPanel, setOpenPanel] = useState(false);
   const [openContextMenu, setOpenContextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [elements,setElements] = useState<Array<any>>([])
+  const [elements, setElements] = useState<Array<any>>([])
   const [curNodeSize, setCurNodeSize] = useState<number>(1);
-  const [myStyle, setMyStyle] = useState([
-    {
-      selector: "node",
-      style: {
-        "background-color": "data(color)",
-        label: "data(label)",
-        width: "data(size)",
-        height: "data(size)",
-        "background-image": '#FFFFFF', 
-      },
+
+const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
+  {
+    selector: "node",
+    style: {
+      "background-color": "data(color)",
+      label: "data(label)",
+      width: "data(size)",
+      height: "data(size)",
+      "background-image": '#FFFFFF', 
     },
-    {
-      selector: "edge",
-      style: {
-        "line-color": "data(color)",
-        "background-image": '#FFFFFF',
-        opacity: 0.35
-      },
+  },
+  {
+    selector: "edge",
+    style: {
+      "line-color": "data(color)",
+      "background-image": '#FFFFFF',
+      opacity: supportedSettings.opacities.NORMAL
     },
-    
-  ]);
+  },
+]);
 
   const resetElements = async () => {
     setElements(() => {
@@ -85,12 +92,11 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     stop: function() {
       setLayoutStop(true);
     }
-   });
+  });
 
-   const [layoutStop, setLayoutStop] = useState(false);
-   const [dataLoaded, setDataLoaded] = useState(false);
+  const [layoutStop, setLayoutStop] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // const [nodePositions, setNodePositions] = useState<Array<any>>([]);
 
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
@@ -485,7 +491,46 @@ const contextMenuItems: MenuItem[] = [
     icon: faPencil,
     submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setNodeSize(value)}}))
   },
+  {
+    label: 'Node color',
+    icon: faBrush,
+    submenu: [
+      {
+        label: 'pos',
+        icon: faPlus,
+        submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('pos', value)}}))
+      },
+      {
+        label: 'neg',
+        icon: faMinus,
+        submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('neg', value)}}))
+      },
+    ]
+    // submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setNodeColor(value)}}))
+  },
 ];
+
+const setNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
+  console.log("setting node color");
+  (graphData.nodes as ICustomNode[]).forEach((node) => {
+    if (node.size !== undefined) {
+      if ((node.size > 0) === (nodeType === 'pos')) {
+        node.color = color;
+      }
+    }
+    else{
+      console.log("node size undefined");
+    }
+  })
+
+  let newElements: any[] = [];
+  createNodes(newElements, graphData.nodes);
+  createLinks(newElements, graphData.links);
+  
+  setElements(newElements);
+  cyRef.current?.style(myStyle);
+  console.log(elements);
+}
 const setNodeSize = (size: SupportedNodeSize) => {
   console.log("setting node size");
 

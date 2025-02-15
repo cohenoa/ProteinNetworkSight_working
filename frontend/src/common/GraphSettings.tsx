@@ -53,6 +53,12 @@ export const supportedSettings = {
         SVG: 'svg',
         PNG: 'png',
         JSON: 'json'
+    },
+    nodeColors: {
+        red: '#ff0000',
+        blue: '#0047AB',
+        black: '#000000',
+        grey: '#808080',
     }
 } as const;
 
@@ -60,6 +66,7 @@ export type SupportedLayout = (typeof supportedSettings.layouts)[keyof typeof su
 export type SupportedNodeSize = (typeof supportedSettings.nodeSizes)[keyof typeof supportedSettings.nodeSizes];
 export type SupportedOpacity = (typeof supportedSettings.opacities)[keyof typeof supportedSettings.opacities];
 export type SupportedFileType = (typeof supportedSettings.fileTypes)[keyof typeof supportedSettings.fileTypes];
+export type SupportedNodeColor = (typeof supportedSettings.nodeColors)[keyof typeof supportedSettings.nodeColors];
 
 interface optionItem {
     label: string;
