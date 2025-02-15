@@ -456,11 +456,6 @@ const savePositionsToIndexedDB = async () => {
 // right click menu
 const contextMenuItems: MenuItem[] = [
   {
-    label: 'Download',
-    icon: faDownload,
-    submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
-  },
-  {
     label: 'Layout',
     icon: faDiagramProject,
     submenu: Object.values(supportedSettings.layouts).map((option) => {
@@ -482,7 +477,7 @@ const contextMenuItems: MenuItem[] = [
     })
   },
   {
-    label: 'Opacity',
+    label: 'Link Opacity',
     icon: faPencil,
     submenu: Object.entries(supportedSettings.opacities).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setOpacity(value)}}))
   },
@@ -492,7 +487,7 @@ const contextMenuItems: MenuItem[] = [
     submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setNodeSize(value)}}))
   },
   {
-    label: 'Node color',
+    label: 'Node Color',
     icon: faBrush,
     submenu: [
       {
@@ -506,7 +501,11 @@ const contextMenuItems: MenuItem[] = [
         submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('neg', value)}}))
       },
     ]
-    // submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setNodeColor(value)}}))
+  },
+  {
+    label: 'Download',
+    icon: faDownload,
+    submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
   },
 ];
 
