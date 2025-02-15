@@ -525,6 +525,11 @@ const setNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
 
   let newElements: any[] = [];
   createNodes(newElements, graphData.nodes);
+
+  newElements.forEach((element) => {
+    element.data.size *= curNodeSize;
+  });
+
   createLinks(newElements, graphData.links);
   
   setElements(newElements);
