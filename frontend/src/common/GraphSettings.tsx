@@ -56,7 +56,9 @@ export const supportedSettings = {
     },
     nodeColors: {
         red: '#ff0000',
+        green: '#00ff00',
         blue: '#0047AB',
+        orange: '#FFA500',
         black: '#000000',
         grey: '#808080',
     }
