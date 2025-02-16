@@ -59,6 +59,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     if (isExampleFile) {
       console.log("using example file");
       actions.updateFileUpload(getExampleFile());
+      set(state.fileName, getExampleFile());
       goNextStep();
       return;
     }
