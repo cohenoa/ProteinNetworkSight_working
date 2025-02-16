@@ -1,0 +1,7 @@
+Deploy to production:
+    echo "DEPLOY_MODE=production" > .env
+    ./deploy.sh
+
+Deploy to beta:
+    echo "DEPLOY_MODE=beta" > .env
+    ./deploy.sh

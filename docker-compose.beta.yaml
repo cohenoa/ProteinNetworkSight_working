@@ -1,0 +1,21 @@
+services:
+  frontend:
+    container_name: medmolnet-beta-front
+    networks:
+      - medmolnet-beta-network
+
+  backend:
+    container_name: medmolnet-beta-back
+    networks:
+      - medmolnet-beta-network
+
+  nginx:
+    container_name: nginx-beta
+    environment:
+      - NGINX_PORT=8081
+    networks:
+      - medmolnet-beta-network
+
+networks:
+  medmolnet-beta-network:
+    driver: bridge

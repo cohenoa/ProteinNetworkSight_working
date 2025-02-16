@@ -491,12 +491,12 @@ const contextMenuItems: MenuItem[] = [
     icon: faBrush,
     submenu: [
       {
-        label: 'pos',
+        label: 'positive',
         icon: faPlus,
         submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('pos', value)}}))
       },
       {
-        label: 'neg',
+        label: 'negetive',
         icon: faMinus,
         submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('neg', value)}}))
       },
