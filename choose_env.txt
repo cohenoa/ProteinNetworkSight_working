@@ -1,11 +1,10 @@
 Automatic Deployment(work in progress):
     Production:
-        echo "DEPLOY_MODE=production" > .env
-        ./deploy.sh
+        ./deploy-prod.bat
 
     Beta:
         echo "DEPLOY_MODE=beta" > .env
-        ./deploy.sh
+        ./deploy-beta.bat
 
 
 Manual Deployment:
