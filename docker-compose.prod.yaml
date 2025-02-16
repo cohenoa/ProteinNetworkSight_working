@@ -10,6 +10,7 @@ services:
       - ./frontend/src:/usr/src/app/src
     networks:
       - medmolnet-network
+    container_name: prod-front
 
   backend:
     image: medmolnet-backend
@@ -20,18 +21,21 @@ services:
       - ./backend:/python-docker
     networks:
       - medmolnet-network
+    container_name: prod-back
 
   nginx:
     image: nginx
     restart: unless-stopped
-    ports:
-      - "${NGINX_PORT}:80" # Dynamic port
     volumes:
       - ./nginx:/etc/nginx
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     networks:
       - medmolnet-network
+    ports:
+      - "80:80"
+      - "8080:8080"
+    container_name: prod-nginx
 
 networks:
   medmolnet-network:

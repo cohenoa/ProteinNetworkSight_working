@@ -1,7 +1,17 @@
-Deploy to production:
-    echo "DEPLOY_MODE=production" > .env
-    ./deploy.sh
+Automatic Deployment(work in progress):
+    Production:
+        echo "DEPLOY_MODE=production" > .env
+        ./deploy.sh
 
-Deploy to beta:
-    echo "DEPLOY_MODE=beta" > .env
-    ./deploy.sh
+    Beta:
+        echo "DEPLOY_MODE=beta" > .env
+        ./deploy.sh
+
+
+Manual Deployment:
+    Production:
+        docker compose -p medmolnet-prod -f docker-compose.yaml up -d
+    
+    Beta:
+        docker compose -p medmolnet-beta -f docker-compose.yaml -f docker-compose.beta.yaml up -d
+
