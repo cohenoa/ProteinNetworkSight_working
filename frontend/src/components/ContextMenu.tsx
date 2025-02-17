@@ -2,11 +2,6 @@ import { FC, useState, useLayoutEffect, useRef } from "react";
 import { ContextMenuProps } from "../@types/props";
 import "../styles/ContextMenu.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { set } from "idb-keyval";
-
-function getMenuPosition(position: { x: number; y: number }, depth: number) {
-  return { x: position.x + 50, y: position.y + 50 };
-}
 
 const ContextMenu: FC<ContextMenuProps> = ({ position, depth, items }) => {
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
