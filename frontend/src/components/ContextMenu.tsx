@@ -2,30 +2,30 @@ import { FC, useState, useLayoutEffect, useRef } from "react";
 import { ContextMenuProps } from "../@types/props";
 import "../styles/ContextMenu.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { set } from "idb-keyval";
+
+function getMenuPosition(position: { x: number; y: number }, depth: number) {
+  return { x: position.x + 50, y: position.y + 50 };
+}
 
 const ContextMenu: FC<ContextMenuProps> = ({ position, depth, items }) => {
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
   const [subMenuXPos, setSubMenuXPos] = useState<number>(-1); // this state is used to fix a bug of position in submenu
-  const [HorizontalMenuDirection, setHorizontalMenuDirection] = useState<string>("right");
-  const [VerticalMenuDirection, setVerticalMenuDirection] = useState<string>("down");
   const menuRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    console.log("window height: ", window.innerHeight);
     if (menuRef.current) {
       const menuRect = menuRef.current.getBoundingClientRect();
       const screenHeight = window.innerHeight;
-      console.log("menu rect: " + menuRect.bottom + " " + menuRect.right);
       
-      // If the menu overflows the bottom, reverse the order
-      let dirValue = menuRect.bottom > screenHeight ? "up" : "down";
-      setVerticalMenuDirection(dirValue);
-      // setVerticalMenuDirection(menuRect.bottom > screenHeight ? "up" : "down");
-      console.log("menu vertical direction: " + dirValue);
-      console.log("menu vertical direction: " + VerticalMenuDirection);
+      let dirValue = position.y + menuRect.height > screenHeight ? "up" : "down";
+
+      if (dirValue === "up"){
+        position.y = position.y - menuRect.height;
+      }
 
     }
-  }, [items.length]);
+  }, [items.length, position.y]);
 
   const handleOptionMouseEnter = (label: string) => {
     setActiveSubMenu(label);
@@ -46,15 +46,35 @@ const ContextMenu: FC<ContextMenuProps> = ({ position, depth, items }) => {
 
     if (subMenuXPos === -1){ // opening submenu for the first time
       setSubMenuXPos(rect.right);
-      return {x: rect.right, y: position.y + rect.height * Number(index)};
+      return getOverflowPosition(
+        { x: rect.right, y: position.y + rect.height * Number(index) },
+        rect.height,
+        items.at(index.valueOf())?.submenu?.length || 0
+      );
+      // return {x: rect.right, y: position.y + rect.height * Number(index)};
     }
     else{ // submenu already opened, using previous XPos to avoid taking submenu pos(render order issue)
-      return {x: subMenuXPos, y: position.y + rect.height * Number(index)};
+      return getOverflowPosition(
+        {x: subMenuXPos, y: position.y + rect.height * Number(index)}, 
+        rect.height,
+        items.at(index.valueOf())?.submenu?.length || 0
+      );
+      // return {x: subMenuXPos, y: position.y + rect.height * Number(index)};
     }
   }
 
+  const getOverflowPosition = (root: { x: number; y: number }, itemHeight: number, numItems: number) => {
+    let newPos = {x: root.x, y: root.y};
+
+    let length = (itemHeight * (numItems - 1));
+    if ( root.y + length + itemHeight > window.innerHeight){
+      newPos.y = root.y - length;
+    }
+    return newPos;
+  }
+
   return (
-    <div ref={menuRef} style={{ top: position.y, left: position.x }} className="custom-context-menu">
+    <div ref={depth === 0? menuRef: undefined} style={{ top: position.y, left: position.x, zIndex: depth + 1 }} className="custom-context-menu">
       {items.map((item, index) => (
           <div
             id={"menuItem" + String(depth) + "_" + String(index)}

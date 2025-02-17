@@ -456,6 +456,11 @@ const savePositionsToIndexedDB = async () => {
 // right click menu
 const contextMenuItems: MenuItem[] = [
   {
+    label: 'Download',
+    icon: faDownload,
+    submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
+  },
+  {
     label: 'Layout',
     icon: faDiagramProject,
     submenu: Object.values(supportedSettings.layouts).map((option) => {
@@ -501,11 +506,6 @@ const contextMenuItems: MenuItem[] = [
         submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('neg', value)}}))
       },
     ]
-  },
-  {
-    label: 'Download',
-    icon: faDownload,
-    submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
   },
 ];
 

@@ -11,7 +11,7 @@
 
 .custom-context-menu {
   position: fixed;
-  z-index: 10;
+  z-index: 1;
   background: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   font-size: 13px;
