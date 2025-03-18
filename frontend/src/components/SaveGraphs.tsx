@@ -141,6 +141,7 @@ const SaveGraphs = forwardRef((props, ref) => {
             thisGraphRef.applyLayout(String(thisGraph.Layout.current.value), false);
             thisGraphRef.setOpacity(Number(thisGraph.Opacity.current.value));
             thisGraphRef.setNodeSize(Number(thisGraph.NodeSize.current.value));
+            // thisGraphRef.setNodeColor('pos', thisGraph.NodeColor.pos);
 
             setCompletedLayouts((prev: number) => {
                 if (prev + 1 === graphRefs.length) {

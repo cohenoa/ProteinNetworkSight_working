@@ -24,6 +24,7 @@ interface GraphExposedMethods extends HTMLDivElement {
   applyLayout: (name: string, animate: boolean) => void,
   setOpacity: (op: number) => void,
   setNodeSize: (size: number) => void,
+  setNodeColor: (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => void,
   fetchData: () => void,
   downloadGraph: (type: downloadFileTypes) => void,
 }

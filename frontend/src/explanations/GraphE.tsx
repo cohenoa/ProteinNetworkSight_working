@@ -55,11 +55,11 @@ const GraphExplanation: FC = () => {
         </li>
         <li className="must-item">
           <i className="fa fa-circle" style={{ color: "red" }} />
-          Red node- positive value.
+          Red node- negative value.
         </li>
         <li className="must-item">
           <i className="fa fa-circle" style={{ color: "blue" }} />
-          Blue node- negative value.
+          Blue node- positive value.
         </li>
         <li className="must-item">
           <i className="fa fa-circle-thin" style={{ fontSize: "25px" }} />

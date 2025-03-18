@@ -429,6 +429,7 @@ const savePositionsToIndexedDB = async () => {
     applyLayout,
     setOpacity,
     setNodeSize,
+    setNodeColor,
     downloadGraph
   }));
 
