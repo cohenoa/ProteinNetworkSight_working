@@ -15,6 +15,7 @@
     "ag-grid-community": "^27.3.0",
     "ag-grid-enterprise": "^27.3.0",
     "ag-grid-react": "^27.3.0",
+    "canvg": "^3.0.11",
     "cors": "^2.8.5",
     "cytoscape": "^3.2.19",
     "cytoscape-cise": "^1.0.0",
