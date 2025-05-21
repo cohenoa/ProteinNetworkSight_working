@@ -10,7 +10,7 @@ import "../styles/SaveGraphs.css";
 import { graphRef } from "../@types/props";
 import { GraphSettings, GraphsStatus, getWindowSelectItem } from "../common/GraphSettings";
 import LoadingComponent from "./Loading";
-import { copySettings, baseDownloadAllGraphSetting } from "../common/GraphSettings";
+import { copySettings, baseGraphSetting } from "../common/GraphSettings";
 
 const presetOption = getWindowSelectItem('layouts', 'PRESET');
 
@@ -22,7 +22,7 @@ const SaveGraphs = forwardRef((props, ref) => {
 
     const [graphRefs, setGraphRefs] = useState<graphRef[]>([]);
 
-    const [applyAllStatus, setApplyAllStatus] = useState<GraphSettings>(copySettings(baseDownloadAllGraphSetting, false));
+    const [applyAllStatus, setApplyAllStatus] = useState<GraphSettings>(copySettings(baseGraphSetting, false));
     const [graphsStatus, setGraphsStatus] = useState<GraphsStatus>({});
     const [usePresetWhenPossible, setUsePresetWhenPossible] = useState<boolean>(false);
     const [allGraphData, setAllGraphData] = useState<ICustomAllGraphData>({});
@@ -42,7 +42,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         state.vectorsHeaders.forEach((header: string) => {
             
             if (header in clickedVectors) {    
-                newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, true);
+                newGraphStatus[header] = copySettings(baseGraphSetting, true);
 
                 newGraphStatus[header].Layout.options.push(presetOption);
                 newGraphStatus[header].Layout.current = presetOption;
@@ -60,7 +60,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                 newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default
             }
             else {
-                newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, false);
+                newGraphStatus[header] = copySettings(baseGraphSetting, false);
                 newGraphStatus[header].Layout.current = newGraphStatus[header].Layout.default;
                 newGraphStatus[header].NodeSize.current = newGraphStatus[header].NodeSize.default;
                 newGraphStatus[header].Opacity.current = newGraphStatus[header].Opacity.default;
@@ -240,7 +240,7 @@ const SaveGraphs = forwardRef((props, ref) => {
     const renderApplyAllMenu = () => {
         return (
             <div className="ApplyAllMenu">
-                {Object.entries(baseDownloadAllGraphSetting).map(([key, item], index) => (
+                {Object.entries(baseGraphSetting).map(([key, item], index) => (
                     <div className="ApplyAllMenuOption" key={"ApplyAllMenuOption-" + key}>
                         <div className="ApplyAllMenuOptiontitle">{"Apply " + item.title + " to all graphs"}</div>
                         <WindowedSelect

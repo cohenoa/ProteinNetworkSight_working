@@ -3,7 +3,7 @@
 export const copySettings = (settings: GraphSettings, fullCopy: boolean = false): GraphSettings => {
     const layoutOptions = fullCopy? [...settings.Layout.options]: settings.Layout.options;
     return {
-        ...baseDownloadAllGraphSetting,
+        ...baseGraphSetting,
         Layout: {
             ...settings.Layout,
             options: layoutOptions,
@@ -11,6 +11,8 @@ export const copySettings = (settings: GraphSettings, fullCopy: boolean = false)
         NodeSize: {...settings.NodeSize},
         Opacity: {...settings.Opacity},
         fileType: {...settings.fileType},
+        PosNodeColor: {...settings.PosNodeColor},
+        NegNodeColor: {...settings.NegNodeColor},
     };
 }
 
@@ -87,6 +89,8 @@ export interface GraphSettings {
     NodeSize: NodeSizeSettingItem;
     Opacity: OpacitySettingItem;
     fileType: FileTypeSettingItem;
+    PosNodeColor: NodeColorSettingItem;
+    NegNodeColor: NodeColorSettingItem;
 }
   
 export interface GraphsStatus {
@@ -133,7 +137,16 @@ interface FileTypeSettingItem extends SettingItem {
     options: FileTypeOptionItem[];
 }
 
-export const baseDownloadAllGraphSetting: GraphSettings = {
+// NodeColor option interfaces:
+interface NodeColorOptionItem extends optionItem {
+    value: SupportedNodeColor;
+}
+  
+interface NodeColorSettingItem extends SettingItem {
+    options: NodeColorOptionItem[];
+}
+
+export const baseGraphSetting: GraphSettings = {
     Layout: {
         title: "Layout",
         default: getWindowSelectItem('layouts', 'CIRCLE'),
@@ -157,5 +170,37 @@ export const baseDownloadAllGraphSetting: GraphSettings = {
         default: getWindowSelectItem('fileTypes', 'PNG'),
         current: null,
         options: Object.values(supportedSettings.fileTypes).map(opt => ({ label: opt, value: opt })),
-    }
+    },
+    PosNodeColor: {
+        title: "Positive Node Color",
+        default: getWindowSelectItem('nodeColors', 'red'),
+        current: null,
+        options: Object.entries(supportedSettings.nodeColors).map(([key, opt]) => ({ label: key, value: opt }))
+    },
+    NegNodeColor: {
+        title: "Negative Node Color",
+        default: getWindowSelectItem('nodeColors', 'blue'),
+        current: null,
+        options: Object.entries(supportedSettings.nodeColors).map(([key, opt]) => ({ label: key, value: opt }))
+    },
+}
+
+export interface LayoutStatus {
+    current: LayoutOptionItem | null;
+}
+
+interface NodePositions {
+    [key: string]: {
+        x: number;
+        y: number;
+    };
+}
+
+export interface GraphState {
+    Layout: LayoutOptionItem;
+    NodeSize: NodeSizeOptionItem;
+    Opacity: OpacityOptionItem;
+    PosNodeColor: NodeColorOptionItem;
+    NegNodeColor: NodeColorOptionItem;
+    Positions: NodePositions | null;
 }

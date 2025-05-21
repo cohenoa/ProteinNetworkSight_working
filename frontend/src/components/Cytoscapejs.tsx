@@ -11,7 +11,7 @@ import { saveAs } from 'file-saver';
 import { get, set } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
-import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity, SupportedNodeColor } from "../common/GraphSettings";
+import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity, SupportedNodeColor, baseGraphSetting, GraphState, GraphSettings } from "../common/GraphSettings";
 import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner, faBrush, faPlus , faMinus } from '@fortawesome/free-solid-svg-icons';
 import svg from "cytoscape-svg";
 import fcose from 'cytoscape-fcose';
@@ -50,7 +50,14 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const [openContextMenu, setOpenContextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [elements, setElements] = useState<Array<any>>([])
-  const [curNodeSize, setCurNodeSize] = useState<number>(1);
+  const [curNodeSize, setCurNodeSize] = useState<SupportedNodeSize>();
+
+  // Layout: LayoutSettingItem;
+  //   NodeSize: NodeSizeSettingItem;
+  //   Opacity: OpacitySettingItem;
+  //   fileType: FileTypeSettingItem;
+
+  const [graphState, setGraphState] = useState<GraphState>()
 
 const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
   {
@@ -68,7 +75,7 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
     style: {
       "line-color": "data(color)",
       "background-image": '#FFFFFF',
-      opacity: supportedSettings.opacities.NORMAL
+      opacity: graphState.Opacity.value
     },
   },
 ]);
@@ -80,7 +87,7 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
   };
   
   const [layout, setLayout] = useState<any>({
-    name: 'circle',
+    name: graphState.Layout.value,
     fit: true, // whether to fit the viewport to the graph
     padding: 30, // padding used on fit
     avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
@@ -338,11 +345,21 @@ const savePositionsToIndexedDB = async () => {
       console.log(clickedVectors)
       if (!(clickedVector in clickedVectors)) {
         // If clickedVector is not in clickedVectors, create a new entry
-        clickedVectors[clickedVector] = { positions: [],threshold:{},elements:[] };
+        clickedVectors[clickedVector] = { positions: [], threshold:{}, elements:[] };
       }
       
       const elementsVector = clickedVectors[clickedVector].elements|| []
       elementsVector.push(elements)
+      
+      const graphState: GraphState = {
+        Layout: baseGraphSetting.Layout.default,
+        NodeSize: baseGraphSetting.NodeSize.default,
+        Opacity: baseGraphSetting.Opacity.default,
+        PosNodeColor: baseGraphSetting.PosNodeColor.default,
+        NegNodeColor: baseGraphSetting.NegNodeColor.default,
+        Positions: null,
+      }; 
+
       // Add the positions to the array for the clickedVector
       clickedVectors[clickedVector].positions = [
         ...nodePositions,
@@ -352,6 +369,7 @@ const savePositionsToIndexedDB = async () => {
       clickedVectors[clickedVector].elements = elementsVector;
       clickedVectors[clickedVector].nodeSize = curNodeSize;
       clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
+      // clickedVectors[clickedVector].color.pos = myStyle[0].style.color;
 
       
       // Update the clicked_vectors and nodePositions in the existing data
@@ -407,6 +425,7 @@ const savePositionsToIndexedDB = async () => {
           // setNodePositions(positions);
           setNodeSize(clickedVectors[clickedVector].nodeSize);
           setOpacity(clickedVectors[clickedVector].opacity);
+          // setNodeColor(clickedVectors[clickedVector].color);
 
           layout.positions = positions.reduce((positionsObj: any, node: any) => {
             const nodeId = Object.keys(node)[0];
