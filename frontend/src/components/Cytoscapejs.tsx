@@ -53,26 +53,26 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const [curNodeSize, setCurNodeSize] = useState<SupportedNodeSize>(supportedSettings.nodeSizes.NORMAL);
   const [curNodeColor, setCurNodeColor] = useState<{pos: SupportedNodeColor, neg: SupportedNodeColor}>({pos: supportedSettings.nodeColors.blue, neg: supportedSettings.nodeColors.red});
 
-const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
-  {
-    selector: "node",
-    style: {
-      "background-color": "data(color)",
-      label: "data(label)",
-      width: "data(size)",
-      height: "data(size)",
-      "background-image": '#FFFFFF', 
+  const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
+    {
+      selector: "node",
+      style: {
+        "background-color": "data(color)",
+        label: "data(label)",
+        width: "data(size)",
+        height: "data(size)",
+        "background-image": '#FFFFFF', 
+      },
     },
-  },
-  {
-    selector: "edge",
-    style: {
-      "line-color": "data(color)",
-      "background-image": '#FFFFFF',
-      opacity: supportedSettings.opacities.NORMAL
+    {
+      selector: "edge",
+      style: {
+        "line-color": "data(color)",
+        "background-image": '#FFFFFF',
+        opacity: supportedSettings.opacities.NORMAL
+      },
     },
-  },
-]);
+  ]);
 
   const resetElements = async () => {
     setElements(() => {
@@ -134,7 +134,12 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
       
       cy.on('free', 'node', (event) => {
         // node dropped
-        layout.name = supportedSettings.layouts.PRESET;
+        // setIsPreset(true);
+        setLayout({
+          ...layout,
+          name: supportedSettings.layouts.PRESET,
+          fit: false
+        })
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
@@ -478,13 +483,12 @@ const saveGraph = async () => {
         }
       }
 
-      const newLayout = {
+      setLayout({
         ...layout,
         name: name,
         animate: animate,
-      };
-
-      setLayout(newLayout);
+        fit: true,
+      });
     }
   };
 
