@@ -175,7 +175,7 @@ export const baseDownloadAllGraphSetting: GraphSettings = {
         options: Object.entries(supportedSettings.nodeColors).map(([key, opt]) => ({ label: key, value: opt }))
     },
     NegNodeColor: {
-        title: "Positive Node Color",
+        title: "Negative Node Color",
         default: getWindowSelectItem('nodeColors', 'red'),
         current: null,
         options: Object.entries(supportedSettings.nodeColors).map(([key, opt]) => ({ label: key, value: opt }))
