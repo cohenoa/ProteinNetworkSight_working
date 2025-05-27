@@ -1,5 +1,7 @@
 import { FC } from "react";
 import "../styles/Explanation.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars, faDiagramProject, faDownload, faFloppyDisk, faArrowPointer, faPencil, faComputerMouse, faBrush } from '@fortawesome/free-solid-svg-icons';
 
 const GraphExplanation: FC = () => {
   return (
@@ -9,57 +11,26 @@ const GraphExplanation: FC = () => {
         current interactions
       </p>
       <p className="please">
-        The obtained network includes the input values represented by nodes
-        (node radius corresponds to the input value). The edges are adapted from
-        STRING-db. Edge width represents the probability of protein-protein
-        interaction.
+        The obtained network includes the input values represented by nodes. 
+        The edges are adapted from STRING-db.
       </p>
       <p className="please">
-        The information can be download as either a table or a network
+        in this page you can interact with individual graphs. 
+        if you wish to make download your data or all the graphs at once click the "save" button below
       </p>
-      <p className="please">
-        The network can be either visualized online or downloaded as a SVG file
-        (editable).
-      </p>
-      <p className="please">
-        Online presentation is interactive: the networks can be changed,
-        zoomed-in, zoomed-out or rotated.
-      </p>
-      <p className="please">
-        The information can be download as a json file for further analysis in Cytoscape
-      </p>
-      <p className="please">
-        To save the current layout of the network right click -{">"} Layout -{">"} preset -{">"} save current.
-      </p>
-      <p className="please">
-        To load the saved layout right click -{">"} Layout -{">"} preset -{">"} load preset.
-      </p>
-      <p className="please">
-        You can change the layout of the network by selecting one of the layout options inside of the right click menu under layouts.
-        To go back to the layout set before right click on the network and select the preset layout option.
-      </p>
-      <p className="please">
-        Change the opacity of the line by right click and then selecting the opacity option the default opacity is 0.15.
-      </p>
-    
-      {/* <p className="please">
-        Table includes several calculated parameters (you can sort by any column
-        by hovering over the column name) Here goes a list of all column names
-        in the output table with a short description:
-      </p> */}
       <ul>
         <span>Nodes:</span>
         <li className="must-item">
           <i className="fa fa-question-circle-o" style={{ color: "black" }} />
-          Network nodes represent proteins\ genes.
-        </li>
-        <li className="must-item">
-          <i className="fa fa-circle" style={{ color: "red" }} />
-          Red node- positive value.
+          Network nodes represent proteins \ genes.
         </li>
         <li className="must-item">
           <i className="fa fa-circle" style={{ color: "blue" }} />
-          Blue node- negative value.
+          Blue node - positive value.
+        </li>
+        <li className="must-item">
+          <i className="fa fa-circle" style={{ color: "red" }} />
+          Red node - negative value.
         </li>
         <li className="must-item">
           <i className="fa fa-circle-thin" style={{ fontSize: "25px" }} />
@@ -75,14 +46,62 @@ const GraphExplanation: FC = () => {
             className="fa fa-minus"
             style={{ color: "lightgray", fontSize: "25px" }}
           />
-          edge width - probability of protein-protein interaction
+          edge width - strength of protein-protein interaction
+        </li>
+        <span>Options:</span>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faArrowPointer} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          move any node by dragging it with the mouse
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faComputerMouse} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          zoom in or out by scrolling to focus on a specific part of the graph
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faComputerMouse} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          use the right click menu to cutomize your graph!
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faDiagramProject} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          change the Layout of the nodes to gain valuable insight
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faPencil} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          change the size of the nodes to your liking
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faBrush} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          change the color of the nodes to your liking
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faPencil} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          change the opacity of the edges to your liking
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faFloppyDisk} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          like your graph? Save it for future use! go to Layouts -{">"} Preset -{">"} save
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faFloppyDisk} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          to reload your saved graph go to Layouts -{">"} Preset -{">"} load
+        </li>
+        <li className="must-item">
+          <FontAwesomeIcon className="icon" icon={faDownload} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          download the graph in a varaiaty of formats - SVG, PNG or JSON
         </li>
         <span>Table:</span>
         <li className="must-item">
           <i className="fa fa-sort-amount-desc" style={{ color: "black" }} />
-          Table can help you sort the nodes by calculated scores.
+          Table can help you see the actual data represented by the graph
         </li>
       </ul>
+    
+      {/* <p className="please">
+        Table includes several calculated parameters (you can sort by any column
+        by hovering over the column name) Here goes a list of all column names
+        in the output table with a short description:
+      </p> */}
+      
     </div>
   );
 };

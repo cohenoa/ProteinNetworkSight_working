@@ -79,7 +79,7 @@ const ContextMenu: FC<ContextMenuProps> = ({ position, depth, items }) => {
             onMouseEnter={() => handleOptionMouseEnter(item.label)}
             onMouseLeave={handleOptionMouseLeave}
           > 
-            <FontAwesomeIcon className="icon" icon={item.icon} fixedWidth={true}></FontAwesomeIcon>
+            <FontAwesomeIcon className="icon" icon={item.icon} fixedWidth={true}/>
             {item.label}
             {item.submenu && (activeSubMenu === item.label || item.submenu.some((item) => {return item.label === activeSubMenu})) && (
             <ContextMenu // submenu

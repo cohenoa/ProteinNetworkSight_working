@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { NavLink } from "react-router-dom";
-import logo from '../assets/img3.png'; // Tell webpack this 
+import logo from '../assets/logo.png'; // Tell webpack this 
 import "../styles/Topbar.css";
 type navProps = { isActive: boolean; isPending: boolean };
 
@@ -17,7 +17,7 @@ const TopbarComponent: FC = () => {
     <header className="topbar">
       <div className="logo-container">
         <NavLink end to="/" className="logo">
-        <img src={logo} style={{ width: "100%" }}  />
+        <img src={logo} style={{ width: "100%", height: "50%"}}  />
         </NavLink>
       </div>
       <div className="menu-container">
