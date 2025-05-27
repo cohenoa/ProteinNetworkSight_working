@@ -353,26 +353,19 @@ const saveGraph = async () => {
   const downloadGraph = (type: SupportedFileType) => {
     const cy = cyRef.current;
     if (cy){
-      let content = '';
-      let contentType = '';
+      let blob: Blob;
       if (type === supportedSettings.fileTypes.SVG) {
-        content = cy.svg();
-        contentType = "image/svg+xml;charset=utf-8";
+        blob = new Blob([cy.svg()], { type: "image/svg+xml;charset=utf-8" });
       } else if (type === supportedSettings.fileTypes.PNG) {
-        content = cy.png();
-        contentType = "image/png";
+        blob = cy.png({ output: "blob", full: true });
       } else if (type === supportedSettings.fileTypes.JSON) {
-        content = JSON.stringify(cy.json());
-        contentType = "application/json";
+        blob = new Blob([JSON.stringify(cy.json())], { type: "application/json" });
       }
       else{
         console.log("type not supported");
         return;
       }
-
-      const blob = new Blob([content], { type: contentType });
       saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.' + type);
-
     }
     else{
       console.log("no cy");
