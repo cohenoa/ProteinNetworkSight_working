@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
-import { IGraphProps } from "../@types/props";
+import { graphRef, IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
 import "../styles/Button.css";
 import CytoscapeComponent from "react-cytoscapejs";
@@ -50,7 +50,8 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const [openContextMenu, setOpenContextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [elements, setElements] = useState<Array<any>>([])
-  const [curNodeSize, setCurNodeSize] = useState<number>(1);
+  const [curNodeSize, setCurNodeSize] = useState<SupportedNodeSize>(supportedSettings.nodeSizes.NORMAL);
+  const [curNodeColor, setCurNodeColor] = useState<{pos: SupportedNodeColor, neg: SupportedNodeColor}>({pos: supportedSettings.nodeColors.blue, neg: supportedSettings.nodeColors.red});
 
 const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
   {
@@ -80,7 +81,7 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
   };
   
   const [layout, setLayout] = useState<any>({
-    name: 'circle',
+    name: supportedSettings.layouts.CIRCLE,
     fit: true, // whether to fit the viewport to the graph
     padding: 30, // padding used on fit
     avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
@@ -133,9 +134,7 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
       
       cy.on('free', 'node', (event) => {
         // node dropped
-
-        // console.log('Node dropped:', event.target.id());
-        // savePositionsToIndexedDB()
+        layout.name = supportedSettings.layouts.PRESET;
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
@@ -153,7 +152,6 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
         setSelectedNode(clickedNode);
       });
 
-      // setFullyLoaded({layoutStop: fullyLoaded.Layout, positions: fullyLoaded.positions, cyref: true, notLoading: fullyLoaded.notLoading});
       try {
         const val = await get(state.fileName);
   
@@ -184,6 +182,7 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
           label: node.id === undefined || typeof node.id === "number"? node.id: node.id,
           color: node.color,
           size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
+          positive: node.size === undefined || node.size > 0 ? true : false,
         },
       })
     );
@@ -218,18 +217,19 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
         const positions = clickedVectors[clickedVector].positions;
         if (positions !== undefined) {
           setElements(elementsVector);
-          // setNodePositions(positions);
+          applyOpacity(clickedVectors[clickedVector].opacity);
+          setCurNodeColor(clickedVectors[clickedVector].color);
+          setCurNodeSize(clickedVectors[clickedVector].nodeSize);
 
-          // Create a layout with saved positions
-          console.log("positions: \n", positions)
-          console.log("number_of_elements: \n",positions.length)
-          layout.name = 'preset';
-          layout.positions = positions.reduce((positionsObj: any, node: any) => {
-            const nodeId = Object.keys(node)[0];
-            const position = node[nodeId];
-            positionsObj[nodeId] = position;
-            return positionsObj;
-          }, {});
+          layout.name = clickedVectors[clickedVector].layout;
+          if (clickedVectors[clickedVector].layout === supportedSettings.layouts.PRESET) {
+            layout.positions = positions.reduce((positionsObj: any, node: any) => {
+              const nodeId = Object.keys(node)[0];
+              const position = node[nodeId];
+              positionsObj[nodeId] = position;
+              return positionsObj;
+            }, {});
+          }
         }
       } else {
         console.log("Setting the elements for the first time");
@@ -259,12 +259,16 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
   }, []);
   
   useEffect(() => {
-    resetElements().then(() => fetchData());
+    resetElements().then(() => {
+      fetchData().then(() => {
+        console.log("HERE NODE SIZE: " + curNodeSize)
+      });
+    });
   }, [ graphData.nodes, graphData.links, state.fileName, fetchData]);
 
   useEffect(() => {
     cyRef.current?.layout(layout).run();
-  }, [layout, curNodeSize]);
+  }, [layout, curNodeSize, elements]);
 
   useEffect(() => {
     if (layoutStop && dataLoaded) {
@@ -284,29 +288,6 @@ const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
     setOpenPanel(false);
   }, []);
 
-  // The function create the nodes data for the elements arra
-  
-// // The function return the color of the node based on the size
-// const getNodeColor = (size: number): string => {
-//   if (size === 0) return "#B2E5FF"; // Light Blue for zero
-
-//   // Darker warm colors for positive values, with doubled range
-//   if (size > 0.9) return "#CC3700"; // Darker Orange Red
-//   if (size > 0.7) return "#E5533A"; // Darker Tomato
-//   if (size > 0.5) return "#CCAC00"; // Darker Gold
-//   if (size > 0.3) return "#CC8400"; // Darker Orange
-//   if (size > 0.1) return "#CC6F00"; // Darker Dark Orange
-
-//   // Darker cool colors for negative values, with doubled range
-//   if (size < -0.9) return "#1875CC"; // Darker Dodger Blue
-//   if (size < -0.7) return "#0093CC"; // Darker Deep Sky Blue
-//   if (size < -0.5) return "#009999"; // Darker Dark Turquoise
-//   if (size < -0.3) return "#1A8C80"; // Darker Light Sea Green
-//   if (size < -0.1) return "#4A7980"; // Darker Cadet Blue
-
-//   return "#B2E5FF"; // Default light blue for any other values (just in case)
-// };
-
 
 
 //The function return the color of the link, based on the score
@@ -323,7 +304,7 @@ const getLinkColor = (score: Number) => {
   return "white";
 };
 
-const savePositionsToIndexedDB = async () => {
+const saveGraph = async () => {
 
   const nodePositions = cyRef.current?.nodes().map((node) => {
     let positionObj = node.position();
@@ -341,17 +322,16 @@ const savePositionsToIndexedDB = async () => {
         clickedVectors[clickedVector] = { positions: [],threshold:{},elements:[] };
       }
       
-      const elementsVector = clickedVectors[clickedVector].elements|| []
-      elementsVector.push(elements)
-      // Add the positions to the array for the clickedVector
-      clickedVectors[clickedVector].positions = [
-        ...nodePositions,
-      ];
-      clickedVectors[clickedVector].threshold = thresholds;
+      const elementsVector = clickedVectors[clickedVector].elements || [];
+      elementsVector.push(elements);
       clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1;
+      clickedVectors[clickedVector].threshold = thresholds;
+      clickedVectors[clickedVector].positions = [...nodePositions];
       clickedVectors[clickedVector].elements = elementsVector;
+      clickedVectors[clickedVector].layout = layout.name;
       clickedVectors[clickedVector].nodeSize = curNodeSize;
       clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
+      clickedVectors[clickedVector].color = curNodeColor;
 
       
       // Update the clicked_vectors and nodePositions in the existing data
@@ -402,36 +382,91 @@ const savePositionsToIndexedDB = async () => {
       const elementsVector = clickedVectors[clickedVector].elements[0]
       const positions = clickedVectors[clickedVector].positions;
       if (positions !== undefined) {
-        if (positions !== undefined) {
-          setElements(elementsVector);
-          // setNodePositions(positions);
-          setNodeSize(clickedVectors[clickedVector].nodeSize);
-          setOpacity(clickedVectors[clickedVector].opacity);
+        setElements(elementsVector);
+        applyOpacity(clickedVectors[clickedVector].opacity);
+        setCurNodeColor(clickedVectors[clickedVector].color);
+        setCurNodeSize(clickedVectors[clickedVector].nodeSize);
 
+        layout.name = clickedVectors[clickedVector].layout;
+        if (clickedVectors[clickedVector].layout === supportedSettings.layouts.PRESET) {
           layout.positions = positions.reduce((positionsObj: any, node: any) => {
             const nodeId = Object.keys(node)[0];
             const position = node[nodeId];
             positionsObj[nodeId] = position;
             return positionsObj;
           }, {});
-
-          console.log("position setting successfull");
-          return true;
         }
       }
+      return true;
     }
     return false;
   }
-
+  
   {/* @ts-ignore */}
   useImperativeHandle(ref, () => ({
     fetchData,
     applyLayout,
-    setOpacity,
-    setNodeSize,
+    applyNodeSize,
+    applyOpacity,
+    applyNodeColor,
     downloadGraph
   }));
 
+  // right click menu
+  const contextMenuItems: MenuItem[] = [
+    {
+      label: 'Download',
+      icon: faDownload,
+      submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
+    },
+    {
+      label: 'Layout',
+      icon: faDiagramProject,
+      submenu: Object.values(supportedSettings.layouts).map((option) => {
+          if (option === supportedSettings.layouts.PRESET){
+            return {
+              label: option,
+              icon: faDiagramProject,
+              submenu: [
+                {label: 'save', icon: faFloppyDisk, onClick: () => {saveGraph()}},
+                {label: 'load', icon: faSpinner, onClick: () => {applyLayout(supportedSettings.layouts.PRESET, true)}},
+              ]
+            }
+          }
+          return {
+            label: option,
+            icon: faDiagramProject,
+            onClick: () => {applyLayout(option, true)},
+          }
+      })
+    },
+    {
+      label: 'Link Opacity',
+      icon: faPencil,
+      submenu: Object.entries(supportedSettings.opacities).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {applyOpacity(value)}}))
+    },
+    {
+      label: 'Node Size',
+      icon: faPencil,
+      submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {applyNodeSize(value)}}))
+    },
+    {
+      label: 'Node Color',
+      icon: faBrush,
+      submenu: [
+        {
+          label: 'positive',
+          icon: faPlus,
+          submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {applyNodeColor('pos', value)}}))
+        },
+        {
+          label: 'negetive',
+          icon: faMinus,
+          submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {applyNodeColor('neg', value)}}))
+        },
+      ]
+    },
+  ];
 
   const applyLayout = async (name: SupportedLayout, animate: boolean) => {
     if (cyRef.current) {
@@ -453,98 +488,24 @@ const savePositionsToIndexedDB = async () => {
     }
   };
 
-// right click menu
-const contextMenuItems: MenuItem[] = [
-  {
-    label: 'Download',
-    icon: faDownload,
-    submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
-  },
-  {
-    label: 'Layout',
-    icon: faDiagramProject,
-    submenu: Object.values(supportedSettings.layouts).map((option) => {
-        if (option === supportedSettings.layouts.PRESET){
-          return {
-            label: option,
-            icon: faDiagramProject,
-            submenu: [
-              {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
-              {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
-            ]
-          }
-        }
-        return {
-          label: option,
-          icon: faDiagramProject,
-          onClick: () => {applyLayout(option, true)},
-        }
-    })
-  },
-  {
-    label: 'Link Opacity',
-    icon: faPencil,
-    submenu: Object.entries(supportedSettings.opacities).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setOpacity(value)}}))
-  },
-  {
-    label: 'Node Size',
-    icon: faPencil,
-    submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {setNodeSize(value)}}))
-  },
-  {
-    label: 'Node Color',
-    icon: faBrush,
-    submenu: [
-      {
-        label: 'positive',
-        icon: faPlus,
-        submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('pos', value)}}))
-      },
-      {
-        label: 'negetive',
-        icon: faMinus,
-        submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {setNodeColor('neg', value)}}))
-      },
-    ]
-  },
-];
-
-const setNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
+const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
   console.log("setting node color");
-  (graphData.nodes as ICustomNode[]).forEach((node) => {
-    if (node.size !== undefined) {
-      if ((node.size > 0) === (nodeType === 'pos')) {
-        node.color = color;
-      }
-    }
-    else{
-      console.log("node size undefined");
-    }
-  })
-
-  let newElements: any[] = [];
-  createNodes(newElements, graphData.nodes);
-
-  newElements.forEach((element) => {
-    element.data.size *= curNodeSize;
-  });
-
-  createLinks(newElements, graphData.links);
-  
-  setElements(newElements);
-  cyRef.current?.style(myStyle);
-  console.log(elements);
-}
-const setNodeSize = (size: SupportedNodeSize) => {
-  console.log("setting node size");
+  const newNodeColors = {...curNodeColor, [nodeType]: color};
 
   cyRef.current?.nodes().forEach(function(node){
+    node.data('color', node.data('positive') ? newNodeColors.pos : newNodeColors.neg);
+  });
+
+  setCurNodeColor(newNodeColors);
+}
+const applyNodeSize = (size: SupportedNodeSize) => {
+  cyRef.current?.nodes().forEach(function(node){
     console.log("inside setting");
-    node.data('size', parseInt(node.data('size'))/curNodeSize*size); 
+    node.data('size', (parseInt(node.data('size')) / curNodeSize) * size);
   });
   setCurNodeSize(size);
 }
-const setOpacity = (op: SupportedOpacity) => {
+const applyOpacity = (op: SupportedOpacity) => {
   console.log("setting opacity");
   const newStyle = [myStyle[0], {...(myStyle[1])}];
   newStyle[1].style.opacity = op;

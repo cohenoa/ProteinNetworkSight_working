@@ -2,16 +2,18 @@
 
 export const copySettings = (settings: GraphSettings, fullCopy: boolean = false): GraphSettings => {
     const layoutOptions = fullCopy? [...settings.Layout.options]: settings.Layout.options;
-    return {
-        ...baseDownloadAllGraphSetting,
-        Layout: {
-            ...settings.Layout,
-            options: layoutOptions,
-        },
-        NodeSize: {...settings.NodeSize},
-        Opacity: {...settings.Opacity},
-        fileType: {...settings.fileType},
-    };
+    const newSettings: GraphSettings = {...baseDownloadAllGraphSetting};
+
+    for (const key in settings) {
+        if (key === 'Layout') {
+            newSettings[key as keyof GraphSettings] = {
+                ...settings[key as keyof GraphSettings],
+                options: layoutOptions,
+            } as SettingItem;
+        }
+        newSettings[key as keyof GraphSettings] = {...settings[key as keyof GraphSettings]} as SettingItem;
+    }
+    return newSettings;
 }
 
 export function getWindowSelectItem<T extends keyof typeof supportedSettings>(setting: T, key: keyof (typeof supportedSettings)[T]) {
@@ -21,6 +23,16 @@ export function getWindowSelectItem<T extends keyof typeof supportedSettings>(se
     }
     return {label: key, value: allOptions[key as keyof typeof allOptions]};
 }
+
+export function getWindowSelectItemByValue<T extends keyof typeof supportedSettings>(setting: T, value: (typeof supportedSettings)[T][keyof (typeof supportedSettings)[T]]): optionItem | undefined {
+    const allOptions = supportedSettings[setting];
+    for (const key in allOptions) {
+        if (allOptions[key] === value) {
+            return {label: key, value: allOptions[key as keyof typeof allOptions]};
+        }
+    }
+}
+
 
 export const supportedSettings = {
     layouts: {
@@ -85,6 +97,8 @@ interface SettingItem {
 export interface GraphSettings {
     Layout: LayoutSettingItem;
     NodeSize: NodeSizeSettingItem;
+    PosNodeColor: NodeColorSettingItem;
+    NegNodeColor: NodeColorSettingItem;
     Opacity: OpacitySettingItem;
     fileType: FileTypeSettingItem;
 }
@@ -133,6 +147,14 @@ interface FileTypeSettingItem extends SettingItem {
     options: FileTypeOptionItem[];
 }
 
+interface NodeColorOptionItem extends optionItem {
+    value: SupportedNodeColor;
+}
+  
+interface NodeColorSettingItem extends SettingItem {
+    options: NodeColorOptionItem[];
+}
+
 export const baseDownloadAllGraphSetting: GraphSettings = {
     Layout: {
         title: "Layout",
@@ -145,6 +167,18 @@ export const baseDownloadAllGraphSetting: GraphSettings = {
         default: getWindowSelectItem('nodeSizes', 'NORMAL'),
         current: null,
         options: Object.entries(supportedSettings.nodeSizes).map(([key, opt]) => ({ label: key, value: opt }))
+    },
+    PosNodeColor: {
+        title: "Positive Node Color",
+        default: getWindowSelectItem('nodeColors', 'blue'),
+        current: null,
+        options: Object.entries(supportedSettings.nodeColors).map(([key, opt]) => ({ label: key, value: opt }))
+    },
+    NegNodeColor: {
+        title: "Positive Node Color",
+        default: getWindowSelectItem('nodeColors', 'red'),
+        current: null,
+        options: Object.entries(supportedSettings.nodeColors).map(([key, opt]) => ({ label: key, value: opt }))
     },
     Opacity: {
         title: "Opacity",

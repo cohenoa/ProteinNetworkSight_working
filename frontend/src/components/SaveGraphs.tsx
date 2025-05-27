@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useImperativeHandle, forwardRef, LegacyRef } from "react";
+import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
@@ -10,7 +10,7 @@ import "../styles/SaveGraphs.css";
 import { graphRef } from "../@types/props";
 import { GraphSettings, GraphsStatus, getWindowSelectItem } from "../common/GraphSettings";
 import LoadingComponent from "./Loading";
-import { copySettings, baseDownloadAllGraphSetting } from "../common/GraphSettings";
+import { copySettings, baseDownloadAllGraphSetting, supportedSettings, getWindowSelectItemByValue } from "../common/GraphSettings";
 
 const presetOption = getWindowSelectItem('layouts', 'PRESET');
 
@@ -41,31 +41,36 @@ const SaveGraphs = forwardRef((props, ref) => {
 
         state.vectorsHeaders.forEach((header: string) => {
             
-            if (header in clickedVectors) {    
+            if (header in clickedVectors) {
                 newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, true);
 
-                newGraphStatus[header].Layout.options.push(presetOption);
-                newGraphStatus[header].Layout.current = presetOption;
-                newGraphStatus[header].Layout.default = presetOption;
+                if (clickedVectors[header].layout === supportedSettings.layouts.PRESET) {
+                    newGraphStatus[header].Layout.options.push(presetOption);
+                }
 
-                const nodeSizeOption = {label: String(clickedVectors[header].nodeSize), value: Number(clickedVectors[header].nodeSize)};
-                const opacityOption = {label: String(clickedVectors[header].opacity), value: Number(clickedVectors[header].opacity)};
+                console.log("clickedVectors[header]", clickedVectors[header]);
 
-                newGraphStatus[header].NodeSize.current = nodeSizeOption;
-                newGraphStatus[header].NodeSize.default = nodeSizeOption;
+                const layoutOption = getWindowSelectItemByValue('layouts', clickedVectors[header].layout);
+                const nodeSizeOption = getWindowSelectItemByValue('nodeSizes', clickedVectors[header].nodeSize);
+                const opacityOption = getWindowSelectItemByValue('opacities', clickedVectors[header].opacity);
+                const posNodeColorOption = getWindowSelectItemByValue('nodeColors', clickedVectors[header].color.pos);
+                const negNodeColorOption = getWindowSelectItemByValue('nodeColors', clickedVectors[header].color.neg);
 
-                newGraphStatus[header].Opacity.current = opacityOption;
-                newGraphStatus[header].Opacity.default = opacityOption;
-
-                newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default
+                newGraphStatus[header].Layout.current = layoutOption || newGraphStatus[header].Layout.default;
+                newGraphStatus[header].NodeSize.current = nodeSizeOption || newGraphStatus[header].NodeSize.default;
+                newGraphStatus[header].Opacity.current = opacityOption || newGraphStatus[header].Opacity.default;
+                newGraphStatus[header].PosNodeColor.current = posNodeColorOption || newGraphStatus[header].PosNodeColor.default;
+                newGraphStatus[header].NegNodeColor.current = negNodeColorOption || newGraphStatus[header].NegNodeColor.default;
             }
             else {
                 newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, false);
                 newGraphStatus[header].Layout.current = newGraphStatus[header].Layout.default;
                 newGraphStatus[header].NodeSize.current = newGraphStatus[header].NodeSize.default;
                 newGraphStatus[header].Opacity.current = newGraphStatus[header].Opacity.default;
-                newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default;
+                newGraphStatus[header].PosNodeColor.current = newGraphStatus[header].PosNodeColor.default;
+                newGraphStatus[header].NegNodeColor.current = newGraphStatus[header].NegNodeColor.default;
             }
+            newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default;
         });
 
         console.log(newGraphStatus);
@@ -131,16 +136,17 @@ const SaveGraphs = forwardRef((props, ref) => {
             if (thisGraphRef === null){
                 return;
             }
-            else if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null){
+            else if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null || thisGraph.PosNodeColor.current === null || thisGraph.NegNodeColor.current === null){
                 console.log("graph not ready");
                 console.log(thisGraph);
                 return;
             }
-            
 
-            thisGraphRef.applyLayout(String(thisGraph.Layout.current.value), false);
-            thisGraphRef.setOpacity(Number(thisGraph.Opacity.current.value));
-            thisGraphRef.setNodeSize(Number(thisGraph.NodeSize.current.value));
+            thisGraphRef.applyLayout(thisGraph.Layout.current.value, false);
+            thisGraphRef.applyOpacity(thisGraph.Opacity.current.value);
+            thisGraphRef.applyNodeSize(thisGraph.NodeSize.current.value);
+            thisGraphRef.applyNodeColor('pos', thisGraph.PosNodeColor.current.value);
+            thisGraphRef.applyNodeColor('neg', thisGraph.NegNodeColor.current.value);
 
             setCompletedLayouts((prev: number) => {
                 if (prev + 1 === graphRefs.length) {

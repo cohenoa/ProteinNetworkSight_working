@@ -1,6 +1,7 @@
 import { Font } from "three/examples/jsm/loaders/FontLoader";
 import { IOthers } from "./forms";
 import { threshMap } from "./global";
+import { SupportedLayout, SupportedNodeColor, SupportedNodeSize, SupportedOpacity } from "../common/GraphSettings";
 /*
   This file define all the props interface - the argument for components.
 */
@@ -21,21 +22,16 @@ export interface formRef {
 export type downloadFileTypes = 'svg' | 'png' | 'json';
 
 interface GraphExposedMethods extends HTMLDivElement {
-  applyLayout: (name: string, animate: boolean) => void,
-  setOpacity: (op: number) => void,
-  setNodeSize: (size: number) => void,
   fetchData: () => void,
+  applyLayout: (name: SupportedLayout, animate: boolean) => void,
+  applyNodeSize: (size: SupportedNodeSize) => void,
+  applyOpacity: (op: SupportedOpacity) => void,
+  applyNodeColor: (type: 'pos' | 'neg', color: SupportedNodeColor) => void
   downloadGraph: (type: downloadFileTypes) => void,
 }
+
 export interface graphRef extends React.RefObject<HTMLDivElement>{
   current: GraphExposedMethods | null;
-  // applyLayout: (name: string, animate: boolean) => void,
-  // setOpacity: (op: number) => void,
-  // setNodeSize: (size: number) => void,
-  // fetchData: () => void,
-  // btnSVGExportClick: () => void,
-  // btnPngClick: () => void,
-  // btnJsonClick: () => void,
 }
 
 // Interface for props of Father and ButtonComponent that includes formRef
