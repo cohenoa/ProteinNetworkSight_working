@@ -67,9 +67,9 @@ export const supportedSettings = {
         JSON: 'json'
     },
     nodeColors: {
+        blue: '#0047AB',
         red: '#ff0000',
         green: '#2b7442',
-        blue: '#0047AB',
         orange: '#f9931f',
         black: '#000000',
         grey: '#808080',

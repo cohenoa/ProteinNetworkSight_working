@@ -21,7 +21,7 @@ const FooterComponent: FC = () => {
           <p className="names">Aviv Eldad</p>   */}
         </div>
         <div className="update">
-          <p className="update">Last database update: {lastUpdate}</p>
+          <p className="update">Last STRING database update: {lastUpdate}</p>
           {/* <p className="update">{lastUpdate}</p> */}
         </div>
     </div>

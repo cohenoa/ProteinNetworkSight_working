@@ -52,6 +52,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const [elements, setElements] = useState<Array<any>>([])
   const [curNodeSize, setCurNodeSize] = useState<SupportedNodeSize>(supportedSettings.nodeSizes.NORMAL);
   const [curNodeColor, setCurNodeColor] = useState<{pos: SupportedNodeColor, neg: SupportedNodeColor}>({pos: supportedSettings.nodeColors.blue, neg: supportedSettings.nodeColors.red});
+  const [curLayout, setCurLayout] = useState<SupportedLayout>(supportedSettings.layouts.CIRCLE);
 
   const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
     {
@@ -134,12 +135,12 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
       
       cy.on('free', 'node', (event) => {
         // node dropped
-        // setIsPreset(true);
-        setLayout({
-          ...layout,
-          name: supportedSettings.layouts.PRESET,
-          fit: false
-        })
+        setCurLayout(supportedSettings.layouts.PRESET);
+        // setLayout({
+        //   ...layout,
+        //   name: supportedSettings.layouts.PRESET,
+        //   fit: false
+        // })
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
@@ -226,8 +227,11 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
           setCurNodeColor(clickedVectors[clickedVector].color);
           setCurNodeSize(clickedVectors[clickedVector].nodeSize);
 
-          layout.name = clickedVectors[clickedVector].layout;
-          if (clickedVectors[clickedVector].layout === supportedSettings.layouts.PRESET) {
+          let layoutName = clickedVectors[clickedVector].layout;
+
+          setCurLayout(layoutName as SupportedLayout);
+          layout.name = layoutName as SupportedLayout;
+          if (layoutName === supportedSettings.layouts.PRESET) {
             layout.positions = positions.reduce((positionsObj: any, node: any) => {
               const nodeId = Object.keys(node)[0];
               const position = node[nodeId];
@@ -333,7 +337,7 @@ const saveGraph = async () => {
       clickedVectors[clickedVector].threshold = thresholds;
       clickedVectors[clickedVector].positions = [...nodePositions];
       clickedVectors[clickedVector].elements = elementsVector;
-      clickedVectors[clickedVector].layout = layout.name;
+      clickedVectors[clickedVector].layout = curLayout;
       clickedVectors[clickedVector].nodeSize = curNodeSize;
       clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
       clickedVectors[clickedVector].color = curNodeColor;
@@ -380,20 +384,32 @@ const saveGraph = async () => {
       const elementsVector = clickedVectors[clickedVector].elements[0]
       const positions = clickedVectors[clickedVector].positions;
       if (positions !== undefined) {
+        console.log("applySavedGraph");
+        console.log(clickedVectors[clickedVector]);
         setElements(elementsVector);
         applyOpacity(clickedVectors[clickedVector].opacity);
         setCurNodeColor(clickedVectors[clickedVector].color);
         setCurNodeSize(clickedVectors[clickedVector].nodeSize);
 
-        layout.name = clickedVectors[clickedVector].layout;
-        if (clickedVectors[clickedVector].layout === supportedSettings.layouts.PRESET) {
-          layout.positions = positions.reduce((positionsObj: any, node: any) => {
+        let layoutName = clickedVectors[clickedVector].layout;
+
+        setCurLayout(layoutName as SupportedLayout);
+        let newLayout = {
+          ...layout,
+          name: layoutName,
+          animate: true,
+          fit: true,
+        }
+        if (layoutName === supportedSettings.layouts.PRESET) {
+          newLayout.positions = positions.reduce((positionsObj: any, node: any) => {
             const nodeId = Object.keys(node)[0];
             const position = node[nodeId];
             positionsObj[nodeId] = position;
             return positionsObj;
           }, {});
         }
+
+        setLayout(newLayout);
       }
       return true;
     }
@@ -412,6 +428,8 @@ const saveGraph = async () => {
 
   // right click menu
   const contextMenuItems: MenuItem[] = [
+    {label: 'save', icon: faFloppyDisk, onClick: () => {saveGraph()}},
+    {label: 'load', icon: faSpinner, onClick: () => {applyLayout(supportedSettings.layouts.PRESET, true)}},
     {
       label: 'Download',
       icon: faDownload,
@@ -420,23 +438,7 @@ const saveGraph = async () => {
     {
       label: 'Layout',
       icon: faDiagramProject,
-      submenu: Object.values(supportedSettings.layouts).map((option) => {
-          if (option === supportedSettings.layouts.PRESET){
-            return {
-              label: option,
-              icon: faDiagramProject,
-              submenu: [
-                {label: 'save', icon: faFloppyDisk, onClick: () => {saveGraph()}},
-                {label: 'load', icon: faSpinner, onClick: () => {applyLayout(supportedSettings.layouts.PRESET, true)}},
-              ]
-            }
-          }
-          return {
-            label: option,
-            icon: faDiagramProject,
-            onClick: () => {applyLayout(option, true)},
-          }
-      })
+      submenu: Object.values(supportedSettings.layouts).map((option) => ({ label: option, icon: faDiagramProject, onClick: () => {applyLayout(option, true)}}))
     },
     {
       label: 'Link Opacity',
@@ -468,20 +470,21 @@ const saveGraph = async () => {
 
   const applyLayout = async (name: SupportedLayout, animate: boolean) => {
     if (cyRef.current) {
-
       if (name === supportedSettings.layouts.PRESET) {
         if (!await applySavedGraph()) {
-          alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
+          alert("there is no saved layout. \nto save a layout open the submenu and click 'save'");
           return;
         }
       }
-
-      setLayout({
-        ...layout,
-        name: name,
-        animate: animate,
-        fit: true,
-      });
+      else{
+        setCurLayout(name);
+        setLayout({
+          ...layout,
+          name: name,
+          animate: animate,
+          fit: true,
+        });
+      }
     }
   };
 
@@ -496,8 +499,8 @@ const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
   setCurNodeColor(newNodeColors);
 }
 const applyNodeSize = (size: SupportedNodeSize) => {
+  console.log("setting node size");
   cyRef.current?.nodes().forEach(function(node){
-    console.log("inside setting");
     node.data('size', (parseInt(node.data('size')) / curNodeSize) * size);
   });
   setCurNodeSize(size);
