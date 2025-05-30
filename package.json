@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "cytoscape-cise": "^2.0.0",
-    "cytoscape-elk": "^2.2.0"
-  }
-}

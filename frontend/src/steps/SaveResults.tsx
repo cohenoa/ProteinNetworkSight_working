@@ -3,7 +3,8 @@ import SaveData from "../components/SaveData";
 import SaveGraphs from "../components/SaveGraphs";
 import "../styles/SaveResults.css";
 import "../styles/StringSuggestions.css";
-import Switch, { Item } from "react-switchable";
+import Switch, { Item } from "react-switchable-next";
+import "react-switchable-next/dist/index.esm.css";
 import { formRefProps } from "../@types/props";
 
 enum SaveMode {
@@ -39,8 +40,8 @@ const SaveResults: FC<formRefProps> = ({ formRef }) => {
                 <Switch name="mode" onItemChanged={(value: String) => {
                     setMode(Number(value) as SaveMode);
                 }}>
-                    <Item value={SaveMode.data.toString()}>Save Data</Item>
-                    <Item value={SaveMode.graphs.toString()}>Save Graphs</Item>
+                    <Item key={1} value={SaveMode.data.toString()}>Save Data</Item>
+                    <Item key={2} value={SaveMode.graphs.toString()}>Save Graphs</Item>
                 </Switch>
             </div>
         )

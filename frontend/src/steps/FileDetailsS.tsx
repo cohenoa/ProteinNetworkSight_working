@@ -28,9 +28,7 @@ type vectorsValues = {
 
 const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading ,updateThresholds});
-  const [selectedOption, setSelectedOption] = useState<OptionType>({
-    ...state.organism,
-  });
+  const [selectedOption, setSelectedOption] = useState<OptionType>({...state.organism});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => {
     setIsModalOpen(true);
@@ -41,7 +39,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const collectThresholds = async (thresholds: Array<Array<number>>) => {
-    var results =  get(state.fileName).then((val) => {
+    var results = get(state.fileName).then((val) => {
       console.log(val['headers']);
       const mappedThresholds = thresholds.map((item, index) => ({[`${state.headers[index + 1]}`]: item}));
       console.log("mappedThresholds: ", thresholds)
@@ -52,7 +50,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
       }, {} as { [key: string]: number[] });
       console.log('modified thresholds: ', resultObject);
       state.thresholds = resultObject
-      console.log( state.thresholds["G1"])
+      // console.log( state.thresholds["G1"])
       // updateThresholds(state, {thresholds:resultObject})
       actions.updateThresholds({ thresholds: resultObject });
       return resultObject
@@ -93,65 +91,50 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
 
   const onSubmit =  async (data: formValues) => {
-  
+    console.log(state);
     get(state.fileName).then((val) => {
-    const headers = val['headers'];
-    proteins = val['json'];
-    proteins.forEach((protein:string[]) =>{
-      if (protein[0].includes(';')){
-        var otherNames = protein[0].split(';');
-        protein[0] = otherNames[0];
-        
-        if(protein[0].includes("_")){
-          var firstPart = protein[0].split("_")[0]
-          var newProtein = protein;
+      console.log(val);
+      const headers = val['headers'];
+      proteins = val['json'];
+      proteins.forEach((protein:string[]) => {
+        if (protein[0].includes(';')){
+          var otherNames = protein[0].split(';');
+          protein[0] = otherNames[0];
+          
+          if(protein[0].includes("_")){
+            var firstPart = protein[0].split("_")[0]
+            var newProtein = protein;
 
-          newProtein[0] = firstPart + "_" + otherNames[1];
-          // newProtein = newProtein + otherNames[1]
-          if(newProtein != undefined){
-            // proteins = [...proteins,newProtein];
-            proteins.push(newProtein)
-          } 
-      }}
-      // dividing the "," and adding a new row with the same values and a new name. 
-      if(protein[0].includes(",")){
-        var otherNames = protein[0].split(',');
-        protein[0] = otherNames[0];      
-      }
-    })
+            newProtein[0] = firstPart + "_" + otherNames[1];
+            // newProtein = newProtein + otherNames[1]
+            if(newProtein !== undefined){
+              // proteins = [...proteins,newProtein];
+              proteins.push(newProtein)
+            } 
+        }}
+        // dividing the "," and adding a new row with the same values and a new name. 
+        if(protein[0].includes(",")){
+          var otherNames = protein[0].split(',');
+          protein[0] = otherNames[0];      
+        }
+      })
       const idIndex = headers.indexOf(data.idHeader);
       const proteinsNames = proteins.map((row: any) => row[idIndex]);
       
       //  !!!OPTION - if we want to accept every _S and _T option. (it changes the value to be of _pY kind).!!!
-
-        // proteinsNames.forEach((protein:string) =>{
-        //   // console.log(protein[0])
-        //   if(protein.includes("_S") || protein.includes("_T")){
-        //     proteinsNames[proteinsNames.indexOf(protein)] = protein.replace("_S","_pY");
-        //     proteinsNames[proteinsNames.indexOf(protein)] = protein.replace("_T","_pY");
-        //     // console.log(protein);
-        //   }})
       
       const vectorsHeaders: string[] = [];
       const vectorsValues: vectorsValues = {};
   
       headers.forEach((header:string, index:number) => {
         if (header.includes(data.vectorsPrefix)) {
-          
           vectorsHeaders.push(header);
-
           const values = proteins.map((row: any) => row[index]);
-          // console.log(values);
           vectorsValues[header] = values;
-          // console.log(header)
         }
-        else{
-          // console.log(header)
-          // state.vectorsValues
-        } 
       });
-      console.log(vectorsHeaders)
-      // console.log("vectorsValues in File Deatiles: ",vectorsValues);
+      console.log("setting headers: ", headers);
+      console.log(vectorsHeaders);
       set(state.fileName,{json: proteins, headers: headers, vectorsHeaders: vectorsHeaders, vectorsValues: vectorsValues})
       if(Object.entries(state.thresholds).length === 0){
         console.log("inside new object")

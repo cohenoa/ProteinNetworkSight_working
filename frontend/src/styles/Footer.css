@@ -22,7 +22,7 @@
 .leftFooter {
   display: flex;
   flex-direction: row;
-  width: 40%;
+  width: 50%;
 }
 
 .update{

@@ -9,7 +9,6 @@ import Tutorial from "./pages/Tutorial";
 
 const App: FC = () => {
   return (
-    //<Graph/>
     <BrowserRouter>
       <TopbarComponent />
       <Routes>

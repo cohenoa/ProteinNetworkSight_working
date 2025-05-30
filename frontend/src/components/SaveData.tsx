@@ -2,7 +2,6 @@ import React, { useEffect, useState, useImperativeHandle, forwardRef } from "rea
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get } from 'idb-keyval';
-import { IVectorsValues } from "../@types/global";
 import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig, nameStatus, replaceNameStatus } from "../@types/props";
@@ -17,34 +16,6 @@ const SaveData = forwardRef((props, ref) => {
 
     const [replacementMap, setReplacementMap] = useState<{ [key: string]: replaceNameStatus }>({});
     const [unMatchedMap, setUnMatchedMap] = useState<{ [key: string]: nameStatus }>({});
-
-    // csv copy from cytoscape
-    // const btnCsvClick = async () => {
-    //     const val = await get(state.fileName);
-    //     const {values_map, ids_arr, standard_name, string_id_arr} = getNameMap(val);
-      
-    //     let csvContent = 'UID,STRING Name,STRING id,' + Object.keys(val['vectorsValues']).join(',') + '\n';
-    //     // Add rows for each ID
-    //     standard_name.forEach((name, index) => {
-    //       const row = [name, ids_arr[index], string_id_arr[index]]; // Include String Id in the row
-    //       Object.keys(val['vectorsValues']).forEach((vectorName) => {
-    //         const value = values_map[vectorName][name] || '';
-    //         row.push(value);
-    //       });
-    //       csvContent += row.join(',') + '\n'; // Join the row values and append to CSV content
-    //     });
-      
-    //     // Create a downloadable CSV file
-    //     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    //     const url = URL.createObjectURL(blob);
-    //     const link = document.createElement('a');
-    //     link.setAttribute('href', url);
-    //     link.setAttribute('download', `${state.fileName.split('.')[0]}.csv`);
-    //     link.style.visibility = 'hidden';
-    //     document.body.appendChild(link);
-    //     link.click();
-    //     document.body.removeChild(link);
-    //   };
 
     useImperativeHandle(ref, () => ({
         getFormData: async () => {
@@ -118,7 +89,7 @@ const SaveData = forwardRef((props, ref) => {
 
             if (name in state.suggestionsObj.alternative_match) {
                 altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId != "0") {
+            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
                 manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
             }
             else if (match.stringId === "0") {

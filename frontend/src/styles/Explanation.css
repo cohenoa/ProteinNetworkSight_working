@@ -32,7 +32,7 @@
   flex-direction: row;
   width: 100%;
   align-items: center;
-    margin: 8px;
+  margin: 8px;
 }
 
 .must-item > .fa {

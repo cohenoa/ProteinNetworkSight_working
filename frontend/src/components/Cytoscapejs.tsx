@@ -1,21 +1,19 @@
-import { FC, useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
-import { IGraphProps, nodePositions } from "../@types/props";
+import { graphRef, IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
 import "../styles/Button.css";
 import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
-import { layoutTester, AllMethods } from "./layoutAlgorithms";
-import { write, utils } from "xlsx";
 import { saveAs } from 'file-saver';
-import { get, set, update } from 'idb-keyval';
+import { get, set } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
-import { updateIsLoading, updateShowError } from "../common/UpdateActions";
-import { headers } from "../assets/DefualtFile";
-import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner} from '@fortawesome/free-solid-svg-icons';
+import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity, SupportedNodeColor } from "../common/GraphSettings";
+import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner, faBrush, faPlus , faMinus } from '@fortawesome/free-solid-svg-icons';
+import svg from "cytoscape-svg";
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
 import cise from 'cytoscape-cise';
@@ -25,21 +23,38 @@ import elk from 'cytoscape-elk';
 cytoscape.use( fcose );
 cytoscape.use( cise );
 cytoscape.use( elk );
+cytoscape.use( svg );
+
+interface CytoscapeStyle {
+  selector: string;
+  style: {
+    "background-color"?: string;
+    label?: string;
+    width?: string;
+    height?: string;
+    "background-image"?: string;
+    "line-color"?: string;
+    opacity?: number;
+  };
+}
 
 /**
  * The component create the graph, using cytoscape.js library.
  * The props are the graph data and the clikceed vector (for the files)
  */
-const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
-  const { state, actions } = useStateMachine({});
+const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
+  const { state } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<ICustomNode | null>(null);
   const [openPanel, setOpenPanel] = useState(false);
   const [openContextMenu, setOpenContextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [elements,setElements] = useState<Array<any>>([])
-  const [curNodeSize, setCurNodeSize] = useState<number>(1);
-  const [myStyle, setMyStyle] = useState([
+  const [elements, setElements] = useState<Array<any>>([])
+  const [curNodeSize, setCurNodeSize] = useState<SupportedNodeSize>(supportedSettings.nodeSizes.NORMAL);
+  const [curNodeColor, setCurNodeColor] = useState<{pos: SupportedNodeColor, neg: SupportedNodeColor}>({pos: supportedSettings.nodeColors.blue, neg: supportedSettings.nodeColors.red});
+  const [curLayout, setCurLayout] = useState<SupportedLayout>(supportedSettings.layouts.CIRCLE);
+
+  const [myStyle, setMyStyle] = useState<CytoscapeStyle[]>([
     {
       selector: "node",
       style: {
@@ -55,10 +70,9 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
       style: {
         "line-color": "data(color)",
         "background-image": '#FFFFFF',
-        opacity: 0.35
+        opacity: supportedSettings.opacities.NORMAL
       },
     },
-    
   ]);
 
   const resetElements = async () => {
@@ -68,7 +82,7 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
   };
   
   const [layout, setLayout] = useState<any>({
-    name: 'circle',
+    name: supportedSettings.layouts.CIRCLE,
     fit: true, // whether to fit the viewport to the graph
     padding: 30, // padding used on fit
     avoidOverlap: true, // prevents node overlap, may overflow boundingBox if not enough space
@@ -80,12 +94,11 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
     stop: function() {
       setLayoutStop(true);
     }
-   });
+  });
 
-   const [layoutStop, setLayoutStop] = useState(false);
-   const [dataLoaded, setDataLoaded] = useState(false);
+  const [layoutStop, setLayoutStop] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // const [nodePositions, setNodePositions] = useState<Array<any>>([]);
 
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
@@ -122,9 +135,12 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
       
       cy.on('free', 'node', (event) => {
         // node dropped
-
-        // console.log('Node dropped:', event.target.id());
-        // savePositionsToIndexedDB()
+        setCurLayout(supportedSettings.layouts.PRESET);
+        // setLayout({
+        //   ...layout,
+        //   name: supportedSettings.layouts.PRESET,
+        //   fit: false
+        // })
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
@@ -142,7 +158,6 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
         setSelectedNode(clickedNode);
       });
 
-      // setFullyLoaded({layoutStop: fullyLoaded.Layout, positions: fullyLoaded.positions, cyref: true, notLoading: fullyLoaded.notLoading});
       try {
         const val = await get(state.fileName);
   
@@ -165,34 +180,65 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
     [graphData,clickedVector, state.fileName]
   );
 
-  const fetchData = async () => {
+  const createNodes = (elements: Array<any>, nodes: ICustomNode[]) => {
+    nodes.forEach((node) => 
+      elements.push({
+        data: {
+          id: node.id,
+          label: node.id === undefined || typeof node.id === "number"? node.id: node.id,
+          color: node.color,
+          size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
+          positive: node.size === undefined || node.size > 0 ? true : false,
+        },
+      })
+    );
+    // setElements(elements)
+  };
+
+  // The function create the links data for the elements array
+  const createLinks = (elements: Array<any>, links: ICustomLink[]) => {
+    links.forEach((link) =>
+      elements.push({
+        data: {
+          source: link.source,
+          target: link.target,
+          label: `Edge from ${link.source} to ${link.target} `,
+          color: getLinkColor(link.score === undefined ? 1994 : link.score),
+        },
+      })
+    );
+    // setElements(elements)
+  };
+
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const val = await get(state.fileName);
       const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{}, elements:[]};
       
       var elementsVector = clickedVectors.elements || [];
-
-      console.log("clicker vector: ", clickedVector);
-      
       if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
 
         elementsVector = clickedVectors[clickedVector].elements[0]
         const positions = clickedVectors[clickedVector].positions;
-        if (positions != undefined) {
+        if (positions !== undefined) {
           setElements(elementsVector);
-          // setNodePositions(positions);
+          applyOpacity(clickedVectors[clickedVector].opacity);
+          setCurNodeColor(clickedVectors[clickedVector].color);
+          setCurNodeSize(clickedVectors[clickedVector].nodeSize);
 
-          // Create a layout with saved positions
-          console.log("positions: \n", positions)
-          console.log("number_of_elements: \n",positions.length)
-          layout.name = 'preset';
-          layout.positions = positions.reduce((positionsObj: any, node: any) => {
-            const nodeId = Object.keys(node)[0];
-            const position = node[nodeId];
-            positionsObj[nodeId] = position;
-            return positionsObj;
-          }, {});
+          let layoutName = clickedVectors[clickedVector].layout;
+
+          setCurLayout(layoutName as SupportedLayout);
+          layout.name = layoutName as SupportedLayout;
+          if (layoutName === supportedSettings.layouts.PRESET) {
+            layout.positions = positions.reduce((positionsObj: any, node: any) => {
+              const nodeId = Object.keys(node)[0];
+              const position = node[nodeId];
+              positionsObj[nodeId] = position;
+              return positionsObj;
+            }, {});
+          }
         }
       } else {
         console.log("Setting the elements for the first time");
@@ -218,22 +264,19 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
       setIsLoading(false);
       setDataLoaded(true);
     }
-  };
+  }, []);
   
   useEffect(() => {
-
-    console.log(clickedVector);
-
-    resetElements().then(() => fetchData());
-    
-    // fetchData();
-    console.log("elements: \n", elements)
-
-  }, [ graphData.nodes, graphData.links, state.fileName]);
+    resetElements().then(() => {
+      fetchData().then(() => {
+        console.log("HERE NODE SIZE: " + curNodeSize)
+      });
+    });
+  }, [ graphData.nodes, graphData.links, state.fileName, fetchData]);
 
   useEffect(() => {
     cyRef.current?.layout(layout).run();
-  }, [layout, curNodeSize]);
+  }, [layout, curNodeSize, elements]);
 
   useEffect(() => {
     if (layoutStop && dataLoaded) {
@@ -247,135 +290,11 @@ const CytoscapejsComponentself = forwardRef(({graphData, clickedVector, threshol
     }
   }, [layoutStop, dataLoaded])
 
-  function convertArrayToSvg(nodesData: any[]): string {
-    const svgContent = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" fit="true">
-        ${nodesData.map(nodeData => convertNodeToSvg(nodeData)).join('\n')}
-      </svg>
-    `;
-    return svgContent;
-  }
-  function addEdgesToSVG(svgString:any, edgeArray:any[]) {
-    // Create a DOMParser
-    var parser = new DOMParser();
-
-    // Parse the SVG string into a DOM structure
-    var doc = parser.parseFromString(svgString, 'image/svg+xml');
-    // Iterate through each edge in the array
-    edgeArray.forEach(edgeData => {
-        // Get the positions of the source and target nodes
-        // node.id.split('_').join('')
-        var sourceNode = doc.getElementById(edgeData.data.source);
-        var targetNode =  doc.getElementById(edgeData.data.target);
-        var edgeColor = doc.getElementById(edgeData.data);
-        // console.log(sourceNode , targetNode);
-        var sourceX =  sourceNode?.getAttribute('cx');
-        var sourceY = sourceNode?.getAttribute('cy');
-        var targetX = targetNode?.getAttribute('cx');
-        var targetY = targetNode?.getAttribute('cy');
-
-        // Create a new line element (edge)
-        if(sourceNode != null&& typeof sourceX == 'string' && typeof sourceY == 'string'&& typeof targetX == 'string'&& typeof targetY == 'string'){
-          var line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', sourceX);
-          line.setAttribute('y1', sourceY);
-          line.setAttribute('x2',targetX);
-          line.setAttribute('y2', targetY);
-          line.setAttribute('stroke', edgeData.data.color || 'black');
-          line.setAttribute('stroke-width', '2.5');
-
-          line.setAttribute('opacity', String(myStyle[1].style.opacity));
-
-          // Append the new line element to the SVG
-          doc.documentElement.insertBefore(line,sourceNode);
-          doc.documentElement.insertBefore(line,targetNode);
-        }
-        
-    });
-
-    // Convert the modified DOM back to an SVG string
-    return new XMLSerializer().serializeToString(doc);
-}
-  function convertNodeToSvg(nodeData: any): string {
-    return `
-      <!-- Circle representing the node -->
-      <circle id = "${nodeData.data.label}" cx="${nodeData.position.x+50}" cy="${nodeData.position.y+50}" r="${nodeData.data.size/1.8}"
-              fill="${nodeData.data.color}" z-index="10" stroke="black"/>
-      <!-- Text label -->
-      <text x="${nodeData.position.x+50}" y="${nodeData.position.y - nodeData.data.size +45}"
-            font-size="12" fill="black" text-anchor="middle">
-        ${nodeData.data.label}
-      </text>
-    `;
-  }
   
-  function saveAsSvg (jsonBlob: any): void{
-    var nodes = jsonBlob.elements.nodes;
-    var edges = jsonBlob.elements.edges;
-    var svgOutPut = convertArrayToSvg(nodes);
-    
-    svgOutPut = addEdgesToSVG(svgOutPut, edges);
-    var a = document.createElement("a");
-    var file = new Blob([svgOutPut], {type: "image/svg+xml"});
-    a.href = URL.createObjectURL(file);
-    a.download =state.fileName.split('.')[0] + '_' + clickedVector + ".svg"
-    a.click();
-  }
   // The function handle a click on the close button on the panel
   const handleOnclickClosePanel = useCallback(() => {
     setOpenPanel(false);
   }, []);
-
-  // The function create the nodes data for the elements array
-  const createNodes = (elements: Array<any>, nodes: ICustomNode[]) => {
-    nodes.forEach((node) => 
-      elements.push({
-        data: {
-          id: node.id,
-          label: node.id == undefined || typeof node.id === "number"? node.id: node.id,
-          color: node.color,
-          size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
-        },
-      })
-    );
-    // setElements(elements)
-  };
-
-  // The function create the links data for the elements array
-  const createLinks = (elements: Array<any>, links: ICustomLink[]) => {
-    links.forEach((link) =>
-      elements.push({
-        data: {
-          source: link.source,
-          target: link.target,
-          label: `Edge from ${link.source} to ${link.target} `,
-          color: getLinkColor(link.score === undefined ? 1994 : link.score),
-        },
-      })
-    );
-    // setElements(elements)
-  };
-  
-// // The function return the color of the node based on the size
-// const getNodeColor = (size: number): string => {
-//   if (size === 0) return "#B2E5FF"; // Light Blue for zero
-
-//   // Darker warm colors for positive values, with doubled range
-//   if (size > 0.9) return "#CC3700"; // Darker Orange Red
-//   if (size > 0.7) return "#E5533A"; // Darker Tomato
-//   if (size > 0.5) return "#CCAC00"; // Darker Gold
-//   if (size > 0.3) return "#CC8400"; // Darker Orange
-//   if (size > 0.1) return "#CC6F00"; // Darker Dark Orange
-
-//   // Darker cool colors for negative values, with doubled range
-//   if (size < -0.9) return "#1875CC"; // Darker Dodger Blue
-//   if (size < -0.7) return "#0093CC"; // Darker Deep Sky Blue
-//   if (size < -0.5) return "#009999"; // Darker Dark Turquoise
-//   if (size < -0.3) return "#1A8C80"; // Darker Light Sea Green
-//   if (size < -0.1) return "#4A7980"; // Darker Cadet Blue
-
-//   return "#B2E5FF"; // Default light blue for any other values (just in case)
-// };
 
 
 
@@ -393,7 +312,7 @@ const getLinkColor = (score: Number) => {
   return "white";
 };
 
-const savePositionsToIndexedDB = async () => {
+const saveGraph = async () => {
 
   const nodePositions = cyRef.current?.nodes().map((node) => {
     let positionObj = node.position();
@@ -411,17 +330,16 @@ const savePositionsToIndexedDB = async () => {
         clickedVectors[clickedVector] = { positions: [],threshold:{},elements:[] };
       }
       
-      const elementsVector = clickedVectors[clickedVector].elements|| []
-      elementsVector.push(elements)
-      // Add the positions to the array for the clickedVector
-      clickedVectors[clickedVector].positions = [
-        ...nodePositions,
-      ];
-      clickedVectors[clickedVector].threshold = thresholds;
+      const elementsVector = clickedVectors[clickedVector].elements || [];
+      elementsVector.push(elements);
       clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1;
+      clickedVectors[clickedVector].threshold = thresholds;
+      clickedVectors[clickedVector].positions = [...nodePositions];
       clickedVectors[clickedVector].elements = elementsVector;
+      clickedVectors[clickedVector].layout = curLayout;
       clickedVectors[clickedVector].nodeSize = curNodeSize;
       clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
+      clickedVectors[clickedVector].color = curNodeColor;
 
       
       // Update the clicked_vectors and nodePositions in the existing data
@@ -435,29 +353,22 @@ const savePositionsToIndexedDB = async () => {
   }
 };
 
-const btnJsonClick = () => {
-  const cy = cyRef.current;
-  if (cy) {
-    const jsonBlob = new Blob([JSON.stringify(cy.json())], { type: 'application/json' });
-    saveAs(jsonBlob,state.fileName.split('.')[0] + '_' + clickedVector + '.json');
-  }
-}
-
-  const btnPngClick = () =>{
+  const downloadGraph = (type: SupportedFileType) => {
     const cy = cyRef.current;
-    if (cy) {
-      const pngBlob = cy.png({ output: "base64uri", full: true });
-      saveAs(pngBlob,state.fileName.split('.')[0] + '_' + clickedVector + '.png');
-  }}
-
-  const btnSVGExportClick = () => {
-    const cy = cyRef.current;
-    if (cy) {
-      // const blob = new Blob([cy.svg({scale: 1, full: true})], {type: 'image/svg+xml'});
-      // saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.svg');
-
-      const jsonData = cy.json();
-      saveAsSvg(jsonData);
+    if (cy){
+      let blob: Blob;
+      if (type === supportedSettings.fileTypes.SVG) {
+        blob = new Blob([cy.svg()], { type: "image/svg+xml;charset=utf-8" });
+      } else if (type === supportedSettings.fileTypes.PNG) {
+        blob = cy.png({ output: "blob", full: true });
+      } else if (type === supportedSettings.fileTypes.JSON) {
+        blob = new Blob([JSON.stringify(cy.json())], { type: "application/json" });
+      }
+      else{
+        console.log("type not supported");
+        return;
+      }
+      saveAs(blob, state.fileName.split('.')[0] + '_' + clickedVector + '.' + type);
     }
     else{
       console.log("no cy");
@@ -471,152 +382,129 @@ const btnJsonClick = () => {
     if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
       const elementsVector = clickedVectors[clickedVector].elements[0]
       const positions = clickedVectors[clickedVector].positions;
-      if (positions != undefined) {
-        if (positions != undefined) {
-          setElements(elementsVector);
-          // setNodePositions(positions);
-          setNodeSize(clickedVectors[clickedVector].nodeSize);
-          setOpacity(clickedVectors[clickedVector].opacity);
+      if (positions !== undefined) {
+        console.log("applySavedGraph");
+        console.log(clickedVectors[clickedVector]);
+        setElements(elementsVector);
+        applyOpacity(clickedVectors[clickedVector].opacity);
+        setCurNodeColor(clickedVectors[clickedVector].color);
+        setCurNodeSize(clickedVectors[clickedVector].nodeSize);
 
-          layout.positions = positions.reduce((positionsObj: any, node: any) => {
+        let layoutName = clickedVectors[clickedVector].layout;
+
+        setCurLayout(layoutName as SupportedLayout);
+        let newLayout = {
+          ...layout,
+          name: layoutName,
+          animate: true,
+          fit: true,
+        }
+        if (layoutName === supportedSettings.layouts.PRESET) {
+          newLayout.positions = positions.reduce((positionsObj: any, node: any) => {
             const nodeId = Object.keys(node)[0];
             const position = node[nodeId];
             positionsObj[nodeId] = position;
             return positionsObj;
           }, {});
-
-          console.log("position setting successfull");
-          return true;
         }
+
+        setLayout(newLayout);
       }
+      return true;
     }
     return false;
   }
-
+  
+  {/* @ts-ignore */}
   useImperativeHandle(ref, () => ({
     fetchData,
     applyLayout,
-    setOpacity,
-    setNodeSize,
-    btnSVGExportClick,
-    btnPngClick,
-    btnJsonClick,
+    applyNodeSize,
+    applyOpacity,
+    applyNodeColor,
+    downloadGraph
   }));
 
+  // right click menu
+  const contextMenuItems: MenuItem[] = [
+    {label: 'save', icon: faFloppyDisk, onClick: () => {saveGraph()}},
+    {label: 'load', icon: faSpinner, onClick: () => {applyLayout(supportedSettings.layouts.PRESET, true)}},
+    {
+      label: 'Download',
+      icon: faDownload,
+      submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
+    },
+    {
+      label: 'Layout',
+      icon: faDiagramProject,
+      submenu: Object.values(supportedSettings.layouts).map((option) => ({ label: option, icon: faDiagramProject, onClick: () => {applyLayout(option, true)}}))
+    },
+    {
+      label: 'Link Opacity',
+      icon: faPencil,
+      submenu: Object.entries(supportedSettings.opacities).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {applyOpacity(value)}}))
+    },
+    {
+      label: 'Node Size',
+      icon: faPencil,
+      submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {applyNodeSize(value)}}))
+    },
+    {
+      label: 'Node Color',
+      icon: faBrush,
+      submenu: [
+        {
+          label: 'positive',
+          icon: faPlus,
+          submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {applyNodeColor('pos', value)}}))
+        },
+        {
+          label: 'negetive',
+          icon: faMinus,
+          submenu: Object.entries(supportedSettings.nodeColors).map(([key, value]) => ({ label: key, icon: faBrush, onClick: () => {applyNodeColor('neg', value)}}))
+        },
+      ]
+    },
+  ];
 
-  const applyLayout = async (name: string, animate: boolean) => {
+  const applyLayout = async (name: SupportedLayout, animate: boolean) => {
     if (cyRef.current) {
-
-      if (name === 'preset') {
+      if (name === supportedSettings.layouts.PRESET) {
         if (!await applySavedGraph()) {
-          alert("there is no saved layout. to save a layout:\n1. right click to open the submenu\n2. go to layouts -> preset\n3. click 'save layout'");
+          alert("there is no saved layout. \nto save a layout open the submenu and click 'save'");
           return;
         }
       }
-      else if (name === 'LCC'){
-        name = 'preset';
-        layout.positions = layoutTester(graphData, AllMethods.spiral);
+      else{
+        setCurLayout(name);
+        setLayout({
+          ...layout,
+          name: name,
+          animate: animate,
+          fit: true,
+        });
       }
-
-      const newLayout = {
-        ...layout,
-        name: name,
-        animate: animate,
-      };
-
-      setLayout(newLayout);
     }
   };
 
-  const downloadFile = (file_type: string) => {
-    if (file_type === 'svg'){
-      btnSVGExportClick();
-    }
-    else if (file_type === 'png'){
-      btnPngClick();
-    }
-    else if (file_type === 'json'){
-      btnJsonClick();
-    }
-    else{
-      console.log("invalid file type");
-    }
-  }
-
-// right click menu
-const contextMenuItems: MenuItem[] = [
-  {
-    label: 'Download',
-    icon: faDownload,
-    submenu: [
-      { label: '.svg', icon: faDownload, onClick: () => downloadFile('svg') },
-      { label: '.png', icon: faDownload, onClick: () => downloadFile('png') },
-      { label: '.json', icon: faDownload, onClick: () => downloadFile('json') },
-    ],
-  },
-  {
-    label: 'Layout',
-    icon: faDiagramProject,
-    submenu: [
-      {label: 'Circle', icon: faDiagramProject, onClick: () => {applyLayout('circle', true)}},
-      {
-        label: 'preset',
-        icon: faDiagramProject,
-        submenu: [
-          {label: 'save', icon: faFloppyDisk, onClick: () => {savePositionsToIndexedDB()}},
-          {label: 'load', icon: faSpinner, onClick: () => {applyLayout('preset', true)}},
-        ]
-      },
-      {label: 'LCC', icon: faDiagramProject, onClick: () => {applyLayout('LCC', true)}},
-      {label: 'FCose', icon: faDiagramProject, onClick: () => {applyLayout('fcose', true)}},
-      {label: 'grid', icon: faDiagramProject, onClick: () => {applyLayout('grid', true)}},
-      {label: 'elk', icon: faDiagramProject, onClick: () => {applyLayout('elk', true)}},
-      {label: 'cise', icon: faDiagramProject, onClick: () => {applyLayout('cise', true)}},
-      {label: 'random', icon: faDiagramProject, onClick: () => {applyLayout('random', true)}},
-    ],
-  },
-  {
-    label: 'Opacity',
-    icon: faPencil,
-    submenu: [
-      { label: '0.05', icon: faPencil, onClick: () => {setOpacity(0.05)} },
-      { label: '0.2', icon: faPencil, onClick: () => {setOpacity(0.2)} },
-      { label: '0.35', icon: faPencil, onClick: () => {setOpacity(0.35)} },
-      { label: '0.5', icon: faPencil, onClick: () => {setOpacity(0.5)} },
-      { label: '0.75', icon: faPencil, onClick: () => {setOpacity(0.75)} },
-      { label: '0.9', icon: faPencil, onClick: () => {setOpacity(0.9)} },
-    ],
-  },
-  {
-    label: 'Node Size',
-    icon: faPencil,
-    submenu: [
-      { label: '0.25', icon: faPencil, onClick: () => {setNodeSize(0.25)}},
-      { label: '0.5', icon: faPencil, onClick: () => {setNodeSize(0.5)}},
-      { label: '1', icon: faPencil, onClick: () => {setNodeSize(1)}},
-      { label: '1.5', icon: faPencil, onClick: () => {setNodeSize(1.5)}},
-      { label: '3', icon: faPencil, onClick: () => {setNodeSize(3)}},
-      { label: '5', icon: faPencil, onClick: () => {setNodeSize(5)}},
-      { label: '10', icon: faPencil, onClick: () => {setNodeSize(10)}},
-    ],
-  },
-];
-const setNodeSize = (size: number) => {
-  // elements.forEach((element) => {
-  //   element.data.size = element.data.size * size;
-  //   setCurNodeSize(size);
-  // });
-  // setElements(elements);
-
-  console.log("setting node size");
+const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
+  console.log("setting node color");
+  const newNodeColors = {...curNodeColor, [nodeType]: color};
 
   cyRef.current?.nodes().forEach(function(node){
-    console.log("inside setting");
-    node.data('size', parseInt(node.data('size'))/curNodeSize*size); 
+    node.data('color', node.data('positive') ? newNodeColors.pos : newNodeColors.neg);
+  });
+
+  setCurNodeColor(newNodeColors);
+}
+const applyNodeSize = (size: SupportedNodeSize) => {
+  console.log("setting node size");
+  cyRef.current?.nodes().forEach(function(node){
+    node.data('size', (parseInt(node.data('size')) / curNodeSize) * size);
   });
   setCurNodeSize(size);
 }
-const setOpacity = (op: number) => {
+const applyOpacity = (op: SupportedOpacity) => {
   console.log("setting opacity");
   const newStyle = [myStyle[0], {...(myStyle[1])}];
   newStyle[1].style.opacity = op;

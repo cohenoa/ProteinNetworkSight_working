@@ -88,9 +88,10 @@ const GraphBar: FC<IGraphBarProps> = ({
 
      
       <p className="graph-notice">
-        It is possible to move any individual node,&nbsp;
+        Once the graph has loaded, you can move any individual node (this may take a few seconds). To move a node, left-click and drag.
+        {/* It is possible to move any individual node,&nbsp;
         <span className="bold">once the graph has loaded (may take a few seconds).</span> To move
-        a node, left-click and drag it
+        a node, left-click and drag it */}
       </p>
     </div>
   );

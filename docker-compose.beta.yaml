@@ -1,0 +1,55 @@
+version: '4.1.0'
+
+services:
+  frontend:
+    image: medmolnet-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend/src:/usr/src/app/src
+    networks:
+      - medmolnet-beta-network
+    container_name: beta-front
+
+  backend:
+    image: medmolnet-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/python-docker
+    networks:
+      - medmolnet-beta-network
+    container_name: beta-back
+
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx-beta:/etc/nginx
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    networks:
+      - medmolnet-beta-network
+    ports:
+      - "8081:80"
+    container_name: beta-nginx
+
+networks:
+  medmolnet-beta-network:
+    driver: bridge
+
+
+# Uncomment and configure certbot if needed
+# certbot:
+#   image: certbot/certbot
+#   container_name: certbot
+#   depends_on:
+#     - nginx
+#   volumes: 
+#     - ./certbot/conf:/etc/letsencrypt
+#     - ./certbot/www:/var/www/certbot
+#   command: certonly --webroot -w /var/www/certbot  --email nitzanmr@gmail.com -d proteinnetworksight.jce.ac -d medmolnet.jce.ac --expand --agree-tos --non-interactive
+#   networks:
+#     - medmolnet-network
