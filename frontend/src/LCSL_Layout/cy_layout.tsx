@@ -118,10 +118,10 @@ CyLayout.prototype.getSpacingFactors = function getSpacingFactors(this: CyLayout
             }
         }
 
-        let clusterInnerSpacing = maxNodeSize * 1.5;
+        let clusterInnerSpacing = maxNodeSize * 1.7;
         
         innerSpacingFactors.set(cluster.rank, clusterInnerSpacing);
-        outerSpacingFactor = Math.max(outerSpacingFactor, clusterInnerSpacing * cluster.maxLayerRank * 1.2);
+        outerSpacingFactor = Math.max(outerSpacingFactor, clusterInnerSpacing * cluster.maxLayerRank * 1.5);
     }
     return {outerSpacingFactor: outerSpacingFactor, innerSpacingFactors: innerSpacingFactors};
 }
