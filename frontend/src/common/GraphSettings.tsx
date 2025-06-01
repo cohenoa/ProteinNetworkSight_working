@@ -42,7 +42,8 @@ export const supportedSettings = {
         GRID: 'grid',
         ELK: 'elk',
         CISE: 'cise',
-        RANDOM: 'random'
+        RANDOM: 'random',
+        LCSL: 'LCSL'
     },
     nodeSizes: {
         SMALL: 0.25,

@@ -1,6 +1,5 @@
 import { position, nodePositions } from "../@types/props";
 import { ICustomGraphData, ICustomNode, ICustomLink } from "../@types/graphs";
-import { assert } from "console";
 
 export function layoutTester(graphData: ICustomGraphData, method: AllMethods): nodePositions {
     let newGraphData = preProcessing(graphData);

@@ -19,7 +19,9 @@ import fcose from 'cytoscape-fcose';
 import cise from 'cytoscape-cise';
 // @ts-ignore
 import elk from 'cytoscape-elk';
+import LCSL from '../LCSL_Layout/index';
 
+cytoscape.use(LCSL);
 cytoscape.use( fcose );
 cytoscape.use( cise );
 cytoscape.use( elk );
@@ -189,6 +191,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
           color: node.color,
           size: Math.abs(node.size === undefined ? 0 : node.size) * 110,  // set the size of the node to be bigger so it will be shown in the graph.
           positive: node.size === undefined || node.size > 0 ? true : false,
+          linksWeights: node.linksWeights === undefined ? 0 : node.linksWeights
         },
       })
     );
@@ -204,6 +207,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
           target: link.target,
           label: `Edge from ${link.source} to ${link.target} `,
           color: getLinkColor(link.score === undefined ? 1994 : link.score),
+          weight: link.score === undefined ? 1994 : link.score,
         },
       })
     );

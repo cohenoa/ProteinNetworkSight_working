@@ -111,7 +111,7 @@ interface nodePositions {
 }
 
 interface position {
-  x: number, 
+  x: number,
   y: number,
 }
 
