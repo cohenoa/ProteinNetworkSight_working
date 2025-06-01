@@ -19,9 +19,9 @@ import fcose from 'cytoscape-fcose';
 import cise from 'cytoscape-cise';
 // @ts-ignore
 import elk from 'cytoscape-elk';
-import LCSL from '../LCSL_Layout/index';
+import lcsl from '../LCSL_Layout/index';
 
-cytoscape.use(LCSL);
+cytoscape.use(lcsl);
 cytoscape.use( fcose );
 cytoscape.use( cise );
 cytoscape.use( elk );
