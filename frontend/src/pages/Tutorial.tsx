@@ -8,14 +8,20 @@ import others from "../assets/tutorial images/others.png";
 import protein_names from "../assets/tutorial images/protein_names.png";
 import table from "../assets/tutorial images/table.png";
 import manual_thresholds from "../assets/tutorial images/manual_thresholds.png";
-import graph_layout from "../assets/tutorial images/graph_layout.png";
-import right_click_menu from "../assets/tutorial images/right_click_menu.png";
-import basic_graph_layout from "../assets/tutorial images/basic_graph_layout.png";
-import cluster_graph_layout from "../assets/tutorial images/cluster_graph_layout.png";
 import download_data from "../assets/tutorial images/download_data.png";
 import download_graphs from "../assets/tutorial images/download_graphs.png";
-import save_graph_layout from "../assets/tutorial images/save_graph_layout.png";
 import save_results_menu from "../assets/tutorial images/save_results_menu.png";
+
+import Menu_Basic_Layouts from '../assets/tutorial images/menu_Basic_Layouts.png';
+import Menu_Cluster_Layout from '../assets/tutorial images/Menu_Cluster_Layout.png';
+import Menu_LCSL from '../assets/tutorial images/Menu_LCSL.png';
+import Menu_Download from '../assets/tutorial images/Menu_Download.png';
+import Menu_Edge_Opacity from '../assets/tutorial images/Menu_Edge_Opacity.png';
+import Menu_Node_Color from '../assets/tutorial images/Menu_Node_Color.png';
+import Menu_Node_Size from '../assets/tutorial images/Menu_Node_Size.png';
+import Menu_save_load from '../assets/tutorial images/Menu_save_load.png';
+import Menu_SaveGraphs from '../assets/tutorial images/Menu_SaveGraphs.png';
+
 import { openLink } from "../common/GeneralCommon";
 import { downloadExampleFile } from "../common/ExampleFileAction";
 
@@ -190,21 +196,24 @@ const Tutorial: FC = () => {
             two proteins).
           </p>
           <p className="t-p">
-            The Right click menu in the graph is used to change the layout of the graph.<br/>
-            The user can also download the graph as a SVG/PNG/JSON file.<br/>
+              Note that you can click on nodes to see more information about them.<br/>
+              You can also drag any node around the graph to better visualize the graph.<br/>
           </p>
-          <img className="t-img" src={right_click_menu} alt="right_click_menu"/>
           <p className="t-p">
-            In the right click menu you can order your graphs in several ways.<br/>
-            Below are 3 static options that are generally usefull in any graph.<br/>
+            The Right click menu in the graph is used to change the graph's visuals<br/>
+            To help either visualize the graph better for publications or to have a better understanding of the data.<br/>
           </p>
-          <img className="t-img" src={basic_graph_layout} alt="basic_graph_layout"/>
-
+          <p className="t-p">
+            We provide a wide varaiety of Layout options that order the nodes 
+            visualy to help you gain valuable insight from the graph<br/>
+            Below are 3 basic options that are generally usefull in any graph.<br/>
+          </p>
+          <img className="t-img" src={Menu_Basic_Layouts} alt="right_click_menu"/>
           <p className="t-p">
             There are also advanced options that position the nodes using different cluster-finding algorithms.<br/>
             We recommand trying each at least once, as they can reveal important attributes of the graph.<br/>
           </p>
-          <img className="t-img" src={cluster_graph_layout} alt="cluster_graph_layout"/>
+          <img className="t-img" src={Menu_Cluster_Layout} alt="cluster_graph_layout"/>
 
           <p className="t-p">
             If you would like to see more information about the layouts, you can find them at <a href="https://blog.js.cytoscape.org/2020/05/11/layouts/#choice-of-layout">cytoscape.js layouts</a>.
@@ -213,10 +222,49 @@ const Tutorial: FC = () => {
           </p>
 
           <p className="t-p">
-            You can also modify the graph by interacting with the nodes.<br/>
-            Once you have reached the desired state, you can save your manual layout by using the "preset" Layout option<br/>
+            We also provide a hand-crafted cluster finding algorithm - named LCSL(Layered CLuster Spiral Layout), 
+            that uses the link's Weights to find clusters, and organize each cluster using a spiral pattern, 
+            depending on the each node's link's weights<br/>
+            the goal of this algorithm is to help you find and prioritize proteins and their drugs for maximum effect in your treatment.<br/>
           </p>
-          <img className="t-img" src={save_graph_layout} alt="cluster_graph_layout"/>
+          <img className="t-img" src={Menu_LCSL} alt="LCSL"/>
+
+          <p className="t-p">
+            To help with visualizing the graph, we provide a few additional options focused on aesthetics.<br/>
+          </p>
+
+          <p className="t-p">
+            The node color option allows you to change the color of the nodes from 6 predefined options, which are applied separately to positive 
+            and negative nodes, enabling you to differentiate between them more easily.<br/>
+          </p>
+          <img className="t-img" src={Menu_Node_Color} alt="node color"/>
+
+          <p className="t-p">
+            The node size option allows you to change the size of all the nodes, while maintaining their relative size.<br/>
+            This is usually helpful when you want to change the ratio of Node:Text or Node:Edge.<br/>
+          </p>
+          <img className="t-img" src={Menu_Node_Size} alt="node size"/>
+
+          <p className="t-p">
+            The Edge Opacity option allows you to change the opacity of the edges, and make them more or less visible 
+            while maintaining their relative visability<br/>
+          </p>
+          <img className="t-img" src={Menu_Edge_Opacity} alt="edge opacity"/>
+
+          <p className="t-p">
+            Once you have reached a desired state, you can save the graph by using the "Save" option on the menu
+            Which will allow you to load the graph in the future after exploring more changed<br/>
+          </p>
+          <img className="t-img" src={Menu_save_load} alt="cluster_graph_layout"/>
+
+          <p className="t-p">
+            Alternativly, if you wish to continue working in another app, or export the result for further analysis, you can download 
+            the graph in one of 3 formats:<br/>
+            1. a .svg file(graph format)<br/>
+            2. a .png file(picture format)<br/>
+            3. a .json file(data format)<br/>
+          </p>
+          <img className="t-img" src={Menu_Download} alt="cluster_graph_layout"/>
           
           <h3 className="t-h3">Table representation</h3>
           <p className="t-p">
@@ -283,9 +331,10 @@ const Tutorial: FC = () => {
                 You can apply a setting to all the graphs by using the top menu<br/>
                 Mark "use preset when available" to use that setting only on graph without a saved layout<br/>
                 Notice that the page is initialized with preset values for every graph that you have saved<br/>
+                If you moved a node manualy before saving a graph, the layout will be saved as preset<br/>
               </p>
             </li>
-            <img className="t-img" src={download_graphs} alt="save_table"/>
+            <img className="t-img" src={Menu_SaveGraphs} alt="save_table"/>
           </ul>
 
         </div>

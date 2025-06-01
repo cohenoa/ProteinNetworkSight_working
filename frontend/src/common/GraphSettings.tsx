@@ -38,20 +38,20 @@ export const supportedSettings = {
     layouts: {
         CIRCLE: 'circle',
         PRESET: 'preset',
-        FCOSE: 'fcose',
         GRID: 'grid',
         LCSL: 'lcsl',
-        ELK: 'elk',
+        FCOSE: 'fcose',
         CISE: 'cise',
+        ELK: 'elk',
         RANDOM: 'random',
     },
     nodeSizes: {
-        SMALL: 0.25,
-        MEDIUM: 0.5,
+        XSMALL: 0.25,
+        SMALL: 0.5,
         NORMAL: 1,
-        LARGE: 1.5,
-        XLARGE: 3,
-        XXLARGE: 5,
+        MEDUIM: 1.5,
+        LARGE: 3,
+        XLARGE: 5,
         HUGE: 10
     },
     opacities: {

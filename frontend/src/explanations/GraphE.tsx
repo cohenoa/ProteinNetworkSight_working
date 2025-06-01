@@ -1,7 +1,7 @@
 import { FC } from "react";
 import "../styles/Explanation.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faDiagramProject, faDownload, faFloppyDisk, faArrowPointer, faPencil, faComputerMouse, faBrush } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faDiagramProject, faDownload, faFloppyDisk, faArrowPointer, faPencil, faComputerMouse, faBrush, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 
 const GraphExplanation: FC = () => {
   return (
@@ -66,7 +66,7 @@ const GraphExplanation: FC = () => {
           change the Layout of the nodes to gain valuable insight
         </li>
         <li className="must-item">
-          <FontAwesomeIcon className="icon" icon={faPencil} fixedWidth={true} style={{ fontSize: "20px" }}/>
+          <FontAwesomeIcon className="icon" icon={faUpRightAndDownLeftFromCenter} fixedWidth={true} style={{ fontSize: "20px" }}/>
           change the size of the nodes to your liking
         </li>
         <li className="must-item">

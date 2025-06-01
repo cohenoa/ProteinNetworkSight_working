@@ -12,7 +12,7 @@ import { get, set } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
 import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity, SupportedNodeColor } from "../common/GraphSettings";
-import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner, faBrush, faPlus , faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faDiagramProject, faDownload, faPencil, faFloppyDisk, faSpinner, faBrush, faPlus , faMinus, faUpRightAndDownLeftFromCenter, faDownLeftAndUpRightToCenter, faExpand } from '@fortawesome/free-solid-svg-icons';
 import svg from "cytoscape-svg";
 import fcose from 'cytoscape-fcose';
 // @ts-ignore
@@ -431,13 +431,6 @@ const saveGraph = async () => {
 
   // right click menu
   const contextMenuItems: MenuItem[] = [
-    {label: 'save', icon: faFloppyDisk, onClick: () => {saveGraph()}},
-    {label: 'load', icon: faSpinner, onClick: () => {applyLayout(supportedSettings.layouts.PRESET, true)}},
-    {
-      label: 'Download',
-      icon: faDownload,
-      submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
-    },
     {
       label: 'Layout',
       icon: faDiagramProject,
@@ -450,8 +443,8 @@ const saveGraph = async () => {
     },
     {
       label: 'Node Size',
-      icon: faPencil,
-      submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: faPencil, onClick: () => {applyNodeSize(value)}}))
+      icon: faUpRightAndDownLeftFromCenter,
+      submenu: Object.entries(supportedSettings.nodeSizes).map(([key, value]) => ({ label: key, icon: value > 1 ? faUpRightAndDownLeftFromCenter: value < 1 ? faDownLeftAndUpRightToCenter : faExpand, onClick: () => {applyNodeSize(value)}}))
     },
     {
       label: 'Node Color',
@@ -469,6 +462,13 @@ const saveGraph = async () => {
         },
       ]
     },
+    {
+      label: 'Download',
+      icon: faDownload,
+      submenu: Object.values(supportedSettings.fileTypes).map((option) => ({ label: option, icon: faDownload, onClick: () => downloadGraph(option)}))
+    },
+    {label: 'save', icon: faFloppyDisk, onClick: () => {saveGraph()}},
+    {label: 'load', icon: faSpinner, onClick: () => {applyLayout(supportedSettings.layouts.PRESET, true)}},
   ];
 
   const applyLayout = async (name: SupportedLayout, animate: boolean) => {

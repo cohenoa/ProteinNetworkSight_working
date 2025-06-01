@@ -279,7 +279,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                         onChange={() => setUsePresetWhenPossible(!usePresetWhenPossible)}
                         className="usePresetCheckbox"
                     />
-                    <label className="usePresetLabel">{" Use Preset when available"}</label>
+                    <label className="usePresetLabel">{"Use Saved when possible"}</label>
                 </div>
             </div>
         )

@@ -10,15 +10,11 @@ const FooterComponent: FC = () => {
       <div className="leftFooter">
         <div className="name">
           {/* <p>This website was developed by Tohar Tsivtman & Ayelet Gibli (2022), Aviv Eldad (2023), Nitzan Migdal (2023-2024), Omri Nahor (2023-2025).</p> */}
-          <p>This website was developed by</p>
-          <p className="names">Tohar Tsivtman and Ayelet Gibli(2022)</p>
-          <p className="names">Aviv Eldad (2023)</p>
-          <p className="names">Nitzan Migdal(2023-2024)</p>
+          <p style={{marginLeft:"10px"}}> This website was developed and maintained by</p>
           <p className="names">Omri Nahor(2023-2025)</p>
-          {/* <p className="names">Tohar Tsivtman and Ayelet Gibli</p>
-          <p className="names">Nitzan Migdal and Omri Nahor</p>
-
-          <p className="names">Aviv Eldad</p>   */}
+          <p className="names">Nitzan Migdal(2023-2024)</p>
+          <p className="names">Aviv Eldad (2023)</p>
+          <p className="names">Tohar Tsivtman and Ayelet Gibli(2022)</p>
         </div>
         <div className="update">
           <p className="update">Last STRING database update: {lastUpdate}</p>
