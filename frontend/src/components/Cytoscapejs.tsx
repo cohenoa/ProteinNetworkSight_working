@@ -441,7 +441,7 @@ const saveGraph = async () => {
     {
       label: 'Layout',
       icon: faDiagramProject,
-      submenu: Object.values(supportedSettings.layouts).map((option) => ({ label: option, icon: faDiagramProject, onClick: () => {applyLayout(option, true)}}))
+      submenu: Object.values(supportedSettings.layouts).filter(option => option !== supportedSettings.layouts.PRESET).map((option) => ({ label: option, icon: faDiagramProject, onClick: () => {applyLayout(option, true)}}))
     },
     {
       label: 'Link Opacity',

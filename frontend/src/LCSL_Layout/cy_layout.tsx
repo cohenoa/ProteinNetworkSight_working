@@ -17,13 +17,13 @@ interface ClusterLayer {
 }
 
 interface LCSLLayoutOptions {
-    name: "LCSL"
+    name: "lcsl"
 }
 
 class DefaultOptions implements LCSLLayoutOptions {
 
     //** Needed to for the layout to be called from cytoscape */
-    name: "LCSL" = "LCSL" as const;
+    name: "lcsl" = "lcsl" as const;
 
     fit: boolean = true;   // if true, fits the viewport to the graph
 
@@ -38,9 +38,6 @@ export function CyLayout(this: CyLayout, options: LayoutPositionOptions) {
     this.options = {
         ...new DefaultOptions(),
         ...options,
-        // animate: options.animate,
-        // fit: options.fit,
-        // eles: options.eles,
     };
 }
 
@@ -59,20 +56,6 @@ declare type CyLayout = {
 
 
 CyLayout.prototype.run = function (this: CyLayout): void {
-    // let params = this.options;
-    // let options = params;
-
-    // let eles = options.eles;
-    // let nodes = eles.nodes().not( ':parent' );
-
-    // @ts-ignore
-    // this.options.eles.nodes().layoutPositions(this, this.options, (ele, i) => positions[String(ele.id())]);
-
-    // this.options.eles.nodes().layoutPositions(this, options, (ele, i) => ({ x: 0, y: 0 }));
-
-    console.log("running layout");
-
-    console.log(this.options);
 
     let clusters = this.calcLayerdClusters();
     console.log("clusters: ", clusters);
@@ -82,13 +65,9 @@ CyLayout.prototype.run = function (this: CyLayout): void {
     console.log("innerSpacingFactor: ", innerSpacingFactors);
 
     let positions = this.getPositions(clusters, { x: 0, y: 0 }, outerSpacingFactor, innerSpacingFactors);
-    console.log("positions: ", positions);
 
-    // this.options.eles.nodes().positions((ele, i) => positions[String(ele.id())]);
     // @ts-ignore
     this.options.eles.nodes().layoutPositions(this, this.options, (ele, i) => positions[String(ele.id())]);
-
-    // (this.options.eles as any)._private.cy.emit("layoutstop");
 };
 
 CyLayout.prototype.getPositions = function getPositions(clusters: LayeredCluster[], center: Position, outerSpacingFactor: number, innerSpacingFactors: Map<number, number>): nodePositions {
@@ -161,7 +140,6 @@ CyLayout.prototype.calcLayerdClusters = function calcLayerdClusters(this: CyLayo
     while (nodes.length > 0) {
         const head = this.getHead(nodes);
         const neighbors = this.getNeighbors(head, addedNodes);
-        console.log(neighbors);
         let {avg, std} = this.getStatistics(neighbors);
 
         let maxLayerRank = 0;
@@ -188,7 +166,6 @@ CyLayout.prototype.calcLayerdClusters = function calcLayerdClusters(this: CyLayo
         clusterRank++;
 
     }
-    console.log(clusters);
     return clusters;
 }
 

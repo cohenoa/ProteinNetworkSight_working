@@ -40,10 +40,10 @@ export const supportedSettings = {
         PRESET: 'preset',
         FCOSE: 'fcose',
         GRID: 'grid',
+        LCSL: 'lcsl',
         ELK: 'elk',
         CISE: 'cise',
         RANDOM: 'random',
-        LCSL: 'LCSL'
     },
     nodeSizes: {
         SMALL: 0.25,
