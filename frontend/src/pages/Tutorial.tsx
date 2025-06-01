@@ -9,7 +9,6 @@ import protein_names from "../assets/tutorial images/protein_names.png";
 import table from "../assets/tutorial images/table.png";
 import manual_thresholds from "../assets/tutorial images/manual_thresholds.png";
 import download_data from "../assets/tutorial images/download_data.png";
-import download_graphs from "../assets/tutorial images/download_graphs.png";
 import save_results_menu from "../assets/tutorial images/save_results_menu.png";
 
 import Menu_Basic_Layouts from '../assets/tutorial images/menu_Basic_Layouts.png';
