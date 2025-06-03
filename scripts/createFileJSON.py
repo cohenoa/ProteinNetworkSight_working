@@ -1,10 +1,15 @@
 import pandas as pd
+import os
 import json
 
 # path to xlsx file
 
-src_path = 'C:/Users/omrin/OneDrive/Desktop/Work/proteinNetworkSight/for work/example_data/example_short1.xlsx'
-dest_path = 'C:/Users/omrin/OneDrive/Desktop/Work/proteinNetworkSight/for work/code/proteinnetworksight/frontend/src/assets/DefualtFile.tsx'
+src_path = '../../example_data/example_short2.xlsx'
+dest_path = './frontend/src/assets/DefualtFile.tsx'
+
+
+# Print the current working directory
+print("Current working directory:", os.getcwd())
 
 df = pd.read_excel(src_path)
 
