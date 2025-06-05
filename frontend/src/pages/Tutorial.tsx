@@ -152,7 +152,8 @@ const Tutorial: FC = () => {
             >
               String-db
             </button>
-            &nbsp;in order to create and visualise protein networks. Thus,
+            &nbsp;
+            in order to create and visualise protein networks. Thus,
             protein/gene names specified in the input file should match the
             names used by String-db. Genes often have multiple names, so it is
             possible that the user used a gene whose name was different in the
@@ -166,51 +167,49 @@ const Tutorial: FC = () => {
         <div>
           <h2 className="t-h2">Results page</h2>
           <p className="t-p">
-            The obtained network includes the input score values represented by
-            nodes (node radius corresponds to the input protein score value).
-            The edges are adapted from STRING-db. Edge width represents the
-            probability of a protein-protein interaction. The information can be
-            downloaded as either a table or a network. The network can be either
-            visualized online or downloaded as a SVG file (editable). Online
-            presentation is interactive: the networks can be changed, zoomed-in,
-            zoomed-out or rotated.
+            The resulting network comprises nodes representing the input score
+            values, where node size is proportional to the input protein score
+            value. The edges are derived from STRING-db, with edge width
+            indicating the probability of a protein-protein interaction. The
+            information can be viewed and downloaded in either a tabular or network format.
+            The network format provides an interactive visualization of the network online, 
+            allowing for zooming, dragging, and more complex manipulation of the
+            network.
           </p>
           <h3 className="t-h3">Graph representation</h3>
           <p className="t-p">
-            The graph presents a network such that each node represents a
-            protein. Node size is proportional to the input value and node color
-            represents the sign of the value (red for positive values, blue for
-            negative values). Edges between each pair of proteins present
-            protein-protein interactions (width of each edge corresponds to a
-            probability of a functional protein-protein connection).
+            The graphical representation displays a network where each node
+            symbolizes a protein. Node size is directly proportional to the input
+            value, and node color indicates the sign of the value (blue for positive
+            values and red for negative values). The edges connecting each pair of
+            proteins represent functional protein-protein interactions, with the
+            width of each edge corresponding to the probability of such an
+            interaction.
           </p>
           <img className="t-img" src={graph} alt="graph"/>
           <p className="t-p">
-            In this figure we see several interactions. For example, we can see
-            that TIGAR has a positive (blue color) large value and it interacts
-            with LKB1 (positive, smaller value) and with GAPDH which has a
-            negative value (red color). Furthermore, we can deduce that ACC1
-            interacts with both BCL2 and FASN, with BCL2 showing a higher
-            probability of interaction (based on the thicker edge connecting the
-            two proteins).
+            In this illustration, multiple protein interactions are depicted. For instance, 
+            TIGAR is represented with a positive, sizeable value (indicated by the blue color) 
+            and interacts with LKB1, which also has a positive but smaller value, as well as with GAPDH, 
+            which is represented by a negative value (indicated by the red color). 
+            Additionally, it can be inferred that ACC1 interacts with both BCL2 and FASN, with BCL2 demonstrating 
+            a higher likelihood of interaction, as evidenced by the thicker edge connecting the two proteins.
           </p>
           <p className="t-p">
-              Note that you can click on nodes to see more information about them.<br/>
-              You can also drag any node around the graph to better visualize the graph.<br/>
+              Note that clicking on individual nodes will reveal additional information about the corresponding protein.<br/>
+              Users can also interactively reposition nodes within the graph to facilitate optimal visualization and facilitate the extraction of meaningful insights from the data.<br/>
           </p>
           <p className="t-p">
-            The Right click menu in the graph is used to change the graph's visuals<br/>
-            To help either visualize the graph better for publications or to have a better understanding of the data.<br/>
+            The context menu accessible via right-click in the graph visualization enables users to adjust visual properties and customize the appearance of the graph to facilitate better comprehension of the data or to prepare visualizations for publication.
           </p>
           <p className="t-p">
-            We provide a wide varaiety of Layout options that order the nodes 
-            visualy to help you gain valuable insight from the graph<br/>
-            Below are 3 basic options that are generally usefull in any graph.<br/>
+            We offer a diverse range of layout options designed to visually organize nodes, enhancing your ability to extract meaningful insights from the graph.<br/>
+            Presented below are three fundamental options that are broadly applicable to any graph.<br/>
           </p>
           <img className="t-img" src={Menu_Basic_Layouts} alt="right_click_menu"/>
           <p className="t-p">
-            There are also advanced options that position the nodes using different cluster-finding algorithms.<br/>
-            We recommand trying each at least once, as they can reveal important attributes of the graph.<br/>
+            Additionally, advanced layout options utilizing various clustering algorithms are available to provide an alternative visualization of the graph's structure.<br/>
+            We recommend exploring each of these options, as they can uncover valuable insights and reveal unique properties of the graph.<br/>
           </p>
           <img className="t-img" src={Menu_Cluster_Layout} alt="cluster_graph_layout"/>
 
@@ -221,10 +220,9 @@ const Tutorial: FC = () => {
           </p>
 
           <p className="t-p">
-            We also provide a hand-crafted cluster finding algorithm - named LCSL(Layered CLuster Spiral Layout), 
-            that uses the link's Weights to find clusters, and organize each cluster using a spiral pattern, 
-            depending on the each node's link's weights<br/>
-            the goal of this algorithm is to help you find and prioritize proteins and their drugs for maximum effect in your treatment.<br/>
+            Additionally, we provide a novel, hand-crafted cluster finding algorithm - named LCSL(Layered Cluster Spiral Layout) - 
+            which utilizes the link weights to identify clusters and organize each cluster in a spiral pattern, 
+            taking into account the weights of each node's links. This algorithm is designed to facilitate the discovery and prioritization of proteins and their respective drugs for optimal therapeutic effect.
           </p>
           <img className="t-img" src={Menu_LCSL} alt="LCSL"/>
 
