@@ -227,6 +227,10 @@ def get_score(conn, id1, id2) -> float:
 
     return result1
 
+def get_scores(conn, ids_list, score_thresh) -> list:
+
+    return result1
+
 def get_score_multithread(f_score_thresh, good_pairs, obj,conn):
     score = get_score(conn, obj.a_id, obj.b_id)
     if score == SCORE_NOT_FOUND:
