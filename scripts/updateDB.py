@@ -1,8 +1,10 @@
 import requests
 import gzip
-from pathlib import Path
 from tqdm import tqdm
 import typing
+import os
+from psycopg2 import connect, DatabaseError
+from configparser import ConfigParser
 
 class Link(typing.TypedDict):
     url: str
@@ -37,8 +39,6 @@ def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
                         break
                 else:
                     insert_fn(line)
-                # if max_test_lines and i + 1 >= max_test_lines:
-                #     break
 
         r.close()
 
@@ -63,7 +63,6 @@ def clear_table(conn, table_name, reset_identity=True, cascade=False):
     sql = f"TRUNCATE TABLE {table_name} {opts_sql};"
     with conn.cursor() as cur:
         cur.execute(sql)
-    # if you aren't in autocommit mode, uncomment the next line:
     # conn.commit()
 
 def insert_fn_factory(conn, table_name):
@@ -81,8 +80,35 @@ def insert_fn_factory(conn, table_name):
         # you might batch commits or use executemany for speed!
     return insert_line
 
-def get_linker():
-    return 
+def configDb(filename='database.ini', section='postgresql'):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(BASE_DIR, filename)
+
+    # create a parser
+    parser = ConfigParser(interpolation=None)
+    # read config file
+    parser.read(file_path)
+    
+    # get section, default to postgresql
+    db = {}
+    if parser.has_section(section):
+        params = parser.items(section)
+        for param in params:
+            db[param[0]] = param[1]
+    else:
+        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+
+    return db
+
+def open_db_conn():
+    try:
+        params = configDb()
+        conn = connect(**params)
+        return conn
+
+    except (Exception, DatabaseError) as error:
+        print(error)
+        return None
 
 
 if __name__ == '__main__':
@@ -110,13 +136,11 @@ if __name__ == '__main__':
     }
 
     # 3) Open Postgres connection
-    # conn = psycopg2.connect(dbname='mydb', user='me', password='secret')
-    # conn.autocommit = True
-
-    
+    conn = open_db_conn()
+    conn.autocommit = True
 
     # 4) Stream and insert
     # insert_fn = insert_fn_factory(conn, 'protein_links')
-    stream_gzip_to_postgres(linker['links']['url'], None, max_test_lines=10)
+    stream_gzip_to_postgres(linker['links']['url'], None, max_test_lines=2000)
 
     # conn.close()
