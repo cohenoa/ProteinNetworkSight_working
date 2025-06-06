@@ -43,8 +43,6 @@ declare module "little-state-machine" {
     proteinsNames: string[];
     organism: OptionType;
     scoreThreshold: number;
-    positiveThreshold: number;
-    negativeThreshold: number;
     vectorsHeaders: string[];
     isLoading: boolean;
     isSetSuggestions: boolean;
@@ -54,7 +52,7 @@ declare module "little-state-machine" {
     vectorsValues: IVectorsValues;
     uuid: string;
     showError:boolean
-    thresholds:{[x: string]: number[];}
+    thresholds:{[x: string]: threshMap;}
     sortTable:Array<ColumnState>;
     stringNames:Array<string>;
   }

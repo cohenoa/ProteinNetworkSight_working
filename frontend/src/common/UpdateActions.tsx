@@ -57,12 +57,9 @@ export function updateFileDetails(
   payload: {
     proteinsNames: string[];
     scoreThreshold: number;
-    positiveThreshold: number;
-    negativeThreshold: number;
     organism: OptionType;
     vectorsHeaders: string[];
-    thresholds: {[x: string]: number[];}
-    // vectorsValues: IVectorsValues;
+    thresholds: {[x: string]: {pos: number, neg: number};}
   }
 ): GlobalState {
   console.log(payload);
@@ -120,7 +117,7 @@ export function updateUuid(
 
 export function updateThresholds(
   state: GlobalState,
-  payload: { thresholds: { [x: string]: number[]; }}
+  payload: { thresholds: { [x: string]: threshMap; }}
 ): GlobalState {
   console.log(payload);
   return {

@@ -11,6 +11,7 @@ import "../styles/FileDetails.css";
 import { get, set } from 'idb-keyval';
 import { headers } from "../assets/DefualtFile";
 import Modal from '../components/thresholdModal';
+import { threshMap } from "../@types/global";
 
 type formValues = {
   idHeader: string;
@@ -19,7 +20,7 @@ type formValues = {
   positiveThreshold: number;
   negativeThreshold: number;
   organism: string;
-  thresholds:{};
+  thresholds: Array<Array<number>>;
 };
 
 type vectorsValues = {
@@ -30,6 +31,10 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading ,updateThresholds});
   const [selectedOption, setSelectedOption] = useState<OptionType>({...state.organism});
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [proteinsJson, setProteinsJson] = useState([]);
+  const defaultThresholds: threshMap = { pos: 0.08, neg: -0.08 };
+  
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -38,42 +43,50 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
     setIsModalOpen(false);
   };
 
+  const getThreshObject = (thresholds: Array<Array<number>>) => {
+    return thresholds.reduce((acc, item, index) => {
+        acc[state.headers[index + 1]] = { pos: item[0], neg: item[1] };
+        return acc;
+      }, {} as { [key: string]: threshMap });
+  }
+
   const collectThresholds = async (thresholds: Array<Array<number>>) => {
     var results = get(state.fileName).then((val) => {
       console.log(val['headers']);
-      const mappedThresholds = thresholds.map((item, index) => ({[`${state.headers[index + 1]}`]: item}));
-      console.log("mappedThresholds: ", thresholds)
-      const resultObject = mappedThresholds.reduce((acc, item) => {
-        const key = Object.keys(item)[0]; // Extracting the key from the current object
-        acc[key] = item[key]; // Assigning the key-value pair to the accumulator object
-        return acc;
-      }, {} as { [key: string]: number[] });
-      console.log('modified thresholds: ', resultObject);
-      state.thresholds = resultObject
-      // console.log( state.thresholds["G1"])
-      // updateThresholds(state, {thresholds:resultObject})
-      actions.updateThresholds({ thresholds: resultObject });
-      return resultObject
+
+      const ThreshObj = getThreshObject(thresholds);
+
+      actions.updateThresholds({ thresholds: ThreshObj });
+      return ThreshObj
     });
     closeModal();
     return results;
   }
 
-  let proteins: any[];
-
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<formValues>();
 
-  get(state.fileName).then((val) => {
-    const headers = val['headers'];
-    proteins = val['json'];
-  }).catch((err) => {
-    console.log('It failed!', err);
-    return;
-  });
+  useEffect(() => {
+    let isMounted = true;
+    if (isMounted) {
+      get(state.fileName).then((val) => {
+        setProteinsJson(val['json']);
+      })
+    }
+    return () => { isMounted = false };
+  }, [])
+
+  // get(state.fileName).then((val) => {
+  //   const headers = val['headers'];
+  //   proteins = val['json'];
+  // }).catch((err) => {
+  //   console.log('It failed!', err);
+  //   return;
+  // });
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -93,9 +106,8 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const onSubmit =  async (data: formValues) => {
     console.log(state);
     get(state.fileName).then((val) => {
-      console.log(val);
       const headers = val['headers'];
-      proteins = val['json'];
+      let proteins = val['json'];
       proteins.forEach((protein:string[]) => {
         if (protein[0].includes(';')){
           var otherNames = protein[0].split(';');
@@ -106,9 +118,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
             var newProtein = protein;
 
             newProtein[0] = firstPart + "_" + otherNames[1];
-            // newProtein = newProtein + otherNames[1]
             if(newProtein !== undefined){
-              // proteins = [...proteins,newProtein];
               proteins.push(newProtein)
             } 
         }}
@@ -143,12 +153,9 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
           actions.updateFileDetails({
             proteinsNames: proteinsNames,
             scoreThreshold: data.scoreThreshold,
-            positiveThreshold: data.positiveThreshold,
-            negativeThreshold: data.negativeThreshold,
             organism: selectedOption,
             vectorsHeaders: vectorsHeaders,
-            thresholds:result,
-            // vectorsValues: vectorsValues,
+            thresholds: result,
           });
           goNextStep();
         })
@@ -157,15 +164,11 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
         actions.updateFileDetails({
           proteinsNames: proteinsNames,
           scoreThreshold: data.scoreThreshold,
-          positiveThreshold: data.positiveThreshold,
-          negativeThreshold: data.negativeThreshold,
           organism: selectedOption,
           vectorsHeaders: vectorsHeaders,
-          thresholds:state.thresholds,
-          // vectorsValues: vectorsValues,
+          thresholds: state.thresholds,
         });
         goNextStep();
-      // console.log(Object.keys(state.thresholds).length === 0);
     }})
     .catch((err) => {
       console.log('It failed!', err);
@@ -253,11 +256,20 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               className="text-input"
               min={0}
               max={1}
-              defaultValue={state.positiveThreshold}
+              defaultValue={0.08}
               required
             {...register("positiveThreshold", {
               validate: {
-                json: (v) => proteins.some((res: any) => res.some((cell: number) => cell > 0 && cell > v))||v==0,
+                json: (v) => proteinsJson.some((res: any) => res.some((cell: number) => cell > 0 && cell > v)),
+              },
+              onChange: (e) => {
+                let value = Number(e.target.value);
+                const allValues = getValues();
+                const allPositiveValues = allValues.thresholds.reduce((acc, item) => {
+                  return acc.concat(item[1]);
+                }, []);
+                const ThreshObj = getThreshObject(allPositiveValues.map((item, index) => [value, item]));
+                actions.updateThresholds({ thresholds: ThreshObj });
               },
             })}
           />
@@ -277,12 +289,21 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               className="text-input"
               min={-1}
               max={0}
-              defaultValue={state.negativeThreshold}
+              defaultValue={-0.08}
               required
               {...register("negativeThreshold", {
                 validate: {
                   json: (v) =>
-                    proteins.some((res: any) => res.some((cell: number) =>cell < 0 && cell <  v))||v==0,
+                    proteinsJson.some((res: any) => res.some((cell: number) => cell < 0 && cell < v)) || v == 0,
+                },
+                onChange: (e) => {
+                  let value = Number(e.target.value);
+                  const allValues = getValues();
+                  const allPositiveValues = allValues.thresholds.reduce((acc, item) => {
+                    return acc.concat(item[0]);
+                  }, []);
+                  const ThreshObj = getThreshObject(allPositiveValues.map((item, index) => [item, value]));
+                  actions.updateThresholds({ thresholds: ThreshObj });
                 },
               })}
             />
@@ -337,7 +358,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
           onConfirm={collectThresholds}
           length={state.headers.length - 1}
           headers={state.headers.slice(1)}
-          defaultValues={[state.positiveThreshold, state.negativeThreshold]}
+          defaultValues={[defaultThresholds.pos, defaultThresholds.neg]}
         />
       </form>
   );
