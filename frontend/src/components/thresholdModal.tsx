@@ -90,8 +90,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, length , head
 
           {/* Buttons at the bottom */}
             <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                <button className="btn btn--outline btn--wide" onClick={onClose}>CANCEL</button>
-                <button className="btn btn--primary btn--wide" onClick={() => onConfirm(thresholds)}>CONFIRM</button>
+                <button type="button" className="btn btn--outline btn--wide" onClick={onClose}>CANCEL</button>
+                <button type="button" className="btn btn--primary btn--wide" onClick={() => onConfirm(thresholds)}>CONFIRM</button>
             </div>
         </div>
       </div>

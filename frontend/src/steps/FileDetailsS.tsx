@@ -30,6 +30,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading ,updateThresholds});
   const [selectedOption, setSelectedOption] = useState<OptionType>({...state.organism});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [proteins, setProteins] = useState<any[]>([]);
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -59,7 +60,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
     return results;
   }
 
-  let proteins: any[];
+  // let proteins: any[];
 
   const {
     register,
@@ -67,13 +68,22 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
     formState: { errors },
   } = useForm<formValues>();
 
-  get(state.fileName).then((val) => {
-    const headers = val['headers'];
-    proteins = val['json'];
-  }).catch((err) => {
-    console.log('It failed!', err);
-    return;
-  });
+  useEffect(() => {
+    get(state.fileName).then((val) => {
+      setProteins(val['json']);
+    }).catch((err) => {
+      console.log('It failed!', err);
+      return;
+    });
+  }, []);
+
+  // get(state.fileName).then((val) => {
+  //   const headers = val['headers'];
+    
+  // }).catch((err) => {
+  //   console.log('It failed!', err);
+  //   return;
+  // });
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -91,11 +101,12 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
 
   const onSubmit =  async (data: formValues) => {
+    console.log(new Error().stack);
     console.log(state);
     get(state.fileName).then((val) => {
       console.log(val);
       const headers = val['headers'];
-      proteins = val['json'];
+      // proteins = val['json'];
       proteins.forEach((protein:string[]) => {
         if (protein[0].includes(';')){
           var otherNames = protein[0].split(';');
@@ -257,7 +268,11 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               required
             {...register("positiveThreshold", {
               validate: {
-                json: (v) => proteins.some((res: any) => res.some((cell: number) => cell > 0 && cell > v))||v==0,
+                json: (v) => {
+                  // console.log(v);
+                  console.log("proteins: ", proteins);
+                  return proteins.some((res: any) => res.some((cell: number) => cell > 0 && cell > v)) || v==0
+                },
               },
             })}
           />
@@ -296,7 +311,8 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
           
           <div className="button-container">
-            <button className="btn btn--primary btn--medium" onClick={() => openModal()}>Manual Thresholds</button>
+            {/* <button className="btn btn--primary btn--medium" onClick={() => openModal()}>Manual Thresholds</button> */}
+            <button type="button" className="btn btn--primary btn--medium" onClick={() => openModal()}>Manual Thresholds</button>
           </div>
         </div>
 
