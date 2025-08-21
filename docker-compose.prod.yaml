@@ -16,7 +16,7 @@ services:
     image: medmolnet-backend
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     volumes:
       - ./backend:/python-docker
     networks:
