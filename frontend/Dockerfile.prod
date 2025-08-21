@@ -23,22 +23,3 @@ COPY --from=builder /usr/src/app/build ./build
 
 EXPOSE 3000
 CMD ["serve", "-s", "build", "-l", "3000"]
-
-# FROM node as builder
-
-# # Create app directory
-# WORKDIR /usr/src/app
-
-# # Install app dependencies
-# COPY package*.json ./
-
-# RUN npm install --legacy-peer-deps
-
-# COPY . .
-# EXPOSE 3000
-# CMD [ "npm", "start" ]
-
-
-# RUN npm run build
-# CMD [ "npm", "run", "build" ]
-# CMD ["serve", "-s", "build"]

@@ -14,6 +14,7 @@ export const makePostRequest = (
   let headers = new Headers();
 
   headers.append("Content-Type", "application/json");
+  console.log(serverUrl);
   fetch(serverUrl + route, {
     mode: "cors",
     method: "POST",

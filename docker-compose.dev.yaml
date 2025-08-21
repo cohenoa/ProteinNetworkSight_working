@@ -5,12 +5,12 @@ services:
     image: medmolnet-frontend
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
       - ./frontend/src:/usr/src/app/src
     networks:
-      - medmolnet-beta-network
-    container_name: beta-front
+      - medmolnet-dev-network
+    container_name: dev-front
 
   backend:
     image: medmolnet-backend
@@ -20,24 +20,24 @@ services:
     volumes:
       - ./backend:/python-docker
     networks:
-      - medmolnet-beta-network
-    container_name: beta-back
+      - medmolnet-dev-network
+    container_name: dev-back
 
   nginx:
     image: nginx
     restart: unless-stopped
     volumes:
-      - ./nginx-beta:/etc/nginx
+      - ./nginx-dev:/etc/nginx
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     networks:
-      - medmolnet-beta-network
+      - medmolnet-dev-network
     ports:
       - "8081:80"
-    container_name: beta-nginx
+    container_name: dev-nginx
 
 networks:
-  medmolnet-beta-network:
+  medmolnet-dev-network:
     driver: bridge
 
 
