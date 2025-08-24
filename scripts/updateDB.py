@@ -1,8 +1,10 @@
 import requests
 import gzip
-from pathlib import Path
 from tqdm import tqdm
 import typing
+import psycopg2
+import os
+from configparser import ConfigParser
 
 class Link(typing.TypedDict):
     url: str
@@ -81,8 +83,26 @@ def insert_fn_factory(conn, table_name):
         # you might batch commits or use executemany for speed!
     return insert_line
 
-def get_linker():
-    return 
+def configDb(filename='database.ini', section='postgresql'):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(BASE_DIR, filename)
+
+    # create a parser
+    parser = ConfigParser(interpolation=None)
+    # read config file
+    parser.read(file_path)
+    
+    # get section, default to postgresql
+    db = {}
+    if parser.has_section(section):
+        params = parser.items(section)
+        for param in params:
+            db[param[0]] = param[1]
+    else:
+        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+
+    return db
+
 
 
 if __name__ == '__main__':
@@ -110,13 +130,16 @@ if __name__ == '__main__':
     }
 
     # 3) Open Postgres connection
-    # conn = psycopg2.connect(dbname='mydb', user='me', password='secret')
-    # conn.autocommit = True
+    params = configDb(filename='../backend/database.ini', section='postgresql')
+    conn = psycopg2.connect(**params)
+    conn.autocommit = True
 
     
 
     # 4) Stream and insert
-    # insert_fn = insert_fn_factory(conn, 'protein_links')
+    insert_fn = insert_fn_factory(conn, 'protein_links')
     stream_gzip_to_postgres(linker['links']['url'], None, max_test_lines=10)
+
+    # 5) add indexes
 
     # conn.close()
