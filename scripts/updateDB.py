@@ -130,7 +130,7 @@ if __name__ == '__main__':
     }
 
     # 3) Open Postgres connection
-    params = configDb(filename='../backend/database.ini', section='postgresql')
+    params = configDb(filename='../DB/database.example.ini', section='postgresql')
     conn = psycopg2.connect(**params)
     conn.autocommit = True
 
