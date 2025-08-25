@@ -1,45 +1,38 @@
 version: '4.1.0'
 
 services:
-  frontend:
+  medmolnet-front:
     image: medmolnet-frontend
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+      context: ./frontend  # Corrected to use context
+      dockerfile: Dockerfile.dev  # Corrected to use dockerfile key
     volumes:
-      - ./frontend/src:/usr/src/app/src
+      - ./frontend/src:/usr/src/app/src  # Sync local frontend code
     networks:
-      - medmolnet-dev-network
-    container_name: dev-front
+      - medmolnet-network
 
-  backend:
+  medmolnet-back:
     image: medmolnet-backend
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./backend  # Corrected to use context
+      dockerfile: Dockerfile  # Corrected to use dockerfile key
     volumes:
-      - ./backend:/python-docker
+      - ./backend:/python-docker  # Sync local backend code
     networks:
-      - medmolnet-dev-network
-    container_name: dev-back
+      - medmolnet-network
 
   nginx:
-    image: nginx
+    container_name: nginx
     restart: unless-stopped
-    volumes:
-      - ./nginx-dev:/etc/nginx
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    networks:
-      - medmolnet-dev-network
+    image: nginx
     ports:
-      - "8081:80"
-    container_name: dev-nginx
-
-networks:
-  medmolnet-dev-network:
-    driver: bridge
-
+        - "8081:80"
+    volumes:
+        - ./nginx:/etc/nginx
+        - ./certbot/conf:/etc/letsencrypt
+        - ./certbot/www:/var/www/certbot
+    networks:
+      - medmolnet-network
 
 # Uncomment and configure certbot if needed
 # certbot:
@@ -53,3 +46,7 @@ networks:
 #   command: certonly --webroot -w /var/www/certbot  --email nitzanmr@gmail.com -d proteinnetworksight.jce.ac -d medmolnet.jce.ac --expand --agree-tos --non-interactive
 #   networks:
 #     - medmolnet-network
+
+networks:
+  medmolnet-network:
+    driver: bridge
