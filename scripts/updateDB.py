@@ -16,12 +16,6 @@ class Linker(typing.TypedDict):
     proteins: Link
     proteins_aliases: Link
 
-response = requests.api.request('GET', 'https://string-db.org/api/json/version')
-
-version = response.json()[0]['string_version']
-
-print(version)
-
 def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
     """
     Stream-download a .gz file, decompress line-by-line,
@@ -35,6 +29,7 @@ def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
                 line = raw_line.decode('utf-8').rstrip('\n')
                 if max_test_lines:
                     print(line)
+                    print(line.split('\t'))
                     if i + 1 >= max_test_lines:
                         break
                 else:
@@ -43,6 +38,19 @@ def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
                 #     break
 
         r.close()
+
+def stream_txt_to_postgres(url, insert_fn, max_test_lines=None):
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        for i, line in enumerate(tqdm(r.iter_lines(), desc='Lines inserted', unit=' lines')):
+            line = line.decode('utf-8').rstrip('\n')
+            if max_test_lines:
+                print(line)
+                print(line.split('\t'))
+                if i + 1 >= max_test_lines:
+                    break
+            else:
+                insert_fn(line)
 
 
 def clear_table(conn, table_name, reset_identity=True, cascade=False):
@@ -103,42 +111,56 @@ def configDb(filename='database.ini', section='postgresql'):
 
     return db
 
+def get_linker():
 
-
-if __name__ == '__main__':
     # 1) Get the version as you already do…
     version = requests.get('https://string-db.org/api/json/version').json()[0]['string_version']
 
-    # 2) Build your URL
     linker: Linker = {
         'links': {
             'url': f'https://stringdb-downloads.org/download/protein.links.v{version}.txt.gz',
-            'table_name': 'network.node_node_links'
+            'table_name': 'network.node_node_links',
+            'splitter': ' '
         },
         'species': {
             'url': f'https://stringdb-downloads.org/download/species.v{version}.txt',
-            'table_name': 'items.species'
+            'table_name': 'items.species',
+            'splitter': '\t'
         },
         'proteins': {
             'url': f'https://stringdb-downloads.org/download/protein.info.v{version}.txt.gz',
-            'table_name': 'items.proteins'
+            'table_name': 'items.proteins',
+            'splitter': '\t'
         },
         'proteins_aliases': {
             'url': f'https://stringdb-downloads.org/download/protein.aliases.v{version}.txt.gz',
-            'table_name': 'items.proteins_names'
+            'table_name': 'items.proteins_names',
+            'splitter': '\t'
         }
     }
+    return linker
 
-    # 3) Open Postgres connection
-    params = configDb(filename='../DB/database.example.ini', section='postgresql')
-    conn = psycopg2.connect(**params)
-    conn.autocommit = True
+if __name__ == '__main__':
+
+    linker = get_linker()
+
+    # params = configDb(filename='../DB/database.example.ini', section='postgresql')
+    # conn = psycopg2.connect(**params)
+    # conn.autocommit = True
+
+    # insert_fn = insert_fn_factory(conn, linker['proteins']['table_name'])
 
     
+    # for url, table, splitter in linker.values():
+    #     if url.endswith('.txt'):
+    #         stream_txt_to_postgres(url, None, max_test_lines=10)
+    #     elif url.endswith('.gz'):
+    #         stream_gzip_to_postgres(url, None, max_test_lines=10)
+    #     else:
+    #         raise Exception('Unknown file type!')
 
-    # 4) Stream and insert
-    insert_fn = insert_fn_factory(conn, 'protein_links')
-    stream_gzip_to_postgres(linker['links']['url'], None, max_test_lines=10)
+    # stream_gzip_to_postgres(linker['species']['url'], None, max_test_lines=10)
+    stream_txt_to_postgres(linker['species']['url'], None, max_test_lines=10)
 
     # 5) add indexes
 
