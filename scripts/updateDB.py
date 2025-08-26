@@ -2,13 +2,19 @@ import requests
 import gzip
 from tqdm import tqdm
 import typing
-import psycopg2
+# import psycopg2
 import os
 from configparser import ConfigParser
 
 class Link(typing.TypedDict):
     url: str
     table_name: str
+    splitter: str
+    indexs: str
+
+class index(typing.TypedDict):
+    name: str
+    columns: str
 
 class Linker(typing.TypedDict):
     links: Link
@@ -16,7 +22,30 @@ class Linker(typing.TypedDict):
     proteins: Link
     proteins_aliases: Link
 
-def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
+# def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
+#     """
+#     Stream-download a .gz file, decompress line-by-line,
+#     and call insert_fn(decoded_line) for each line.
+#     """
+#     with requests.get(url, stream=True) as r:
+#         r.raise_for_status()
+#         with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
+#             # wrap the gz iterator in tqdm
+#             for i, raw_line in enumerate(tqdm(gz, desc='Lines inserted', unit=' lines')):
+#                 line = raw_line.decode('utf-8').rstrip('\n')
+#                 if max_test_lines:
+#                     print(line)
+#                     print(line.split('\t'))
+#                     if i + 1 >= max_test_lines:
+#                         break
+#                 else:
+#                     insert_fn(line)
+#                 # if max_test_lines and i + 1 >= max_test_lines:
+#                 #     break
+
+#         r.close()
+
+def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None, batch_size=1000):
     """
     Stream-download a .gz file, decompress line-by-line,
     and call insert_fn(decoded_line) for each line.
@@ -24,18 +53,17 @@ def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None):
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
-            # wrap the gz iterator in tqdm
+            lines = []
             for i, raw_line in enumerate(tqdm(gz, desc='Lines inserted', unit=' lines')):
                 line = raw_line.decode('utf-8').rstrip('\n')
-                if max_test_lines:
-                    print(line)
-                    print(line.split('\t'))
-                    if i + 1 >= max_test_lines:
-                        break
-                else:
-                    insert_fn(line)
-                # if max_test_lines and i + 1 >= max_test_lines:
-                #     break
+                lines.append(line)
+                if max_test_lines and i + 1 >= max_test_lines:
+                    break
+                if len(lines) >= batch_size:
+                    insert_fn(lines)
+                    lines = []
+            if lines:
+                insert_fn(lines)
 
         r.close()
 
@@ -51,6 +79,21 @@ def stream_txt_to_postgres(url, insert_fn, max_test_lines=None):
                     break
             else:
                 insert_fn(line)
+
+def stream_txt_to_postgres(url, insert_fn, max_test_lines=None, batch_size=1000):
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        lines = []
+        for i, line in enumerate(tqdm(r.iter_lines(), desc='Lines inserted', unit=' lines')):
+            line = line.decode('utf-8').rstrip('\n')
+            lines.append(line)
+            if max_test_lines and i + 1 >= max_test_lines:
+                break
+            if len(lines) >= batch_size:
+                insert_fn(lines)
+                lines = []
+        if lines:
+            insert_fn(lines)
 
 
 def clear_table(conn, table_name, reset_identity=True, cascade=False):
@@ -120,7 +163,9 @@ def get_linker():
         'links': {
             'url': f'https://stringdb-downloads.org/download/protein.links.v{version}.txt.gz',
             'table_name': 'network.node_node_links',
-            'splitter': ' '
+            'splitter': ' ',
+            'indexs': ["CREATE INDEX idx_node_node_links_a_b ON network.node_node_links(node_id_a, node_id_b);",
+                       "CREATE INDEX idx_node_node_links_b_a ON network.node_node_links(node_id_b, node_id_a);"]
         },
         'species': {
             'url': f'https://stringdb-downloads.org/download/species.v{version}.txt',
@@ -140,6 +185,17 @@ def get_linker():
     }
     return linker
 
+def save_as_txt_factory(file_path):
+
+    def save_as_txt(lines):
+        print(f"Trying to open file: {os.path.abspath(file_path)}")
+        with open(file_path, 'w') as f:
+            for line in lines:
+                f.write(line + '\n')
+            # f.write(lines)
+
+    return save_as_txt
+
 if __name__ == '__main__':
 
     linker = get_linker()
@@ -149,6 +205,7 @@ if __name__ == '__main__':
     # conn.autocommit = True
 
     # insert_fn = insert_fn_factory(conn, linker['proteins']['table_name'])
+    insert_fn = save_as_txt_factory('./DB/samples/species.sample.txt')
 
     
     # for url, table, splitter in linker.values():
@@ -159,8 +216,8 @@ if __name__ == '__main__':
     #     else:
     #         raise Exception('Unknown file type!')
 
-    # stream_gzip_to_postgres(linker['species']['url'], None, max_test_lines=10)
-    stream_txt_to_postgres(linker['species']['url'], None, max_test_lines=10)
+    # stream_gzip_to_postgres(linker['proteins_aliases']['url'], insert_fn, max_test_lines=10)
+    stream_txt_to_postgres(linker['species']['url'], insert_fn, max_test_lines=10)
 
     # 5) add indexes
 

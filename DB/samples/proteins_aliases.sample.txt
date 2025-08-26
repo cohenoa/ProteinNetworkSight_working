@@ -1,0 +1,10 @@
+#string_protein_id	alias	source
+23.BEL05_00025	23	RefSeq_xref_taxon
+23.BEL05_00025	A0A1E5IUA8	UniProt_AC
+23.BEL05_00025	A0A1E5IUA8_SHECO	UniProt_ID
+23.BEL05_00025	BEL05_00025	RefSeq
+23.BEL05_00025	BEL05_00025	RefSeq_locus
+23.BEL05_00025	BEL05_00025	UniProt_GN_ORFNames
+23.BEL05_00025	FAD-dependent oxidoreductase	UniProt_DE_SubName_Full
+23.BEL05_00025	Hypothetical protein	RefSeq_product
+23.BEL05_00025	NZ_MCBT01000037.1	UniProt_DR_RefSeq

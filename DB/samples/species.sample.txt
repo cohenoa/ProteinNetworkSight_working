@@ -1,0 +1,10 @@
+#taxon_id	STRING_type	STRING_name_compact	official_name_NCBI	domain
+23	periphery	Shewanella colwelliana	Shewanella colwelliana	Bacteria
+48	core	Archangium gephyra	Archangium gephyra	Bacteria
+52	core	Chondromyces crocatus	Chondromyces crocatus	Bacteria
+54	core	Nannocystis exedens	Nannocystis exedens	Bacteria
+69	core	Lysobacter enzymogenes	Lysobacter enzymogenes	Bacteria
+140	periphery	Borrelia hermsii	Borrelia hermsii	Bacteria
+162	core	Treponema phagedenis	Treponema phagedenis	Bacteria
+163	periphery	Treponema bryantii	Treponema bryantii	Bacteria
+183	core	Leptonema illini	Leptonema illini	Bacteria
