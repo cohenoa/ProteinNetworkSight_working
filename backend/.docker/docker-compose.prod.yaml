@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  frontend:
+    image: medmolnet-frontend
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    networks: [medmolnet-network]
+    container_name: prod-front
+
+  backend:
+    image: medmolnet-backend
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.prod
+    restart: unless-stopped
+    env_file:
+      - .env.prod            
+    networks: [medmolnet-network]
+    container_name: prod-back
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport socket; s=socket.socket(); s.settimeout(2); s.connect(('localhost',5000)); print('ok')\nPY"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    volumes:
+      - ../../nginx:/etc/nginx
+      - ../../certbot/conf:/etc/letsencrypt
+      - ../../certbot/www:/var/www/certbot
+    networks: [medmolnet-network]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    container_name: prod-nginx
+    depends_on:
+      - frontend
+      - backend
+
+networks:
+  medmolnet-network:
+    driver: bridge
