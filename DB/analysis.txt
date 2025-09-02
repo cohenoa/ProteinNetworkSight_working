@@ -1,0 +1,71 @@
+- items.proteins: {species_id}.{protein_id}(current from full dump) == {string_protein_id}(from single protein.names)
+    uses: 
+        SELECT DISTINCT preferred_name
+        FROM items.proteins
+        WHERE protein_id = %s and species_id = %s
+        LIMIT 1
+    
+        SELECT annotation
+        FROM items.proteins
+        WHERE protein_id = %s
+        LIMIT 1
+
+        SELECT protein_id 
+        FROM items.proteins
+        WHERE preferred_name = %s and species_id =  %s
+
+    table columns:
+    CURRENT:
+        protein_id
+        protein_external_id -- unused (UNIQUE)
+        species_id
+        protein_checksum -- unused
+        protein_size
+        annotation
+        preferred_name
+        annotation_word_vectors -- unused
+
+    ALTERNATIVE:
+        string_protein_id (UNIQUE. Ex: 23.BEL05_00025)
+        preferred_name (Ex: BEL05_00025)
+        protein_size (Ex: 429)
+        annotation (Ex: Hypothetical protein...)
+
+- items.species: just different names?
+    uses:
+        SELECT species_id, official_name
+        FROM items.species
+
+    CURRENT:
+        species_id
+        official_name
+        compact_name
+        kingdom
+        type CHECK (type IN ('core', 'periphery'))
+
+    ALTERNATIVE:
+        taxon_id
+        STRING_type
+        STRING_name_compact
+        official_name_NCBI
+        domain
+    
+
+- items.protains_names:
+    uses:
+        SELECT DISTINCT protein_id
+        FROM items.proteins_names
+        WHERE UPPER(protein_name) = %s and species_id = %s
+        LIMIT 4
+
+    CURRENT:
+        protein_name
+        protein_id
+        species_id
+        source -- unused
+        is_preferred_name -- unused
+    
+    ALTERNATIVE:
+        string_protein_id (UNIQUE. Ex: 23.BEL05_00025)
+        alias (Ex: A0A1E5IUA8)
+        source (Ex: UniProt_AC)

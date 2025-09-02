@@ -1,0 +1,1 @@
+CREATE INDEX idx_proteins_name ON items.proteins(preferred_name);

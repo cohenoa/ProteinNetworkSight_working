@@ -1,0 +1,196 @@
+import requests
+import gzip
+from tqdm import tqdm
+import io
+import psycopg2
+from psycopg2.extensions import connection, cursor
+from psycopg2 import sql
+from configparser import ConfigParser
+import os
+
+section_identifiers = ['links', 'species', 'proteins', 'proteins_aliases']
+
+def get_version():
+    return requests.get('https://string-db.org/api/json/version').json()[0]['string_version']
+
+def stream_gzip_to_postgres(
+    url, 
+    table_insert_map, 
+    max_test_lines=None, 
+    batch_size=1000
+):
+    """
+    Stream a gzipped PostgreSQL dump file (.gz), detect COPY statements for 
+    specified tables, and insert their data in batches.
+
+    Args:
+        url (str): URL to the gzipped dump file.
+        table_insert_map (dict): Mapping of table_name -> insert_fn(list_of_rows).
+        max_test_lines (int, optional): For testing, limit number of lines processed.
+        batch_size (int): Number of rows to insert per batch.
+    """
+    current_table = None
+    buffer = []
+    sanity_check = 5
+    sanity_counter = 5
+
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
+            for i, raw_line in enumerate(tqdm(gz, desc='Processing lines', unit=' lines')):
+                line = raw_line.decode('utf-8').rstrip('\n')
+
+                # Detect start of COPY command
+                if line.startswith("COPY "):
+                    print(line)
+                    if current_table != None:
+                        print("Recognizing end of table doesnt work!")
+                        break
+
+                    table_name = line.split()[1]  # e.g., "items.clades_names"
+                    if table_name in table_insert_map:
+                        current_table = table_name
+                        buffer = []
+                        sanity_counter = 0
+                        continue
+                    else:
+                        current_table = None  # Not a table we care about
+                        continue
+
+                # Detect end of COPY data
+                if current_table and line == r'\.':
+                    if buffer:
+                        if table_insert_map[current_table]:
+                            table_insert_map[current_table](buffer)
+                        buffer = []
+                    current_table = None
+                    continue
+
+                # Process data lines for current table
+                if current_table:
+                    if sanity_counter < sanity_check:
+                        print(line)
+                        sanity_counter += 1
+                    buffer.append(line)
+                    if len(buffer) >= batch_size:
+                        if table_insert_map[current_table]:
+                            table_insert_map[current_table](buffer)
+                        buffer = []
+
+                # Optional testing stop
+                # if max_test_lines and i >= max_test_lines:
+                #     break
+
+        # Flush remaining buffer if any
+        if current_table and buffer:
+            if table_insert_map[current_table]:
+                table_insert_map[current_table](buffer)
+
+    r.close()
+
+def insert_rows_copy_from(conn: connection, table_name, rows):
+    """
+    Insert rows into a Postgres table using psycopg2.copy_from.
+    rows must be a list of raw tab-delimited strings.
+    """
+    with conn.cursor() as cur:
+        buffer = io.StringIO("\n".join(rows) + "\n")  # mimic stdin
+        cur.copy_from(buffer, table_name, sep="\t")
+    conn.commit()
+
+def insert_rows_by_insert(conn: connection, table_name, rows):
+    with conn.cursor() as cur:
+        cur.executemany(f"INSERT INTO {table_name} VALUES %s", rows) # needs work
+    conn.commit()
+    
+def open_conn(config_file_name) -> connection:
+    parser = ConfigParser(interpolation=None)
+    # read config file
+    print(os.path.abspath(config_file_name))
+    parser.read(config_file_name)
+    section = 'postgresql'
+
+    # get section, default to postgresql
+    db = {}
+    if parser.has_section(section):
+        params = parser.items(section)
+        for param in params:
+            db[param[0]] = param[1]
+    else:
+        raise Exception('Section {0} not found in the {1} file'.format(section, config_file_name))
+    conn = psycopg2.connect(**db)
+    return conn
+
+import os
+from psycopg2 import sql
+
+SCHEMA_DIR = "DB/Schemas_new"
+
+def process_tables(conn, tables, insert_func):
+    """
+    Loop over tables and apply the update process:
+    1. Truncate & drop indexes if table exists, otherwise run config.sql
+    2. Insert data via user-provided function
+    3. Apply indexes from indexes.sql
+
+    Parameters
+    ----------
+    conn : psycopg2 connection
+        An open PostgreSQL connection.
+    tables : dict
+        Dictionary of { "schema.table": None, ... }
+    insert_func : callable
+        Function with signature insert_func(conn, full_table_name).
+        Should perform the insert step for the table.
+    """
+    SCHEMA_DIR = "DB/Schemas_new"
+    for full_table_name in tables.keys():
+        schema, table = full_table_name.split(".")
+        table_dir = os.path.join(SCHEMA_DIR, f"{schema}.{table}")
+        config_path = os.path.join(table_dir, "config.sql")
+        index_path = os.path.join(table_dir, "indexes.sql")
+
+        with conn.cursor() as cur:
+            # --- Step 1: Reset / Init ---
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = %s
+                    AND table_name = %s
+                );
+            """, (schema, table))
+            exists = cur.fetchone()[0]
+
+            if exists:
+                print(f"[{full_table_name}] exists → truncating and dropping indexes...")
+                cur.execute(sql.SQL("TRUNCATE {}.{} CASCADE;").format(
+                    sql.Identifier(schema), sql.Identifier(table)
+                ))
+
+                # Drop indexes
+                cur.execute("""
+                    SELECT indexname
+                    FROM pg_indexes
+                    WHERE schemaname = %s AND tablename = %s;
+                """, (schema, table))
+                for (idx,) in cur.fetchall():
+                    print(f"    Dropping index {idx}...")
+                    cur.execute(sql.SQL("DROP INDEX IF EXISTS {};").format(sql.Identifier(idx)))
+            else:
+                print(f"[{full_table_name}] does not exist → creating from {config_path}")
+                with open(config_path, "r") as f:
+                    cur.execute(f.read())
+
+        # --- Step 2: Insert data ---
+        print(f"[{full_table_name}] inserting data...")
+        insert_func(conn, full_table_name)
+
+        # --- Step 3: Apply indexes ---
+        if os.path.exists(index_path):
+            print(f"[{full_table_name}] applying indexes from {index_path}...")
+            with open(index_path, "r") as f:
+                index_sql = f.read()
+            with conn.cursor() as cur:
+                cur.execute(index_sql)
+        else:
+            print(f"[{full_table_name}] no index file found.")

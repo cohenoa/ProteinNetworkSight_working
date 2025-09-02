@@ -50,19 +50,35 @@ def stream_gzip_to_postgres(url, insert_fn, max_test_lines=None, batch_size=1000
     Stream-download a .gz file, decompress line-by-line,
     and call insert_fn(decoded_line) for each line.
     """
+    saw_items = False
+    start_at = 368
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
             lines = []
             for i, raw_line in enumerate(tqdm(gz, desc='Lines inserted', unit=' lines')):
                 line = raw_line.decode('utf-8').rstrip('\n')
-                lines.append(line)
-                if max_test_lines and i + 1 >= max_test_lines:
+                if i == start_at:
+                    print("starting scan")
+                if i > start_at and not saw_items:
+                    if line.find('items.proteins') != -1:
+                        saw_items = True
+                if saw_items:
+                    lines.append(line)
+                    max_test_lines -= 1
+                else:
+                    continue
+                # lines.append(line)
+                # if max_test_lines and i + 1 >= max_test_lines:
+                #     break
+                if max_test_lines == 0:
                     break
                 if len(lines) >= batch_size:
+                    print("inserting in loop")
                     insert_fn(lines)
                     lines = []
             if lines:
+                print("inserting outside of loop")
                 insert_fn(lines)
 
         r.close()
@@ -188,11 +204,15 @@ def get_linker():
 def save_as_txt_factory(file_path):
 
     def save_as_txt(lines):
-        print(f"Trying to open file: {os.path.abspath(file_path)}")
-        with open(file_path, 'w') as f:
+        if os.path.exists(file_path):
+            print("File already exists, appending...")
+            mode = 'a'
+        else:
+            print("File does not exist, creating...")
+            mode = 'w'
+        with open(file_path, mode) as f:
             for line in lines:
                 f.write(line + '\n')
-            # f.write(lines)
 
     return save_as_txt
 
@@ -205,7 +225,7 @@ if __name__ == '__main__':
     # conn.autocommit = True
 
     # insert_fn = insert_fn_factory(conn, linker['proteins']['table_name'])
-    insert_fn = save_as_txt_factory('./DB/samples/species.sample.txt')
+    insert_fn = save_as_txt_factory('./sample.txt')
 
     
     # for url, table, splitter in linker.values():
@@ -216,8 +236,8 @@ if __name__ == '__main__':
     #     else:
     #         raise Exception('Unknown file type!')
 
-    # stream_gzip_to_postgres(linker['proteins_aliases']['url'], insert_fn, max_test_lines=10)
-    stream_txt_to_postgres(linker['species']['url'], insert_fn, max_test_lines=10)
+    stream_gzip_to_postgres('https://stringdb-downloads.org/download/items_schema.v12.0.sql.gz', insert_fn, max_test_lines=500)
+    # stream_txt_to_postgres(linker['species']['url'], None, max_test_lines=10)
 
     # 5) add indexes
 
