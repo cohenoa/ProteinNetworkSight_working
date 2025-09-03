@@ -7,96 +7,177 @@ from psycopg2.extensions import connection, cursor
 from psycopg2 import sql
 from configparser import ConfigParser
 import os
+from requests.adapters import HTTPAdapter, Retry
 
 section_identifiers = ['links', 'species', 'proteins', 'proteins_aliases']
 
 def get_version():
     return requests.get('https://string-db.org/api/json/version').json()[0]['string_version']
 
+# def stream_gzip_to_postgres(
+#     url,
+#     table_insert_map, 
+#     max_test_lines=None, 
+#     batch_size=1000
+# ):
+#     """
+#     Stream a gzipped PostgreSQL dump file (.gz), detect COPY statements for 
+#     specified tables, and insert their data in batches.
+
+#     Args:
+#         url (str): URL to the gzipped dump file.
+#         table_insert_map (dict): Mapping of table_name -> insert_fn(list_of_rows).
+#         max_test_lines (int, optional): For testing, limit number of lines processed.
+#         batch_size (int): Number of rows to insert per batch.
+#     """
+#     current_table = None
+#     buffer = []
+#     sanity_check = 5
+#     sanity_counter = 5
+
+#     with requests.get(url, stream=True) as r:
+#         r.raise_for_status()
+#         with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
+#             for i, raw_line in enumerate(tqdm(gz, desc='Processing lines', unit=' lines')):
+#                 line = raw_line.decode('utf-8').rstrip('\n')
+
+#                 # Detect start of COPY command
+#                 if line.startswith("COPY "):
+#                     if current_table != None:
+#                         print("Recognizing end of table doesnt work!")
+#                         break
+
+#                     table_name = line.split()[1]  # e.g., "items.clades_names"
+#                     if table_name in table_insert_map:
+#                         current_table = table_name
+#                         buffer = []
+#                         sanity_counter = 0
+#                         continue
+#                     else:
+#                         current_table = None  # Not a table we care about
+#                         continue
+
+#                 # Detect end of COPY data
+#                 if current_table and line == r'\.':
+#                     if buffer:
+#                         if table_insert_map[current_table]:
+#                             table_insert_map[current_table](buffer)
+#                         buffer = []
+#                     current_table = None
+#                     continue
+
+#                 # Process data lines for current table
+#                 if current_table:
+#                     # if sanity_counter < sanity_check:
+#                     #     print(line)
+#                     #     sanity_counter += 1
+#                     buffer.append(line)
+#                     if len(buffer) >= batch_size:
+#                         if table_insert_map[current_table]:
+#                             table_insert_map[current_table](buffer)
+#                         buffer = []
+
+#         # Flush remaining buffer if any
+#         if current_table and buffer:
+#             if table_insert_map[current_table]:
+#                 table_insert_map[current_table](buffer)
+
+#     r.close()
+
 def stream_gzip_to_postgres(
-    url, 
-    table_insert_map, 
-    max_test_lines=None, 
-    batch_size=1000
+    url,
+    table_insert_map,
+    batch_size=10000,
+    max_test_lines=None,
 ):
     """
     Stream a gzipped PostgreSQL dump file (.gz), detect COPY statements for 
-    specified tables, and insert their data in batches.
+    specified tables, and insert their data in batches with retries.
 
     Args:
+        conn: psycopg2 connection
         url (str): URL to the gzipped dump file.
-        table_insert_map (dict): Mapping of table_name -> insert_fn(list_of_rows).
-        max_test_lines (int, optional): For testing, limit number of lines processed.
+        table_insert_map (dict): Mapping of table_name -> True/False or insert_fn.
+                                 If value is True, use COPY directly.
+                                 If callable, it will be used to insert rows.
         batch_size (int): Number of rows to insert per batch.
+        max_test_lines (int, optional): For testing, limit number of lines processed.
     """
+    # Setup requests session with retries
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
+    session.mount("http://", HTTPAdapter(max_retries=retries))
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+
     current_table = None
-    buffer = []
-    sanity_check = 5
-    sanity_counter = 5
+    buffer = io.StringIO()
+    rows_in_batch = 0
 
-    with requests.get(url, stream=True) as r:
+    with session.get(url, stream=True) as r:
         r.raise_for_status()
-        with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
-            for i, raw_line in enumerate(tqdm(gz, desc='Processing lines', unit=' lines')):
-                line = raw_line.decode('utf-8').rstrip('\n')
+        decompressor = gzip.GzipFile(fileobj=r.raw, mode="rb")
 
-                # Detect start of COPY command
-                if line.startswith("COPY "):
-                    print(line)
-                    if current_table != None:
-                        print("Recognizing end of table doesnt work!")
-                        break
+        for i, raw_line in enumerate(tqdm(decompressor, desc="Processing lines", unit=" lines")):
+            line = raw_line.decode("utf-8").rstrip("\n")
 
-                    table_name = line.split()[1]  # e.g., "items.clades_names"
-                    if table_name in table_insert_map:
-                        current_table = table_name
-                        buffer = []
-                        sanity_counter = 0
-                        continue
-                    else:
-                        current_table = None  # Not a table we care about
-                        continue
+            if max_test_lines and i > max_test_lines:
+                break
 
-                # Detect end of COPY data
-                if current_table and line == r'\.':
-                    if buffer:
-                        if table_insert_map[current_table]:
-                            table_insert_map[current_table](buffer)
-                        buffer = []
+            # Detect start of COPY
+            if line.startswith("COPY "):
+                table_name = line.split()[1]  # e.g. items.clades_names
+                if table_name in table_insert_map:
+                    current_table = table_name
+                    buffer = io.StringIO()
+                    rows_in_batch = 0
+                else:
                     current_table = None
-                    continue
+                continue
 
-                # Process data lines for current table
-                if current_table:
-                    if sanity_counter < sanity_check:
-                        print(line)
-                        sanity_counter += 1
-                    buffer.append(line)
-                    if len(buffer) >= batch_size:
-                        if table_insert_map[current_table]:
-                            table_insert_map[current_table](buffer)
-                        buffer = []
+            # Detect end of COPY data
+            if current_table and line == "\\.":
+                if rows_in_batch > 0:
+                    buffer.seek(0)
+                    if table_insert_map[current_table]:
+                        table_insert_map[current_table](buffer)
+                buffer = io.StringIO()
+                rows_in_batch = 0
+                current_table = None
+                continue
 
-                # Optional testing stop
-                # if max_test_lines and i >= max_test_lines:
-                #     break
+            # Handle COPY rows
+            if current_table:
+                buffer.write(line + "\n")
+                rows_in_batch += 1
 
-        # Flush remaining buffer if any
-        if current_table and buffer:
+                if rows_in_batch >= batch_size:
+                    buffer.seek(0)
+                    if table_insert_map[current_table]:
+                        table_insert_map[current_table](buffer)
+                    buffer = io.StringIO()
+                    rows_in_batch = 0
+
+        # Final flush if needed
+        if current_table and rows_in_batch > 0:
+            buffer.seek(0)
             if table_insert_map[current_table]:
-                table_insert_map[current_table](buffer)
+                    table_insert_map[current_table](buffer)
 
-    r.close()
+        # conn.commit()
 
-def insert_rows_copy_from(conn: connection, table_name, rows):
-    """
-    Insert rows into a Postgres table using psycopg2.copy_from.
-    rows must be a list of raw tab-delimited strings.
-    """
-    with conn.cursor() as cur:
-        buffer = io.StringIO("\n".join(rows) + "\n")  # mimic stdin
-        cur.copy_from(buffer, table_name, sep="\t")
-    conn.commit()
+
+def insert_rows_copy_from_factory(conn: connection, table_name):
+    def insert_rows_copy_from(buffer):
+        """
+        Insert rows into a Postgres table using psycopg2.copy_from.
+        rows must be a list of raw tab-delimited strings.
+        """
+        with conn.cursor() as cur:
+            sql = f"COPY {table_name} FROM STDIN WITH (FORMAT text, DELIMITER E'\\t');"
+            cur.copy_expert(sql, buffer)
+        conn.commit()
+
+    return insert_rows_copy_from
 
 def insert_rows_by_insert(conn: connection, table_name, rows):
     with conn.cursor() as cur:
@@ -119,6 +200,7 @@ def open_conn(config_file_name) -> connection:
     else:
         raise Exception('Section {0} not found in the {1} file'.format(section, config_file_name))
     conn = psycopg2.connect(**db)
+    conn.autocommit = True
     return conn
 
 import os
@@ -169,9 +251,13 @@ def process_tables(conn, tables, insert_func):
 
                 # Drop indexes
                 cur.execute("""
-                    SELECT indexname
-                    FROM pg_indexes
-                    WHERE schemaname = %s AND tablename = %s;
+                    SELECT i.indexname
+                    FROM pg_indexes i
+                    LEFT JOIN pg_constraint c
+                    ON c.conname = i.indexname
+                    WHERE i.schemaname = %s
+                    AND i.tablename = %s
+                    AND (c.contype IS NULL OR c.contype NOT IN ('p','u'));
                 """, (schema, table))
                 for (idx,) in cur.fetchall():
                     print(f"    Dropping index {idx}...")
@@ -181,16 +267,16 @@ def process_tables(conn, tables, insert_func):
                 with open(config_path, "r") as f:
                     cur.execute(f.read())
 
-        # --- Step 2: Insert data ---
-        print(f"[{full_table_name}] inserting data...")
-        insert_func(conn, full_table_name)
+        # # --- Step 2: Insert data ---
+        # print(f"[{full_table_name}] inserting data...")
+        # insert_func(conn, full_table_name)
 
-        # --- Step 3: Apply indexes ---
-        if os.path.exists(index_path):
-            print(f"[{full_table_name}] applying indexes from {index_path}...")
-            with open(index_path, "r") as f:
-                index_sql = f.read()
-            with conn.cursor() as cur:
-                cur.execute(index_sql)
-        else:
-            print(f"[{full_table_name}] no index file found.")
+        # # --- Step 3: Apply indexes ---
+        # if os.path.exists(index_path):
+        #     print(f"[{full_table_name}] applying indexes from {index_path}...")
+        #     with open(index_path, "r") as f:
+        #         index_sql = f.read()
+        #     with conn.cursor() as cur:
+        #         cur.execute(index_sql)
+        # else:
+        #     print(f"[{full_table_name}] no index file found.")
