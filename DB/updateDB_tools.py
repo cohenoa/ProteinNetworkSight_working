@@ -113,6 +113,10 @@ def stream_gzip_to_postgres(
     buffer = io.StringIO()
     rows_in_batch = 0
 
+    not_found = []
+    for key in table_insert_map.keys():
+        not_found.append(key)
+
     with session.get(url, stream=True) as r:
         r.raise_for_status()
         decompressor = gzip.GzipFile(fileobj=r.raw, mode="rb")
@@ -128,6 +132,7 @@ def stream_gzip_to_postgres(
                 table_name = line.split()[1]  # e.g. items.clades_names
                 if table_name in table_insert_map:
                     current_table = table_name
+                    not_found.remove(table_name)
                     buffer = io.StringIO()
                     rows_in_batch = 0
                 else:
@@ -143,6 +148,8 @@ def stream_gzip_to_postgres(
                 buffer = io.StringIO()
                 rows_in_batch = 0
                 current_table = None
+                if len(not_found) == 0:
+                    break
                 continue
 
             # Handle COPY rows
