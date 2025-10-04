@@ -8,81 +8,130 @@ from psycopg2 import sql
 from configparser import ConfigParser
 import os
 from requests.adapters import HTTPAdapter, Retry
+import zlib
+import time
 
 section_identifiers = ['links', 'species', 'proteins', 'proteins_aliases']
 
 def get_version():
     return requests.get('https://string-db.org/api/json/version').json()[0]['string_version']
 
-# def stream_gzip_to_postgres(
-#     url,
-#     table_insert_map, 
-#     max_test_lines=None, 
-#     batch_size=1000
-# ):
-#     """
-#     Stream a gzipped PostgreSQL dump file (.gz), detect COPY statements for 
-#     specified tables, and insert their data in batches.
+def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=2.0):
+    """
+    Stream a remote .gz file line by line, resuming automatically on connection loss.
 
-#     Args:
-#         url (str): URL to the gzipped dump file.
-#         table_insert_map (dict): Mapping of table_name -> insert_fn(list_of_rows).
-#         max_test_lines (int, optional): For testing, limit number of lines processed.
-#         batch_size (int): Number of rows to insert per batch.
-#     """
-#     current_table = None
-#     buffer = []
-#     sanity_check = 5
-#     sanity_counter = 5
+    Args:
+        url (str): URL of the .gz file
+        chunk_size (int): size of compressed chunks to request from server
+        max_retries (int): how many times to retry on failure before giving up
+        backoff (float): exponential backoff factor (seconds)
 
-#     with requests.get(url, stream=True) as r:
-#         r.raise_for_status()
-#         with gzip.GzipFile(fileobj=r.raw, mode='rb') as gz:
-#             for i, raw_line in enumerate(tqdm(gz, desc='Processing lines', unit=' lines')):
-#                 line = raw_line.decode('utf-8').rstrip('\n')
+    Yields:
+        (line, offset): line (decoded str), compressed byte offset (int)
+    """
+    offset = 0
+    buffer = b""
+    last_line = None
+    print_flag = False
 
-#                 # Detect start of COPY command
-#                 if line.startswith("COPY "):
-#                     if current_table != None:
-#                         print("Recognizing end of table doesnt work!")
-#                         break
+    while True:
+        headers = {"Range": f"bytes={offset}-"} if offset > 0 else {}
+        retries = 0
 
-#                     table_name = line.split()[1]  # e.g., "items.clades_names"
-#                     if table_name in table_insert_map:
-#                         current_table = table_name
-#                         buffer = []
-#                         sanity_counter = 0
-#                         continue
-#                     else:
-#                         current_table = None  # Not a table we care about
-#                         continue
+        if (print_flag):
+            print("retries left: ", max_retries - retries)
+            print("last line: ", last_line)
 
-#                 # Detect end of COPY data
-#                 if current_table and line == r'\.':
-#                     if buffer:
-#                         if table_insert_map[current_table]:
-#                             table_insert_map[current_table](buffer)
-#                         buffer = []
-#                     current_table = None
-#                     continue
+        try:
+            with requests.get(url, headers=headers, stream=True, timeout=30) as r:
+                r.raise_for_status()
+                decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
 
-#                 # Process data lines for current table
-#                 if current_table:
-#                     # if sanity_counter < sanity_check:
-#                     #     print(line)
-#                     #     sanity_counter += 1
-#                     buffer.append(line)
-#                     if len(buffer) >= batch_size:
-#                         if table_insert_map[current_table]:
-#                             table_insert_map[current_table](buffer)
-#                         buffer = []
+                for chunk in r.iter_content(chunk_size):
+                    offset += len(chunk)  # track compressed bytes
+                    buffer += decompressor.decompress(chunk)
 
-#         # Flush remaining buffer if any
-#         if current_table and buffer:
-#             if table_insert_map[current_table]:
-#                 table_insert_map[current_table](buffer)
+                    while b"\n" in buffer:
+                        line, buffer = buffer.split(b"\n", 1)
+                        if print_flag:
+                            print("line: ", line)
+                            print_flag = False
+                        yield line.decode("utf-8", errors="ignore")
+                        last_line = line
 
-#     r.close()
+                # If we got here, stream ended cleanly
+                if buffer:
+                    yield buffer.decode("utf-8", errors="ignore")
+                return
+
+        except (requests.RequestException, requests.ConnectionError) as e:
+            retries += 1
+            if retries > max_retries:
+                raise RuntimeError(f"Max retries exceeded at offset {offset}") from e
+            wait_time = backoff * retries
+            print_flag = True
+            print(f"⚠️ Connection lost at {offset} bytes, retrying in {wait_time:.1f}s...")
+            time.sleep(wait_time)
+            continue
+
+
+
+def proccess_dump_file(url, table_insert_map, batch_size=10000):
+
+    not_found = list(table_insert_map.keys())
+    current_table = None
+    buffer = io.StringIO()
+    rows_in_batch = 0
+
+    pbar = tqdm(desc="Processing lines", unit=" lines")
+
+    for line in resilient_gzip_stream(url):
+        # Detect start of COPY
+        if line.startswith("COPY "):
+            table_name = line.split()[1]  # e.g. items.clades_names
+            print(f"Found table: {table_name}")
+            if table_name in table_insert_map:
+                current_table = table_name
+                not_found.remove(table_name)
+                buffer = io.StringIO()
+                rows_in_batch = 0
+            else:
+                current_table = None
+            continue
+
+        # Detect end of COPY data
+        if current_table and line == "\\.":
+            print("emptying buffer")
+            if rows_in_batch > 0:
+                buffer.seek(0)
+                if table_insert_map[current_table]:
+                    table_insert_map[current_table](buffer)
+            buffer = io.StringIO()
+            rows_in_batch = 0
+            current_table = None
+            if len(not_found) == 0:
+                break
+            continue
+
+        # Handle COPY rows
+        if current_table:
+            buffer.write(line + "\n")
+            rows_in_batch += 1
+
+            if rows_in_batch >= batch_size:
+                buffer.seek(0)
+                if table_insert_map[current_table]:
+                    table_insert_map[current_table](buffer)
+                buffer = io.StringIO()
+                rows_in_batch = 0
+        pbar.update(1)
+
+    # Final flush if needed
+    if current_table and rows_in_batch > 0:
+        buffer.seek(0)
+        if table_insert_map[current_table]:
+                table_insert_map[current_table](buffer)
+    print("Done")
 
 def stream_gzip_to_postgres(
     url,
@@ -112,6 +161,7 @@ def stream_gzip_to_postgres(
     current_table = None
     buffer = io.StringIO()
     rows_in_batch = 0
+    last_line = None
 
     not_found = []
     for key in table_insert_map.keys():
@@ -119,7 +169,8 @@ def stream_gzip_to_postgres(
 
     with session.get(url, stream=True) as r:
         r.raise_for_status()
-        decompressor = gzip.GzipFile(fileobj=r.raw, mode="rb")
+        buffered = io.BufferedReader(r.raw)
+        decompressor = gzip.GzipFile(fileobj=buffered, mode="rb")
 
         for i, raw_line in enumerate(tqdm(decompressor, desc="Processing lines", unit=" lines")):
             line = raw_line.decode("utf-8").rstrip("\n")
@@ -185,6 +236,21 @@ def insert_rows_copy_from_factory(conn: connection, table_name):
         conn.commit()
 
     return insert_rows_copy_from
+
+def print_rows_factory(filename=None):
+    if filename is not None:
+        def print_rows_file(buffer: io.StringIO):
+            with open(filename, "a") as f:
+                f.write(buffer.getvalue())
+        return print_rows_file
+    
+    def print_rows(buffer: io.StringIO):
+        print("Emptying buffer")
+        print(buffer.getvalue())
+
+    return print_rows
+
+    
 
 def insert_rows_by_insert(conn: connection, table_name, rows):
     with conn.cursor() as cur:
