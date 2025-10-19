@@ -33,31 +33,59 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=2.0):
     buffer = b""
     last_line = None
     print_flag = False
+    fail_chunk = 100
+    retries = 0
+    decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+
+    # DEBUG: uncomment for debugging - debug offset after connection crash
+    # n_chunks = 0
+    # last_offset = 0
+    # last_decompressor = decompressor.copy()
 
     while True:
+        # DEBUG: uncomment for debugging - debug offset after connection crash
+        # offset = last_offset
+        # decompressor = last_decompressor
         headers = {"Range": f"bytes={offset}-"} if offset > 0 else {}
-        retries = 0
 
         if (print_flag):
-            print("retries left: ", max_retries - retries)
-            print("last line: ", last_line)
+            print("last yielded line: ", last_line)
+            print("buffer: ", buffer)
 
-        try:
             with requests.get(url, headers=headers, stream=True, timeout=30) as r:
                 r.raise_for_status()
-                decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
 
                 for chunk in r.iter_content(chunk_size):
                     offset += len(chunk)  # track compressed bytes
                     buffer += decompressor.decompress(chunk)
 
+                    with open('chunk_before_fail.txt', 'wb') as f:
+                        f.write(buffer)
+                    break
+            break
+
+        try:
+            with requests.get(url, headers=headers, stream=True, timeout=30) as r:
+                r.raise_for_status()
+                # decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+
+                for chunk in r.iter_content(chunk_size):
+                    # DEBUG: uncomment for debugging - debug offset after connection crash
+                    # last_offset = offset
+                    # last_decompressor = decompressor.copy()
+
+                    offset += len(chunk)  # track compressed bytes
+                    buffer += decompressor.decompress(chunk)
+
                     while b"\n" in buffer:
                         line, buffer = buffer.split(b"\n", 1)
-                        if print_flag:
-                            print("line: ", line)
-                            print_flag = False
                         yield line.decode("utf-8", errors="ignore")
                         last_line = line
+                    
+                    # DEBUG: uncomment for debugging - debug offset after connection crash
+                    # n_chunks += 1
+                    # if (n_chunks == fail_chunk):
+                    #     raise requests.ConnectionError("fail")
 
                 # If we got here, stream ended cleanly
                 if buffer:

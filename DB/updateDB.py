@@ -1,8 +1,8 @@
-print("hi")
 from DB.updateDB_tools import *
 
 # configFileName = 'DB/database.example.ini'
 # conn: connection = open_conn(configFileName)
+
 tables = {
     'items.proteins': print_rows_factory("DB/test.txt"),
     # 'items.proteins_names': insert_rows_copy_from_factory(conn, 'items.proteins_names'),
