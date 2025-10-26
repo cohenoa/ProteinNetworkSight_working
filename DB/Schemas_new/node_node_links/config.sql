@@ -1,0 +1,7 @@
+CREATE TABLE network.node_node_links (
+    node_id_a integer,
+    node_type_b integer,
+    node_id_b integer,
+    combined_score smallint,
+    evidence_scores smallint[]
+);

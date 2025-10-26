@@ -381,3 +381,38 @@ def process_tables(conn, tables, insert_func):
         #         cur.execute(index_sql)
         # else:
         #     print(f"[{full_table_name}] no index file found.")
+
+def count_rows_in_file(path):
+    count = 0
+    with gzip.open(path, mode='rt', encoding='utf-8') as f:  # 'rt' = read text mode
+        for _ in tqdm(f, desc=f"Counting rows", unit=" rows"):
+            count += 1
+    return count - 1
+
+def verify_Table(conn, table_name):
+    count = 0
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COUNT(*) FROM {table_name}")
+        count = cur.fetchone()[0]
+    
+    return count
+
+def sample_file(url, n_lines = 1000):
+
+    buffer = io.StringIO()
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        buffered = io.BufferedReader(r.raw)
+        decompressor = gzip.GzipFile(fileobj=buffered, mode="rb")
+
+        for i, raw_line in enumerate(tqdm(decompressor, desc="Processing lines", unit=" lines")):
+            line = raw_line.decode("utf-8").rstrip("\n")
+            buffer.write(line + "\n")
+
+            if i == n_lines:
+                with open("sample_network.txt", "w") as f:
+                    f.write(buffer.getvalue())
+                break
+
+    
+            
