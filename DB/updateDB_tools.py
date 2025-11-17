@@ -16,7 +16,7 @@ section_identifiers = ['links', 'species', 'proteins', 'proteins_aliases']
 def get_version():
     return requests.get('https://string-db.org/api/json/version').json()[0]['string_version']
 
-def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=2.0):
+def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=4.0):
     """
     Stream a remote .gz file line by line, resuming automatically on connection loss.
 
@@ -33,12 +33,13 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=2.0):
     buffer = b""
     last_line = None
     print_flag = False
-    fail_chunk = 100
+    fail_chunk = 2641568
     retries = 0
     decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
 
     # DEBUG: uncomment for debugging - debug offset after connection crash
-    # n_chunks = 0
+    n_chunks = 0
+    test_chunks = 5
     # last_offset = 0
     # last_decompressor = decompressor.copy()
 
@@ -51,18 +52,21 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=2.0):
         if (print_flag):
             print("last yielded line: ", last_line)
             print("buffer: ", buffer)
+            print("n_chunks: ", n_chunks)
 
-            with requests.get(url, headers=headers, stream=True, timeout=30) as r:
-                r.raise_for_status()
+            if (n_chunks == fail_chunk):
+                with requests.get(url, headers=headers, stream=True, timeout=30) as r:
+                    r.raise_for_status()
+                    i = 0
+                    for chunk in r.iter_content(chunk_size):
+                        offset += len(chunk)  # track compressed bytes
+                        buffer += decompressor.decompress(chunk)
 
-                for chunk in r.iter_content(chunk_size):
-                    offset += len(chunk)  # track compressed bytes
-                    buffer += decompressor.decompress(chunk)
-
-                    with open('chunk_before_fail.txt', 'wb') as f:
-                        f.write(buffer)
-                    break
-            break
+                        with open(f'chunk_before_fail_{i}.txt', 'wb') as f:
+                            f.write(buffer)
+                        i += 1
+                        if i == test_chunks:
+                            return
 
         try:
             with requests.get(url, headers=headers, stream=True, timeout=30) as r:
@@ -81,11 +85,17 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=2.0):
                         line, buffer = buffer.split(b"\n", 1)
                         yield line.decode("utf-8", errors="ignore")
                         last_line = line
+                        if line == b'28953018\t656061\t28954285\t192\t{{9,187},{13,48}}':
+                            print("found last yielded line")
+                            with open(f'left_over.txt', 'wb') as f:
+                                f.write(buffer)
+                            raise requests.ConnectionError("fail")
                     
                     # DEBUG: uncomment for debugging - debug offset after connection crash
-                    # n_chunks += 1
-                    # if (n_chunks == fail_chunk):
-                    #     raise requests.ConnectionError("fail")
+                    n_chunks += 1
+                    if (n_chunks == fail_chunk):
+                        print("read n_chunks")
+                        raise requests.ConnectionError("fail")
 
                 # If we got here, stream ended cleanly
                 if buffer:
@@ -111,6 +121,8 @@ def proccess_dump_file(url, table_insert_map, batch_size=10000):
     buffer = io.StringIO()
     rows_in_batch = 0
 
+    keep_by_idx = []
+
     pbar = tqdm(desc="Processing lines", unit=" lines")
 
     for line in resilient_gzip_stream(url):
@@ -123,6 +135,7 @@ def proccess_dump_file(url, table_insert_map, batch_size=10000):
                 not_found.remove(table_name)
                 buffer = io.StringIO()
                 rows_in_batch = 0
+                keep_by_idx = calc_keep_columns(line, table_insert_map[table_name]['keep_columns'])
             else:
                 current_table = None
             continue
@@ -132,8 +145,8 @@ def proccess_dump_file(url, table_insert_map, batch_size=10000):
             print("emptying buffer")
             if rows_in_batch > 0:
                 buffer.seek(0)
-                if table_insert_map[current_table]:
-                    table_insert_map[current_table](buffer)
+                if table_insert_map[current_table]['insert_function']:
+                    table_insert_map[current_table]['insert_function'](buffer)
             buffer = io.StringIO()
             rows_in_batch = 0
             current_table = None
@@ -143,13 +156,13 @@ def proccess_dump_file(url, table_insert_map, batch_size=10000):
 
         # Handle COPY rows
         if current_table:
-            buffer.write(line + "\n")
+            buffer.write(clean_line(line, keep_by_idx) + "\n")
             rows_in_batch += 1
 
             if rows_in_batch >= batch_size:
                 buffer.seek(0)
-                if table_insert_map[current_table]:
-                    table_insert_map[current_table](buffer)
+                if table_insert_map[current_table]['insert_function']:
+                    table_insert_map[current_table]['insert_function'](buffer)
                 buffer = io.StringIO()
                 rows_in_batch = 0
         pbar.update(1)
@@ -157,100 +170,16 @@ def proccess_dump_file(url, table_insert_map, batch_size=10000):
     # Final flush if needed
     if current_table and rows_in_batch > 0:
         buffer.seek(0)
-        if table_insert_map[current_table]:
-                table_insert_map[current_table](buffer)
+        if table_insert_map[current_table]['insert_function']:
+                table_insert_map[current_table]['insert_function'](buffer)
     print("Done")
 
-def stream_gzip_to_postgres(
-    url,
-    table_insert_map,
-    batch_size=10000,
-    max_test_lines=None,
-):
-    """
-    Stream a gzipped PostgreSQL dump file (.gz), detect COPY statements for 
-    specified tables, and insert their data in batches with retries.
+def calc_keep_columns(line: str, column_names: list[str]):
+    columns = line.split("(")[1].split(")")[0].split(", ")
+    return [columns.index(col) for col in column_names]
 
-    Args:
-        conn: psycopg2 connection
-        url (str): URL to the gzipped dump file.
-        table_insert_map (dict): Mapping of table_name -> True/False or insert_fn.
-                                 If value is True, use COPY directly.
-                                 If callable, it will be used to insert rows.
-        batch_size (int): Number of rows to insert per batch.
-        max_test_lines (int, optional): For testing, limit number of lines processed.
-    """
-    # Setup requests session with retries
-    session = requests.Session()
-    retries = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
-    session.mount("http://", HTTPAdapter(max_retries=retries))
-    session.mount("https://", HTTPAdapter(max_retries=retries))
-
-    current_table = None
-    buffer = io.StringIO()
-    rows_in_batch = 0
-    last_line = None
-
-    not_found = []
-    for key in table_insert_map.keys():
-        not_found.append(key)
-
-    with session.get(url, stream=True) as r:
-        r.raise_for_status()
-        buffered = io.BufferedReader(r.raw)
-        decompressor = gzip.GzipFile(fileobj=buffered, mode="rb")
-
-        for i, raw_line in enumerate(tqdm(decompressor, desc="Processing lines", unit=" lines")):
-            line = raw_line.decode("utf-8").rstrip("\n")
-
-            if max_test_lines and i > max_test_lines:
-                break
-
-            # Detect start of COPY
-            if line.startswith("COPY "):
-                table_name = line.split()[1]  # e.g. items.clades_names
-                if table_name in table_insert_map:
-                    current_table = table_name
-                    not_found.remove(table_name)
-                    buffer = io.StringIO()
-                    rows_in_batch = 0
-                else:
-                    current_table = None
-                continue
-
-            # Detect end of COPY data
-            if current_table and line == "\\.":
-                if rows_in_batch > 0:
-                    buffer.seek(0)
-                    if table_insert_map[current_table]:
-                        table_insert_map[current_table](buffer)
-                buffer = io.StringIO()
-                rows_in_batch = 0
-                current_table = None
-                if len(not_found) == 0:
-                    break
-                continue
-
-            # Handle COPY rows
-            if current_table:
-                buffer.write(line + "\n")
-                rows_in_batch += 1
-
-                if rows_in_batch >= batch_size:
-                    buffer.seek(0)
-                    if table_insert_map[current_table]:
-                        table_insert_map[current_table](buffer)
-                    buffer = io.StringIO()
-                    rows_in_batch = 0
-
-        # Final flush if needed
-        if current_table and rows_in_batch > 0:
-            buffer.seek(0)
-            if table_insert_map[current_table]:
-                    table_insert_map[current_table](buffer)
-
-        # conn.commit()
-
+def clean_line(line, keep_columns: list[int]):
+    return "\t".join(line.split("\t")[i] for i in keep_columns)
 
 def insert_rows_copy_from_factory(conn: connection, table_name):
     def insert_rows_copy_from(buffer):
@@ -309,7 +238,7 @@ from psycopg2 import sql
 
 SCHEMA_DIR = "DB/Schemas_new"
 
-def process_tables(conn, tables, insert_func):
+def reset_tables(conn, tables):
     """
     Loop over tables and apply the update process:
     1. Truncate & drop indexes if table exists, otherwise run config.sql
@@ -368,19 +297,21 @@ def process_tables(conn, tables, insert_func):
                 with open(config_path, "r") as f:
                     cur.execute(f.read())
 
-        # # --- Step 2: Insert data ---
-        # print(f"[{full_table_name}] inserting data...")
-        # insert_func(conn, full_table_name)
+def apply_indexes(conn, tables, Schema_dir="DB/Schemas_new"):
+    for full_table_name in tables.keys():
+        schema, table = full_table_name.split(".")
+        table_dir = os.path.join(SCHEMA_DIR, f"{schema}.{table}")
+        index_path = os.path.join(table_dir, "indexes.sql")
 
-        # # --- Step 3: Apply indexes ---
-        # if os.path.exists(index_path):
-        #     print(f"[{full_table_name}] applying indexes from {index_path}...")
-        #     with open(index_path, "r") as f:
-        #         index_sql = f.read()
-        #     with conn.cursor() as cur:
-        #         cur.execute(index_sql)
-        # else:
-        #     print(f"[{full_table_name}] no index file found.")
+        if os.path.exists(index_path):
+            print(f"[{full_table_name}] applying indexes from {index_path}...")
+            with open(index_path, "r") as f:
+                index_sql = f.read()
+            with conn.cursor() as cur:
+                cur.execute(index_sql)
+        else:
+            print(f"[{full_table_name}] no index file found.")
+
 
 def count_rows_in_file(path):
     count = 0
