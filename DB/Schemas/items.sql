@@ -10,6 +10,16 @@ CREATE TABLE items.species (
     type VARCHAR(50) CHECK (type IN ('core', 'periphery'))  -- Core or periphery species
 );
 
+-- from STRING
+CREATE TABLE items.species (
+    species_id integer,
+    official_name character varying(100),
+    compact_name character varying(100),
+    kingdom character varying(15),
+    type character varying(10),
+    protein_count integer
+);
+
 -- Table for storing protein information
 CREATE TABLE items.proteins (
     protein_id INT PRIMARY KEY,  -- Internal protein identifier
@@ -23,6 +33,18 @@ CREATE TABLE items.proteins (
     FOREIGN KEY (species_id) REFERENCES items.species(species_id)
 );
 
+-- from STRING
+CREATE TABLE items.proteins (
+    protein_id integer,
+    protein_external_id character varying(50),
+    species_id integer,
+    protein_checksum character varying(16),
+    protein_size integer,
+    annotation character varying(600),
+    preferred_name character varying(50),
+    annotation_word_vectors tsvector
+);
+
 -- Table for storing protein names
 CREATE TABLE items.proteins_names (
     protein_name VARCHAR(255),  -- A name of the protein (e.g., "amiF", "spr1703", "AE008535", etc.)
@@ -33,6 +55,15 @@ CREATE TABLE items.proteins_names (
     PRIMARY KEY (protein_name, protein_id),  -- Composite key to ensure unique names per protein
     FOREIGN KEY (protein_id) REFERENCES items.proteins(protein_id),  -- Reference to items.proteins
     FOREIGN KEY (species_id) REFERENCES items.species(species_id)  -- Reference to items.species
+);
+
+-- from STRING
+CREATE TABLE items.proteins_names (
+    protein_name character varying(100),
+    protein_id integer,
+    species_id integer,
+    source character varying(100),
+    is_preferred_name boolean
 );
 
 

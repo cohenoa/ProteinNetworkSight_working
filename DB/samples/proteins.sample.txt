@@ -1,0 +1,10 @@
+#string_protein_id	preferred_name	protein_size	annotation
+23.BEL05_00025	BEL05_00025	429	Hypothetical protein; Incomplete; too short partial abutting assembly gap; missing start and stop; Derived by automated computational analysis using gene prediction method: GeneMarkS+.
+23.BEL05_00030	OEG73659.1	203	2-keto-4-pentenoate hydratase; Derived by automated computational analysis using gene prediction method: Protein Homology.
+23.BEL05_00035	OEG73660.1	1140	Hybrid sensor histidine kinase/response regulator; Derived by automated computational analysis using gene prediction method: Protein Homology.
+23.BEL05_00040	acsA	650	acetate--CoA ligase; Catalyzes the conversion of acetate into acetyl-CoA (AcCoA), an essential intermediate at the junction of anabolic and catabolic pathways. AcsA undergoes a two-step reaction. In the first half reaction, AcsA combines acetate with ATP to form acetyl-adenylate (AcAMP) intermediate. In the second half reaction, it can then transfer the acetyl group from AcAMP to the sulfhydryl group of CoA, forming the product AcCoA; Belongs to the ATP-dependent AMP-binding enzyme family.
+23.BEL05_00045	OEG73662.1	579	ATP-dependent helicase; Derived by automated computational analysis using gene prediction method: Protein Homology.
+23.BEL05_00050	OEG73663.1	85	Glutaredoxin; Functions as an electron carrier in the glutathione-dependent synthesis of deoxyribonucleotides by the enzyme ribonucleotide reductase; also involved in reducing some disulfides in a coupled system with glutathione reductase; Derived by automated computational analysis using gene prediction method: Protein Homology.
+23.BEL05_00055	OEG73664.1	380	Porin; Derived by automated computational analysis using gene prediction method: Protein Homology.
+23.BEL05_00070	cpoB	241	Tol-pal system protein YbgF; Mediates coordination of peptidoglycan synthesis and outer membrane constriction during cell division; Belongs to the CpoB family.
+23.BEL05_00075	pal	180	Peptidoglycan-associated lipoprotein; Part of the Tol-Pal system, which plays a role in outer membrane invagination during cell division and is important for maintaining outer membrane integrity.
