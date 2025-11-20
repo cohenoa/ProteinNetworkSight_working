@@ -33,7 +33,7 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=4.0):
     buffer = b""
     last_line = None
     print_flag = False
-    fail_chunk = 2641568
+    fail_chunk = -1
     retries = 0
     decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
 
@@ -85,11 +85,11 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=4.0):
                         line, buffer = buffer.split(b"\n", 1)
                         yield line.decode("utf-8", errors="ignore")
                         last_line = line
-                        if line == b'28953018\t656061\t28954285\t192\t{{9,187},{13,48}}':
-                            print("found last yielded line")
-                            with open(f'left_over.txt', 'wb') as f:
-                                f.write(buffer)
-                            raise requests.ConnectionError("fail")
+                        # if line == b'28953018\t656061\t28954285\t192\t{{9,187},{13,48}}':
+                        #     print("found last yielded line")
+                        #     with open(f'left_over.txt', 'wb') as f:
+                        #         f.write(buffer)
+                        #     raise requests.ConnectionError("fail")
                     
                     # DEBUG: uncomment for debugging - debug offset after connection crash
                     n_chunks += 1
@@ -100,7 +100,9 @@ def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=4.0):
                 # If we got here, stream ended cleanly
                 if buffer:
                     yield buffer.decode("utf-8", errors="ignore")
-                return
+                    last_line = buffer
+                r.close()
+            break
 
         except (requests.RequestException, requests.ConnectionError) as e:
             retries += 1
