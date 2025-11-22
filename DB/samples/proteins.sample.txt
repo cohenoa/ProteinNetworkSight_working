@@ -8,3 +8,6 @@
 23.BEL05_00055	OEG73664.1	380	Porin; Derived by automated computational analysis using gene prediction method: Protein Homology.
 23.BEL05_00070	cpoB	241	Tol-pal system protein YbgF; Mediates coordination of peptidoglycan synthesis and outer membrane constriction during cell division; Belongs to the CpoB family.
 23.BEL05_00075	pal	180	Peptidoglycan-associated lipoprotein; Part of the Tol-Pal system, which plays a role in outer membrane invagination during cell division and is important for maintaining outer membrane integrity.
+
+
+1 23.BEL05_00025
