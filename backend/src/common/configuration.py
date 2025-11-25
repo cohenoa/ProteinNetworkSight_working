@@ -2,7 +2,7 @@ from configparser import ConfigParser
 import os.path
 from psycopg2 import connect, DatabaseError
 
-def configDb(filename='database.ini', section='postgresql'):
+def configDb(filename='database.prod.ini', section='postgresql'):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(BASE_DIR, filename)
 

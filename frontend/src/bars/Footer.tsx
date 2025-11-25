@@ -1,7 +1,7 @@
 import { FC } from "react";
 import "../styles/Footer.css";
 
-const lastUpdate = "25 February, 2023"
+const STRING_version = "V12.0"
 
 const FooterComponent: FC = () => {
   return (
@@ -17,7 +17,7 @@ const FooterComponent: FC = () => {
           <p className="names">Tohar Tsivtman and Ayelet Gibli(2022)</p>
         </div>
         <div className="update">
-          <p className="update">Last STRING database update: {lastUpdate}</p>
+          <p className="update">Last STRING database update: {STRING_version}</p>
           {/* <p className="update">{lastUpdate}</p> */}
         </div>
     </div>

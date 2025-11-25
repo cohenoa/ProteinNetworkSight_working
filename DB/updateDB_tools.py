@@ -16,7 +16,7 @@ section_identifiers = ['links', 'species', 'proteins', 'proteins_aliases']
 def get_version():
     return requests.get('https://string-db.org/api/json/version').json()[0]['string_version']
 
-def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=5, backoff=4.0):
+def resilient_gzip_stream(url, chunk_size=1024*64, max_retries=250, backoff=4.0):
     """
     Stream a remote .gz file line by line, resuming automatically on connection loss.
 
@@ -290,14 +290,14 @@ def reset_tables(conn: connection, tables):
                     cur.execute(sql.SQL("DROP INDEX IF EXISTS {};").format(sql.Identifier(idx)))
             else:
                 print(f"[{full_table_name}] does not exist → creating from {config_path}")
+                cur.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
                 with open(config_path, "r") as f:
-                    query = f.read()
-                    cur.execute(query)
+                    cur.execute(f.read())
 
 def apply_indexes(conn, tables, DB_DIR="DB/Schemas_new"):
     for full_table_name in tables.keys():
         schema, table = full_table_name.split(".")
-        table_dir = os.path.join(DB_DIR, f"{schema}.{table}")
+        table_dir = os.path.join(DB_DIR, schema, table)
         index_path = os.path.join(table_dir, "indexes.sql")
 
         if os.path.exists(index_path):
