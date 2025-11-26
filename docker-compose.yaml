@@ -30,8 +30,8 @@ services:
         - 8080:8080
     volumes:
         - ./nginx:/etc/nginx
-        - ./certbot/conf:/etc/letsencrypt
-        - ./certbot/www:/var/www/certbot
+        # - ./certbot/conf:/etc/letsencrypt
+        # - ./certbot/www:/var/www/certbot
     networks:
       - medmolnet-network
 
