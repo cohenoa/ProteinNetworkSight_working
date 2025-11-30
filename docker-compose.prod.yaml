@@ -1,56 +1,47 @@
 version: '4.1.0'
 
 services:
-  frontend:
+  medmolnet-front:
     image: medmolnet-frontend
+    container_name: medmolnet-frontend
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ./frontend  # Corrected to use context
+      dockerfile: Dockerfile  # Corrected to use dockerfile key
     volumes:
-      - ./frontend/src:/usr/src/app/src
+      - ./frontend/src:/usr/src/app/src  # Sync local frontend code
+    ports:
+      - 3001:3000
     networks:
-      - medmolnet-network
-    container_name: prod-front
+      - medmolnet-beta-network
+    environment:
+      - REACT_APP_API_URL=http://localhost
 
-  backend:
+  medmolnet-back:
     image: medmolnet-backend
+    container_name: medmolnet-backend
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./backend  # Corrected to use context
+      dockerfile: Dockerfile  # Corrected to use dockerfile key
     volumes:
-      - ./backend:/python-docker
+      - ./backend:/python-docker  # Sync local backend code
     networks:
-      - medmolnet-network
-    container_name: prod-back
+      - medmolnet-beta-network
+    environment:
+      - DB_CONFIG=database.example.ini
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx
+    container_name: nginx
     restart: unless-stopped
-    volumes:
-      - ./nginx:/etc/nginx
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    networks:
-      - medmolnet-network
     ports:
-      - "80:80"
-      - "8080:8080"
-    container_name: prod-nginx
+        - 80:80
+    volumes:
+        - ./nginx:/etc/nginx
+    networks:
+      - medmolnet-beta-network
 
 networks:
-  medmolnet-network:
+  medmolnet-beta-network:
     driver: bridge
-
-
-# Uncomment and configure certbot if needed
-# certbot:
-#   image: certbot/certbot
-#   container_name: certbot
-#   depends_on:
-#     - nginx
-#   volumes: 
-#     - ./certbot/conf:/etc/letsencrypt
-#     - ./certbot/www:/var/www/certbot
-#   command: certonly --webroot -w /var/www/certbot  --email nitzanmr@gmail.com -d proteinnetworksight.jce.ac -d medmolnet.jce.ac --expand --agree-tos --non-interactive
-#   networks:
-#     - medmolnet-network

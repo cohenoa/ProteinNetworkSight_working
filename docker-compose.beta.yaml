@@ -1,55 +1,47 @@
 version: '4.1.0'
 
 services:
-  frontend:
+  medmolnet-front:
     image: medmolnet-frontend
+    container_name: medmolnet-frontend
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ./frontend  # Corrected to use context
+      dockerfile: Dockerfile  # Corrected to use dockerfile key
     volumes:
-      - ./frontend/src:/usr/src/app/src
+      - ./frontend/src:/usr/src/app/src  # Sync local frontend code
+    ports:
+      - 3001:3000
     networks:
       - medmolnet-beta-network
-    container_name: beta-front
+    environment:
+      - REACT_APP_API_URL=http://localhost
 
-  backend:
+  medmolnet-back:
     image: medmolnet-backend
+    container_name: medmolnet-backend
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./backend  # Corrected to use context
+      dockerfile: Dockerfile  # Corrected to use dockerfile key
     volumes:
-      - ./backend:/python-docker
+      - ./backend:/python-docker  # Sync local backend code
     networks:
       - medmolnet-beta-network
-    container_name: beta-back
+    environment:
+      - DB_CONFIG=database.example.ini
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx
+    container_name: nginx
     restart: unless-stopped
+    ports:
+        - 80:80
     volumes:
-      - ./nginx-beta:/etc/nginx
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+        - ./nginx:/etc/nginx
     networks:
       - medmolnet-beta-network
-    ports:
-      - "8081:80"
-    container_name: beta-nginx
 
 networks:
   medmolnet-beta-network:
     driver: bridge
-
-
-# Uncomment and configure certbot if needed
-# certbot:
-#   image: certbot/certbot
-#   container_name: certbot
-#   depends_on:
-#     - nginx
-#   volumes: 
-#     - ./certbot/conf:/etc/letsencrypt
-#     - ./certbot/www:/var/www/certbot
-#   command: certonly --webroot -w /var/www/certbot  --email nitzanmr@gmail.com -d proteinnetworksight.jce.ac -d medmolnet.jce.ac --expand --agree-tos --non-interactive
-#   networks:
-#     - medmolnet-network

@@ -25,7 +25,7 @@ def configDb(filename='database.prod.ini', section='postgresql'):
 
 def open_db_conn():
     try:
-        params = configDb()
+        params = configDb(filename=os.environ['DB_CONFIG'])
         conn = connect(**params)
         return conn
 
