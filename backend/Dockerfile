@@ -12,5 +12,5 @@ COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt --no-cache
 
 COPY . .
-EXPOSE 3000
+EXPOSE 5000
 CMD [ "python", "./routes.py"]

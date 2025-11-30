@@ -10,7 +10,7 @@ services:
     volumes:
       - ./frontend/src:/usr/src/app/src  # Sync local frontend code
     ports:
-      - 3001:3000
+      - 3000:3000
     networks:
       - medmolnet-beta-network
     environment:
@@ -26,6 +26,8 @@ services:
       - ./backend:/python-docker  # Sync local backend code
     networks:
       - medmolnet-beta-network
+    ports:
+      - 5000:5000
     environment:
       - DB_CONFIG=database.example.ini
     extra_hosts:
