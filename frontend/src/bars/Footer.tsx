@@ -17,7 +17,7 @@ const FooterComponent: FC = () => {
           <p className="names">Tohar Tsivtman and Ayelet Gibli(2022)</p>
         </div>
         <div className="update">
-          <p className="update">Last STRING database update: {STRING_version}</p>
+          <p className="update">STRING version: {STRING_version}</p>
           {/* <p className="update">{lastUpdate}</p> */}
         </div>
     </div>

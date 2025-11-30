@@ -13,8 +13,11 @@ class ProteinNames:
     def __str__(self) -> str:
         toPrint = "original name:" + self.original_name + "\n"
         toPrint += "clean name:" + self.clean_name + "\n"
-        toPrint += "suggested_names:" + self.suggested_names + "\n"
+        toPrint += "suggested_names:" + str(self.suggested_names) + "\n"
         return toPrint
+    
+    def __repr__(self):
+        str(self)
 
 
 def init_suggestions_list(org_names) -> list:
@@ -75,6 +78,7 @@ def get_suggestions(clean_name, organism) -> dict:
     string_suggestions = {}
     conn = open_db_conn()
     if conn is None:
+        print("------------------ Connection to DB Failed ------------------------", flush=True)
         return
 
     ids = get_match_ids(conn, clean_name, organism)

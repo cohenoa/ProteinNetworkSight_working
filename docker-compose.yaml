@@ -20,6 +20,8 @@ services:
       - ./backend:/python-docker  # Sync local backend code
     networks:
       - medmolnet-network
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
 
   nginx:
     container_name: nginx
@@ -27,7 +29,6 @@ services:
     image: nginx
     ports:
         - 80:80
-        - 8080:8080
     volumes:
         - ./nginx:/etc/nginx
         # - ./certbot/conf:/etc/letsencrypt

@@ -1,50 +1,100 @@
-﻿asttokens==2.0.5
-autopep8==1.6.0
-backcall==0.2.0
-black==22.10.0
-certifi==2022.5.18.1
-charset-normalizer==2.0.12
-click==8.1.3
-colorama==0.4.4
-configparser==5.2.0
-decorator==5.1.1
-executing==0.8.3
-Flask==2.1.2
-Flask-Cors==3.0.10
-idna==3.3
-ipython==8.4.0
-itsdangerous==2.1.2
-jedi==0.18.1
-Jinja2==3.1.2
-jsonpickle==2.2.0
-MarkupSafe==2.1.1
-matplotlib-inline==0.1.3
-mypy-extensions==0.4.3
-networkx==2.8.2
-numpy==1.22.4
-pandas==1.4.2
-parso==0.8.3
-pathspec==0.10.1
-patool==1.12
-pickleshare==0.7.5
-platformdirs==2.5.2
-prompt-toolkit==3.0.29
-psycopg2==2.9.3
-pure-eval==0.2.2
-pycodestyle==2.8.0
-Pygments==2.12.0
-python-dateutil==2.8.2
-pytz==2022.1
-pyvis==0.2.1
-requests==2.27.1
-six==1.16.0
-stack-data==0.2.0
-toml==0.10.2
-tomli==2.0.1
-traitlets==5.2.1.post0
-urllib3==1.26.9
-waitress==2.1.2
-wcwidth==0.2.5
-Werkzeug==2.1.2
-wfastcgi==3.0.0
-XlsxWriter==3.0.3
+﻿asttokens
+autopep8
+backcall
+black
+certifi
+charset-normalizer
+click
+colorama
+configparser
+decorator
+executing
+Flask
+Flask-Cors
+idna
+ipython
+itsdangerous
+jedi
+Jinja2
+jsonpickle
+MarkupSafe
+matplotlib-inline
+mypy-extensions
+networkx
+numpy
+pandas
+parso
+pathspec
+patool
+pickleshare
+platformdirs
+prompt-toolkit
+psycopg2-binary
+pure-eval
+pycodestyle
+Pygments
+python-dateutil
+pytz
+pyvis
+requests
+six
+stack-data
+toml
+tomli
+traitlets
+urllib3
+waitress
+wcwidth
+Werkzeug
+wfastcgi
+XlsxWriter
+# asttokens==2.0.5
+# autopep8==1.6.0
+# backcall==0.2.0
+# black==22.10.0
+# certifi==2022.5.18.1
+# charset-normalizer==2.0.12
+# click==8.1.3
+# colorama==0.4.4
+# configparser==5.2.0
+# decorator==5.1.1
+# executing==0.8.3
+# Flask==2.1.2
+# Flask-Cors==3.0.10
+# idna==3.3
+# ipython==8.4.0
+# itsdangerous==2.1.2
+# jedi==0.18.1
+# Jinja2==3.1.2
+# jsonpickle==2.2.0
+# MarkupSafe==2.1.1
+# matplotlib-inline==0.1.3
+# mypy-extensions==0.4.3
+# networkx==2.8.2
+# numpy==1.22.4
+# pandas==1.4.2
+# parso==0.8.3
+# pathspec==0.10.1
+# patool==1.12
+# pickleshare==0.7.5
+# platformdirs==2.5.2
+# prompt-toolkit==3.0.29
+# psycopg2-binary
+# pure-eval==0.2.2
+# pycodestyle==2.8.0
+# Pygments==2.12.0
+# python-dateutil==2.8.2
+# pytz==2022.1
+# pyvis==0.2.1
+# requests==2.27.1
+# six==1.16.0
+# stack-data==0.2.0
+# toml==0.10.2
+# tomli==2.0.1
+# traitlets==5.2.1.post0
+# urllib3==1.26.9
+# waitress==2.1.2
+# wcwidth==0.2.5
+# Werkzeug==2.1.2
+# wfastcgi==3.0.0
+# XlsxWriter==3.0.3
