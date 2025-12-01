@@ -10,7 +10,7 @@ services:
     volumes:
       - ./frontend/src:/usr/src/app/src  # Sync local frontend code
     ports:
-      - 3000:3000
+      - 3654:3000
     networks:
       - medmolnet-prod-network
     environment:
@@ -27,7 +27,7 @@ services:
     networks:
       - medmolnet-prod-network
     ports:
-      - 5000:5000
+      - 5654:5000
     environment:
       - DB_CONFIG=database.prod.ini
     extra_hosts:
