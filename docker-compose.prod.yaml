@@ -14,7 +14,7 @@ services:
     networks:
       - medmolnet-prod-network
     environment:
-      - REACT_APP_API_URL=https://proteinnetworksight
+      - REACT_APP_API_URL=https://proteinnetworksight.jce.ac
 
   medmolnet-back:
     image: medmolnet-backend
