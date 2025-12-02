@@ -39,8 +39,8 @@ services:
     restart: unless-stopped
     ports:
         - 8825:80
-    #volumes:
-    #   - ./nginx:/etc/nginx # Sync local file ??????????in prod?????????
+    volumes:
+       - ./nginx:/etc/nginx
     networks:
       - medmolnet-prod-network
 
