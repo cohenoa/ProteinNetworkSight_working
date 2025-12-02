@@ -7,8 +7,8 @@ services:
     build:
       context: ./frontend  # Corrected to use context
       dockerfile: Dockerfile  # Corrected to use dockerfile key
-    volumes:
-      - ./frontend/src:/usr/src/app/src  # Sync local frontend code
+    #volumes:
+    #  - ./frontend/src:/usr/src/app/src  # Sync local frontend code
     ports:
       - 3654:3000
     networks:
@@ -22,16 +22,16 @@ services:
     build:
       context: ./backend  # Corrected to use context
       dockerfile: Dockerfile  # Corrected to use dockerfile key
-    volumes:
-      - ./backend:/python-docker  # Sync local backend code
+    #volumes:
+    #  - ./backend:/python-docker  # Sync local backend code ??????????in prod?????????
     networks:
       - medmolnet-prod-network
     ports:
       - 5654:5000
     environment:
       - DB_CONFIG=database.prod.ini
-    extra_hosts:
-    - "host.docker.internal:host-gateway"
+    #extra_hosts:
+    # - "host.docker.internal:host-gateway" # This allows containers to talk directly to the host network, Why in prod? 
 
   nginx:
     image: nginx
@@ -39,8 +39,8 @@ services:
     restart: unless-stopped
     ports:
         - 8825:80
-    volumes:
-        - ./nginx:/etc/nginx
+    #volumes:
+    #   - ./nginx:/etc/nginx # Sync local file ??????????in prod?????????
     networks:
       - medmolnet-prod-network
 
