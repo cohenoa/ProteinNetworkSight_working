@@ -5,14 +5,10 @@ services:
     image: medmolnet-frontend
     container_name: medmolnet-frontend
     build:
-      context: ./frontend  # Corrected to use context
-      dockerfile: Dockerfile  # Corrected to use dockerfile key
-    #volumes:
-    #  - ./frontend/src:/usr/src/app/src  # Sync local frontend code
+      context: ./frontend 
+      dockerfile: Dockerfile 
     ports:
       - 3654:3000
-    networks:
-      - medmolnet-prod-network
     environment:
       - REACT_APP_API_URL=https://proteinnetworksight.jce.ac
 
@@ -20,18 +16,12 @@ services:
     image: medmolnet-backend
     container_name: medmolnet-backend
     build:
-      context: ./backend  # Corrected to use context
-      dockerfile: Dockerfile  # Corrected to use dockerfile key
-    #volumes:
-    #  - ./backend:/python-docker  # Sync local backend code ??????????in prod?????????
-    networks:
-      - medmolnet-prod-network
+      context: ./backend 
+      dockerfile: Dockerfile  
     ports:
       - 5654:5000
     environment:
       - DB_CONFIG=database.prod.ini
-    #extra_hosts:
-    # - "host.docker.internal:host-gateway" # This allows containers to talk directly to the host network, Why in prod? 
 
   nginx:
     image: nginx
@@ -41,9 +31,5 @@ services:
         - 8825:80
     volumes:
        - ./nginx:/etc/nginx
-    networks:
-      - medmolnet-prod-network
 
-networks:
-  medmolnet-prod-network:
-    driver: bridge
+
