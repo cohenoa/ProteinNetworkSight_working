@@ -51,6 +51,11 @@
     color: red;
 }
 
+.detail-warning{
+    font-size:  var(--small-text);
+    color: rgb(255, 179, 0);
+}
+
 .button-container{
     width: 30%;
     height: 70px;

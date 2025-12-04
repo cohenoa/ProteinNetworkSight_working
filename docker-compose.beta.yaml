@@ -40,7 +40,7 @@ services:
     ports:
         - 80:80
     volumes:
-        - ./nginx:/etc/nginx
+        - ./nginx-beta:/etc/nginx
     networks:
       - medmolnet-beta-network
 

@@ -23,6 +23,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   const [file, setFile] = useState<File | null>(null);
   const [hasError, setHasError] = useState<string | null>(null);
+  const [hasWarning, setHasWarning] = useState<string | null>(null);
   const [isExampleFile, setIsExampleFile] = useState(false);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     setFile(uploadedFile);
     actions.updateFileName({ fileName: uploadedFile.name });
     setHasError(null);
+    setHasWarning(null);
     setIsExampleFile(false);
   };
 
@@ -51,6 +53,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     actions.updateFileName({ fileName: "example_data.xlsx" });
     setIsExampleFile(true);
     setHasError(null);
+    setHasWarning(null);
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -113,7 +116,17 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const processParsedData = (fileData: any[][]) => {
-    fileData = filterByFirstColumnUnique(fileData);
+    const { filtered_data, num_duplicates } = filterByFirstColumnUnique(fileData);
+    fileData = filtered_data;
+
+    console.log(num_duplicates);
+
+    if (num_duplicates > 0) {
+      setHasWarning(`File contains ${num_duplicates} duplicate entries. Only the first occurrence will be used. click next again to continue.`);
+      if (!hasWarning){
+        return;
+      }
+    }
     
     if (fileData.length > MAX_ROWS) {
       setHasError(`File exceeds ${MAX_ROWS} rows. Please split it.`);
@@ -133,17 +146,23 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     }
   };
 
-  function filterByFirstColumnUnique(data: any[][]): any[][] {
+  function filterByFirstColumnUnique(data: any[][]): { filtered_data: any[][], num_duplicates: number } {
     const seen = new Set<any>();
+    let num_duplicates = 0;
 
-    return data.filter(row => {
+    const filtered_data = data.filter(row => {
       const key = row[0];
       if (seen.has(key)) {
+        num_duplicates++;
         return false;
       }
       seen.add(key);
       return true;
-    });
+    })
+
+    console.log("num duplicates: ", num_duplicates);
+
+    return { filtered_data, num_duplicates };
   }
 
   const processStringNameFile = (fileData: any[][], headers: string[]) => {
@@ -200,6 +219,9 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
         <input className="upload-container" type="file" onChange={onFileDrop} />
         {hasError  && (
           <p className="detail-error">{hasError}</p>
+        )}
+        {hasWarning && (
+          <p className="detail-warning">{hasWarning}</p>
         )}
       </div>
     </form>
