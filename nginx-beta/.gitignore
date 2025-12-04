@@ -1,0 +1,6 @@
+# Certbot files and directories
+/.well-known/
+/renewal/
+
+# Ignore Certbot configuration files
+/etc/letsencrypt/

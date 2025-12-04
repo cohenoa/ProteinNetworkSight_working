@@ -113,6 +113,8 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const processParsedData = (fileData: any[][]) => {
+    fileData = filterByFirstColumnUnique(fileData);
+    
     if (fileData.length > MAX_ROWS) {
       setHasError(`File exceeds ${MAX_ROWS} rows. Please split it.`);
       return;
@@ -130,6 +132,19 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       uploadFileData(fileData, headers);
     }
   };
+
+  function filterByFirstColumnUnique(data: any[][]): any[][] {
+    const seen = new Set<any>();
+
+    return data.filter(row => {
+      const key = row[0];
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }
 
   const processStringNameFile = (fileData: any[][], headers: string[]) => {
     console.log("loading saved file");
