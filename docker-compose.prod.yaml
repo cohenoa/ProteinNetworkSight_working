@@ -1,47 +1,32 @@
-version: '4.1.0'
-
 services:
   medmolnet-front:
     image: medmolnet-frontend
     container_name: medmolnet-frontend
     build:
-      context: ./frontend  # Corrected to use context
-      dockerfile: Dockerfile  # Corrected to use dockerfile key
-    volumes:
-      - ./frontend/src:/usr/src/app/src  # Sync local frontend code
+      context: ./frontend 
+      dockerfile: Dockerfile 
     ports:
-      - 3001:3000
-    networks:
-      - medmolnet-beta-network
+      - 3654:3000
     environment:
-      - REACT_APP_API_URL=http://localhost
+      - REACT_APP_API_URL=https://proteinnetworksight.jce.ac
 
   medmolnet-back:
     image: medmolnet-backend
     container_name: medmolnet-backend
     build:
-      context: ./backend  # Corrected to use context
-      dockerfile: Dockerfile  # Corrected to use dockerfile key
-    volumes:
-      - ./backend:/python-docker  # Sync local backend code
-    networks:
-      - medmolnet-beta-network
+      context: ./backend 
+      dockerfile: Dockerfile  
+    ports:
+      - 5654:5000
     environment:
-      - DB_CONFIG=database.example.ini
-    extra_hosts:
-    - "host.docker.internal:host-gateway"
+      - DB_CONFIG=database.prod.ini
 
   nginx:
     image: nginx
     container_name: nginx
     restart: unless-stopped
     ports:
-        - 80:80
+        - 8825:80
     volumes:
-        - ./nginx:/etc/nginx
-    networks:
-      - medmolnet-beta-network
-
-networks:
-  medmolnet-beta-network:
-    driver: bridge
+        - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+        - ./nginx/proxy.conf:/etc/nginx/proxy.conf:ro
