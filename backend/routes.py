@@ -4,15 +4,18 @@ from src.graph_data import make_graph_data
 from src.organism_list import get_organism_list
 from src.user_register import register_user
 from src.names import cal_string_suggestions
+from src.common.configuration import pgdb
 import json
 import uuid
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+pgdb.init_app(app)
 cors = CORS(app, resources={r"/api/": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['EXECUTOR_TYPE'] = 'thread'
 app.config['EXECUTOR_MAX_WORKERS'] = 6
+
 @app.route('/api/', methods=["GET"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def index():

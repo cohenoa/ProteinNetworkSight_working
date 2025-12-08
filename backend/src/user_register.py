@@ -1,4 +1,4 @@
-from src.common.configuration import close_db_conn, open_db_conn
+from src.common.configuration import pgdb
 import pandas as pd
 
 from src.names import NAME_NOT_FOUND
@@ -27,16 +27,14 @@ def get_match_info(cur, id):
     return rows[0][0]
 
 
-def get_info_list(conn, ids):
-    cur = conn.cursor()
+def get_info_list(ids):
+    with pgdb.get_cursor() as cur:
+        info_list = []
+        for id in ids:
+            info = get_match_info(cur, id)
+            info = info.replace("'", "''")
+            info_list.append(info)
 
-    info_list = []
-    for id in ids:
-        info = get_match_info(cur, id)
-        info = info.replace("'", "''")
-        info_list.append(info)
-
-    cur.close()
     return info_list
 
 
@@ -61,33 +59,26 @@ def get_drug_list(med_df, string_names):
     return drug_list
 
 
-def insert(conn, df):
-
-    cur = conn.cursor()
-
-    # create INSERT INTO table (columns) VALUES('%s',...)
-    for __, row in df.iterrows():
-        cur.execute(
-            "INSERT INTO users.users_table VALUES('%s','%s','%s','%s',N'%s','%s')"
-            % (
-                row["user"],
-                row["proteins"],
-                row["string_name"],
-                row["string_ids"],
-                row["info"],
-                row["drug"],
+def insert(df):
+    with pgdb.get_cursor() as cur:
+        for __, row in df.iterrows():
+            cur.execute(
+                "INSERT INTO users.users_table VALUES('%s','%s','%s','%s',N'%s','%s')"
+                % (
+                    row["user"],
+                    row["proteins"],
+                    row["string_name"],
+                    row["string_ids"],
+                    row["info"],
+                    row["drug"],
+                )
             )
-        )
-        conn.commit()
 
 
 def register_user(proteins, ids, user_id, string_names):
-    conn = open_db_conn()
-    if conn is None:
-        return
     med_df = pd.read_csv("/python-docker/src/common/cancerdrugsdb.txt", delimiter="\t")
 
-    info_list = get_info_list(conn, ids)
+    info_list = get_info_list(ids)
     drugs_list = get_drug_list(med_df, string_names)
     dup_user = [user_id for __ in proteins]
 
@@ -96,6 +87,4 @@ def register_user(proteins, ids, user_id, string_names):
         columns=["user", "proteins", "string_name", "string_ids", "info", "drug"],
     )
 
-    insert(conn, df)
-
-    close_db_conn(conn)
+    insert(df)

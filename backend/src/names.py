@@ -1,4 +1,4 @@
-from src.common.configuration import close_db_conn, open_db_conn
+from src.common.configuration import pgdb
 from src.clean_uid import clean_id
 
 ID_NOT_FOUND = "id not found"
@@ -31,62 +31,58 @@ def init_suggestions_list(org_names) -> list:
     return sug_list
 
 
-def get_match_ids(conn, name, organism) -> list:
-    sql = """ 
-            SELECT DISTINCT protein_id
-            FROM items.proteins_names
-            WHERE UPPER(protein_name) = %s and species_id = %s
-            LIMIT 4
-            """
-    cur = conn.cursor()
-    cur.execute(sql, (name, organism))
+def get_match_ids(name, organism) -> list:
+    with pgdb.get_cursor() as cur:
+        sql = """ 
+                SELECT DISTINCT protein_id
+                FROM items.proteins_names
+                WHERE UPPER(protein_name) = %s and species_id = %s
+                LIMIT 4
+                """
+        cur.execute(sql, (name, organism))
 
-    if cur.rowcount == 0:
-        return [ID_NOT_FOUND]
+        if cur.rowcount == 0:
+            return [ID_NOT_FOUND]
 
-    matches = []
-    rows = cur.fetchall()
+        matches = []
+        rows = cur.fetchall()
+
     for row in rows:
         matches.append(row[0])
 
     return matches
 
 
-def get_name_by_id(conn, id, organism) -> str:
-    sql = """ 
-            SELECT DISTINCT preferred_name
-            FROM items.proteins
-            WHERE protein_id = %s and species_id = %s
-            LIMIT 1
-            """
+def get_name_by_id(id, organism) -> str:
+    with pgdb.get_cursor() as cur:
+        sql = """ 
+                SELECT DISTINCT preferred_name
+                FROM items.proteins
+                WHERE protein_id = %s and species_id = %s
+                LIMIT 1
+                """
 
-    if id == ID_NOT_FOUND:
-        return NAME_NOT_FOUND
+        if id == ID_NOT_FOUND:
+            return NAME_NOT_FOUND
+        
+        cur.execute(sql, (id, organism))
 
-    cur = conn.cursor()
-    cur.execute(sql, (id, organism))
+        if cur.rowcount == 0:
+            return NAME_NOT_FOUND
 
-    if cur.rowcount == 0:
-        return NAME_NOT_FOUND
-
-    rows = cur.fetchall()
+        rows = cur.fetchall()
     return rows[0][0]
 
 
 def get_suggestions(clean_name, organism) -> dict:
     """Connect to the PostgreSQL database server"""
     string_suggestions = {}
-    conn = open_db_conn()
-    if conn is None:
-        print("------------------ Connection to DB Failed ------------------------", flush=True)
-        return
 
-    ids = get_match_ids(conn, clean_name, organism)
+    ids = get_match_ids(clean_name, organism)
     for id in ids:
-        name = get_name_by_id(conn, id, organism)
+        name = get_name_by_id(id, organism)
         string_suggestions[name] = id
-    
-    close_db_conn(conn)
+
     return string_suggestions
 
 

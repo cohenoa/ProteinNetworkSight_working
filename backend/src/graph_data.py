@@ -244,22 +244,14 @@ def get_pairs_score(score_thresh, pairs_list, conn) -> list:
     good_pairs = []
     f_score_thresh= float(score_thresh)
     start = time.time()
-    # pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-
-    # for i in range(len(pairs_list)):
-    #     obj = pairs_list[i]
-    #     pool.submit(get_score_multithread,f_score_thresh, good_pairs, obj, conn)
-    # pool.shutdown(wait=True)
     
     for obj in pairs_list:
         score = get_score(conn, obj.a_id, obj.b_id)
         
         if score == SCORE_NOT_FOUND:
-            # print("score not found for:", obj.a_id, obj.b_id)
             continue
 
         f_score = float(score)
-        # print(f_score, f_score_thresh, f_score > f_score_thresh )
         if f_score > f_score_thresh:
             obj.score = score
             good_pairs.append(obj)
@@ -312,25 +304,18 @@ def make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh):
         return
 
     usr_df = read_user_info(user_id, conn)
-    # print("BEFORE. usr_df columns=", usr_df.columns)
-    # print("BEFORE. values_map=", values_map)
-
-    usr_df["values"] = usr_df["proteins"].apply(lambda v: getValueById(v, values_map))
-    # print("AFTER adding the values. usr_df=", usr_df.head)
 
     # deleting names with no id
     mask = usr_df["string_ids"].apply(lambda v: not isIdOk(v))
     usr_df.drop(usr_df[mask].index, inplace=True)
-    # print("AFTER deleting names with no id. usr_df=", usr_df.head)
 
-    # applying the threshold
+    # applying values
+    usr_df["values"] = usr_df["proteins"].apply(lambda v: getValueById(v, values_map))
+
     mask = usr_df["values"].apply(lambda v: not isValueOk(v, thresh_pos, thresh_neg))
     usr_df.drop(usr_df[mask].index, inplace=True)
-    # print("AFTER applying threshold. usr_df=", usr_df)
-    start = time.time()
+
     links_list = make_links_list(usr_df, score_thresh, conn)
-    end = time.time()
-    print(end-start)
     nodes_list = make_node_list(usr_df, links_list)
 
     close_db_conn(conn)

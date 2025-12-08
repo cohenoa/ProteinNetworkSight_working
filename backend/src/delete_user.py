@@ -1,18 +1,12 @@
-from common.configuration import close_db_conn, open_db_conn
+from common.configuration import pgdb
 
 def truncate_Table():
-    conn = open_db_conn()
-    if conn is None:
-        return
-    cur = conn.cursor()
-    
-    sql = """ 
-                TRUNCATE users.users_table
-          """
+    with pgdb.get_cursor() as cur:    
+        sql = """ 
+                    TRUNCATE users.users_table
+            """
 
-    cur.execute(sql)
-    cur.close()
-    close_db_conn(conn)
+        cur.execute(sql)
 
 if __name__ == "__main__":
     truncate_Table()

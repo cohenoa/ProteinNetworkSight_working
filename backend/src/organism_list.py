@@ -1,4 +1,4 @@
-from src.common.configuration import close_db_conn, open_db_conn
+from src.common.configuration import pgdb
 
 
 class Organism:
@@ -12,29 +12,23 @@ class Organism:
         return toPrint
 
 
-def get_organism(conn) -> str:
-    sql = """ 
-           SELECT species_id, official_name
-           FROM items.species
-        """
-
-    cur = conn.cursor()
-    cur.execute(sql)
-
-    rows = cur.fetchall()
+def get_organism() -> str:
+    with pgdb.get_cursor() as cur:
+        sql = """ 
+            SELECT species_id, official_name
+            FROM items.species
+            """
+        cur.execute(sql)
+        rows = cur.fetchall()
     return rows
 
 
 def get_organism_list():
     organism_list = []
-    conn = open_db_conn()
-    if conn is None:
-        return
 
-    rows = get_organism(conn)
+    rows = get_organism()
     for row in rows:
         obj = Organism(row[1], row[0])
         organism_list.append(obj)   
 
-    close_db_conn(conn)
     return organism_list
