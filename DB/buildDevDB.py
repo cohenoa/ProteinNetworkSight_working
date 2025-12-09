@@ -1,7 +1,7 @@
 from DB.updateDB_tools import *
 import csv
 
-configFileName = 'DB/database.example.ini'
+configFileName = 'DB/database.prod.ini'
 
 conn: connection = open_conn(configFileName)
 
