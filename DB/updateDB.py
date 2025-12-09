@@ -1,7 +1,10 @@
 
 from DB.updateDB_tools import *
 
-configFileName = 'DB/database.prod.ini'
+version = get_version()
+print(version)
+
+configFileName = 'DB/database.example.ini'
 conn: connection = open_conn(configFileName)
 
 # tables = {
@@ -26,20 +29,20 @@ tables = {
     }
 }
 
-reset_tables(conn, tables)
+# reset_tables(conn, tables)
 
 
-proccess_dump_file(url='https://stringdb-downloads.org/download/items_schema.v12.0.sql.gz',
-                        table_insert_map=tables,
-                        batch_size=10000
-                        )
-
-# proccess_dump_file(url='https://stringdb-downloads.org/download/network_schema.v12.0.sql.gz',
+# proccess_dump_file(url=f'https://stringdb-downloads.org/download/items_schema.v{version}.sql.gz',
 #                         table_insert_map=tables,
 #                         batch_size=10000
 #                         )
 
-apply_indexes(conn, tables)
+# proccess_dump_file(url=f'https://stringdb-downloads.org/download/network_schema.v{version}.sql.gz',
+#                         table_insert_map=tables,
+#                         batch_size=10000
+#                         )
+
+# apply_indexes(conn, tables)
 
 
 conn.close()

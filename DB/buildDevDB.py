@@ -1,8 +1,43 @@
 from DB.updateDB_tools import *
+import csv
 
 configFileName = 'DB/database.example.ini'
 
 conn: connection = open_conn(configFileName)
+
+def write_csv_file(
+    rows: list[tuple],
+    output_path: str,
+    headers: list[str] | None = None
+):
+    """
+    Writes DB rows to a CSV file safely.
+
+    Args:
+        rows: List of tuples (DB rows)
+        output_path: Where to save the CSV file
+        headers: Optional list of column names
+    """
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(
+            f,
+            delimiter=",",
+            quotechar='"',
+            quoting=csv.QUOTE_MINIMAL
+        )
+
+        # ✅ Optional header row
+        if headers:
+            writer.writerow(headers)
+
+        # ✅ Data rows
+        for row in rows:
+            writer.writerow([
+                "" if value is None else value for value in row
+            ])
+
+    print(f"✅ CSV written to: {os.path.abspath(output_path)}")
 
 proteins = {
     "FASN": 6216362,
@@ -46,6 +81,57 @@ proteins = {
     "SERPINE1": 6211804,
 }
 
+species_rows = [(9606, "Homo sapiens", "Homo sapiens", "eukaryota", "core", 19699)]
+
 with conn.cursor() as cur:
-    cur.execute("SELECT")
+    cur.execute("CREATE TEMP TABLE temp_ids (id INT);")
+    ids = list(proteins.values())
+    cur.executemany("INSERT INTO temp_ids (id) VALUES (%s)", [(i,) for i in ids])
+
+    # ------------- PROTEINS ---------------
+    cur.execute("SELECT * FROM items.proteins WHERE protein_id IN (SELECT id FROM temp_ids);")
+    rows = cur.fetchall()
+
+    write_csv_file(rows, "DB/Schemas_new/items/proteins/dev_data.csv", headers=[
+            "protein_id",
+            "protein_external_id",
+            "species_id",
+            "protein_checksum",
+            "protein_size",
+            "annotation",
+            "preferred_name",
+            "annotation_word_vectors"
+        ])
+    
+    # ------------- PROTEINS NAMES ---------------
+    cur.execute("SELECT * FROM items.proteins_names WHERE protein_id IN (SELECT id FROM temp_ids);")
+    rows = cur.fetchall()
+
+    write_csv_file(rows, "DB/Schemas_new/items/proteins_names/dev_data.csv", headers=[
+            "protein_name",
+            "protein_id",
+            "species_id",
+            "source",
+            "is_preferred_name"
+        ])
+    
+    # ------------- SPECIES ---------------
+    write_csv_file(species_rows, "DB/Schemas_new/items/species/dev_data.csv", headers=[
+            "species_id",
+            "official_name",
+            "compact_name",
+            "kingdom",
+            "type",
+            "protein_count"
+        ])
+    
+    # ------------- NODE NODE LINKS ---------------
+    cur.execute("SELECT * FROM network.node_node_links WHERE node_id_a IN (SELECT id FROM temp_ids) AND node_id_b IN (SELECT id FROM temp_ids);")
+    rows = cur.fetchall()
+
+    write_csv_file(rows, "DB/Schemas_new/network/node_node_links/dev_data.csv", headers=[
+            "node_id_a",
+            "node_id_b",
+            "combined_score"
+        ])
 
