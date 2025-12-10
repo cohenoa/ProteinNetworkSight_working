@@ -298,13 +298,7 @@ def make_links_list(usr_df, score_thresh, conn):
 
 
 # ========main function =========
-def make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh):
-    conn = open_db_conn()
-    if conn is None:
-        return
-
-    usr_df = read_user_info(user_id, conn)
-
+def make_graph_data(usr_df: pd.DataFrame, values_map, thresh_pos, thresh_neg, score_thresh):
     # deleting names with no id
     mask = usr_df["string_ids"].apply(lambda v: not isIdOk(v))
     usr_df.drop(usr_df[mask].index, inplace=True)
@@ -315,8 +309,7 @@ def make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh):
     mask = usr_df["values"].apply(lambda v: not isValueOk(v, thresh_pos, thresh_neg))
     usr_df.drop(usr_df[mask].index, inplace=True)
 
-    links_list = make_links_list(usr_df, score_thresh, conn)
+    links_list = make_links_list(usr_df, score_thresh)
     nodes_list = make_node_list(usr_df, links_list)
 
-    close_db_conn(conn)
     return nodes_list, links_list

@@ -2,7 +2,7 @@ from flask import Flask, request,redirect
 from src.validate import cal_string_id
 from src.graph_data import make_graph_data
 from src.organism_list import get_organism_list
-from src.user_register import register_user
+from src.user_register import register_user, make_user_df
 from src.names import cal_string_suggestions
 from src.common.configuration import pgdb
 import json
@@ -74,12 +74,18 @@ def create_user_table():
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def cal_graph_data():
     request_data = request.get_json()
-    user_id = request_data["user_id"]
     values_map = request_data["values_map"]
     thresh_pos = request_data["thresh_pos"]
     thresh_neg = request_data["thresh_neg"]
     score_thresh = request_data["score_thresh"]
-    nodes_list, links_list = make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh)
+
+    proteins = request_data["proteins"]
+    string_names = request_data["string_names"]
+    ids = request_data["ids"]
+
+    usr_df = make_user_df(proteins, ids, str(uuid.uuid4()).replace("-", ""), string_names)
+
+    nodes_list, links_list = make_graph_data(usr_df, values_map, thresh_pos, thresh_neg, score_thresh)
     return json.dumps(
         {
             "nodes": [ob.__dict__ for ob in nodes_list],

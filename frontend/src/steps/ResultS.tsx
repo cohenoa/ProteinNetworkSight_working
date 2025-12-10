@@ -103,19 +103,38 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
         vectorsValues = val['vectorsValues'];
         const values_arr = vectorsValues[vectorName] || [];
         const ids_arr = state.proteinsNames || [];
+        const idsList: string[] = [];
+        const stringNames: string[] = [];
+
         let values_map: { [key: string]: number } = {};
         for (let i = 0; i < values_arr.length; i++) {
           values_map[ids_arr[i]] = values_arr[i];
         }
+
+        Object.keys(state.namesStringMap).forEach((orgName) => {
+          const map = state.namesStringMap[orgName];
+          if (map) {
+            idsList.push(map.stringId);
+            stringNames.push(map.stringName);
+          }
+        });
+
         const body = {
-          user_id: state.uuid,
           values_map: values_map,
           thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
           thresh_neg: state.thresholds[clickedVector][1],//^
           score_thresh: state.scoreThreshold,
+          proteins: state.proteinsNames,
+          ids: idsList,
+          string_names: stringNames,
         };
         console.log("body", body);
         actions.updateIsLoading({isLoading: true});
+
+        console.log("body of users request in graph_data: ");
+        console.log({
+        });
+
         makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
       
   })};

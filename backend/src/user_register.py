@@ -75,6 +75,20 @@ def insert(df):
             )
 
 
+def make_user_df(proteins, ids, user_id, string_names):
+    med_df = pd.read_csv("/python-docker/src/common/cancerdrugsdb.txt", delimiter="\t")
+
+    info_list = get_info_list(ids)
+    drugs_list = get_drug_list(med_df, string_names)
+    dup_user = [user_id for __ in proteins]
+
+    df = pd.DataFrame(
+        zip(dup_user, proteins, string_names, ids, info_list, drugs_list),
+        columns=["user", "proteins", "string_name", "string_ids", "info", "drug"],
+    )
+
+    return df
+
 def register_user(proteins, ids, user_id, string_names):
     med_df = pd.read_csv("/python-docker/src/common/cancerdrugsdb.txt", delimiter="\t")
 

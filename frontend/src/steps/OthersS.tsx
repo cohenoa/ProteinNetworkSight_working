@@ -51,13 +51,21 @@ const OthersS: FC<IStepProps> = ({ step, goNextStep }) => {
       string_names: stringNames,
     });
 
+    console.log("body of users request: ");
+    console.log({
+      proteins: state.proteinsNames,
+      ids: idsList,
+      string_names: stringNames,
+    });
+
     actions.updateIsLoading({ isLoading: true });
-    makePostRequest(body, "user", handleJsonResponse);
+    // makePostRequest(body, "user", handleJsonResponse);
+    handleJsonResponse("");
   };
 
   const handleJsonResponse = (jsonString: string) => {
-    const uidJson: IUidJson = JSON.parse(jsonString);
-    actions.updateUuid({ uuid: uidJson.uuid });
+    // const uidJson: IUidJson = JSON.parse(jsonString);
+    // actions.updateUuid({ uuid: uidJson.uuid });
     goNextStep();
   };
 
