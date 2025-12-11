@@ -1,7 +1,9 @@
-from src.common.configuration import close_db_conn, open_db_conn
+from src.common.configuration import close_db_conn, open_db_conn, pgdb
 import pandas as pd
 import time
-import concurrent.futures
+import logging
+
+# import concurrent.futures
 
 RED = "#ff0000"
 BLUE = "#0047AB"
@@ -240,6 +242,37 @@ def get_score_multithread(f_score_thresh, good_pairs, obj,conn):
         good_pairs.append(obj)
     return 
 
+def get_pairs_score_optimized(threshold, ids) -> list[tuple]:
+    logging.info("threshold is:", threshold)
+    logging.info("threshold type is: ", type(threshold))
+    
+    search_query = """
+        SELECT 
+            LEAST(l.node_id_a, l.node_id_b) AS id1,
+            GREATEST(l.node_id_a, l.node_id_b) AS id2,
+            l.combined_score::float / 1000.0 AS score
+        FROM network.node_node_links l
+        JOIN temp_ids a ON l.node_id_a = a.id
+        JOIN temp_ids b ON l.node_id_b = b.id
+        WHERE l.combined_score >= %s
+        GROUP BY id1, id2, score;
+    """
+
+    with pgdb.get_cursor() as cur:
+        cur.execute("CREATE TEMP TABLE temp_ids (id INT);")
+        cur.executemany("INSERT INTO temp_ids (id) VALUES (%s)", [(i,) for i in ids])
+
+        cur.execute(search_query, (int(float(threshold) * 1000),))
+
+        if cur.rowcount == 0:
+            return SCORE_NOT_FOUND
+        
+        rows = cur.fetchall()
+
+        cur.execute("DROP TABLE temp_ids;")
+
+    return rows
+
 def get_pairs_score(score_thresh, pairs_list, conn) -> list:
     good_pairs = []
     f_score_thresh= float(score_thresh)
@@ -267,16 +300,16 @@ def get_matchings_proteins_from_df(usr_df, string_id):
     return match_list
 
 
-def go_back_to_original(usr_df, string_pairs_scores) -> list:
+def go_back_to_original(usr_df, string_pairs_scores: list[tuple]) -> list:
     original_pairs_scores = []
     for obj in string_pairs_scores:
-        a_matching_names = get_matchings_proteins_from_df(usr_df, obj.a_id)
-        b_matching_names = get_matchings_proteins_from_df(usr_df, obj.b_id)
+        a_matching_names = get_matchings_proteins_from_df(usr_df, obj[0])
+        b_matching_names = get_matchings_proteins_from_df(usr_df, obj[1])
 
         for a_match in a_matching_names:
             for b_match in b_matching_names:
-                scoreObj = Link(a_match, b_match, obj.score)
-                print(a_match, b_match, obj.score)
+                scoreObj = Link(a_match, b_match, obj[2])
+                print(a_match, b_match, obj[2])
                 original_pairs_scores.append(scoreObj)
 
     return original_pairs_scores
@@ -290,9 +323,15 @@ def findLinksWeights(name, links_list):
     
     return linksWeights
 
-def make_links_list(usr_df, score_thresh, conn):
-    pairs_list = init_pairs_list(usr_df)
-    string_pairs_scores = get_pairs_score(score_thresh, pairs_list, conn)
+def make_links_list(usr_df, score_thresh):
+    # pairs_list = init_pairs_list(usr_df)
+
+    uniq_df = usr_df.drop(usr_df[usr_df.string_ids == ""].index, inplace=False)
+    uniq_df = uniq_df.drop_duplicates(subset=["string_ids"], inplace=False)
+    string_ids = uniq_df["string_ids"].tolist()
+
+    logging.info("make_links_list: " + score_thresh)
+    string_pairs_scores = get_pairs_score_optimized(score_thresh, string_ids)
     original_pairs_scores = go_back_to_original(usr_df, string_pairs_scores)
     return original_pairs_scores
 
@@ -309,6 +348,7 @@ def make_graph_data(usr_df: pd.DataFrame, values_map, thresh_pos, thresh_neg, sc
     mask = usr_df["values"].apply(lambda v: not isValueOk(v, thresh_pos, thresh_neg))
     usr_df.drop(usr_df[mask].index, inplace=True)
 
+    logging.info("make_graph_data: " + score_thresh)
     links_list = make_links_list(usr_df, score_thresh)
     nodes_list = make_node_list(usr_df, links_list)
 

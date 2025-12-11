@@ -57,3 +57,13 @@
     margin-top: 10px;
     font-size: 13.5px;
 }
+
+.clickable-link{
+    cursor: pointer;
+    color: #0077cc;
+    text-decoration: underline; 
+}
+
+.clickable-link:hover {
+  color: #005599;        /* optional hover color */
+}

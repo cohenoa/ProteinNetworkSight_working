@@ -522,7 +522,7 @@ return (
     ) : (
       <>
         {openPanel && (
-          <Panel node={selectedNode} onClickClose={handleOnclickClosePanel} />
+          <Panel node={selectedNode} organism={state.organism} onClickClose={handleOnclickClosePanel} />
         )}
         {openContextMenu && (
           <ContextMenu

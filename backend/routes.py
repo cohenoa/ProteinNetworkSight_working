@@ -7,7 +7,16 @@ from src.names import cal_string_suggestions
 from src.common.configuration import pgdb
 import json
 import uuid
+import logging
+import requests
 from flask_cors import CORS, cross_origin
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logging.info("Flask app started")
 
 app = Flask(__name__)
 pgdb.init_app(app)
@@ -93,6 +102,13 @@ def cal_graph_data():
         }
     )
 
+@app.route("/api/uniprot", methods=["POST"])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+def proxy_uniprot():
+    query_url = request.args.get("url")
+    r = requests.get(query_url)
+    return r.json()
+
 @app.route("/api/saveGraphs", methods=["POST"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def calc_all_graph_data():
@@ -120,4 +136,4 @@ def calc_all_graph_data():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0" ,port=5000)
+    app.run(host="0.0.0.0" ,port=5000, debug=True)

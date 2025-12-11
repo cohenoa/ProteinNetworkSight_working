@@ -50,6 +50,7 @@ export interface IStepProps {
 
 export interface IPanelProps {
   node: true | ICustomNode;
+  organism: OptionType;
   onClickClose: () => void;
 }
 
