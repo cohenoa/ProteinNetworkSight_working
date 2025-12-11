@@ -59,6 +59,7 @@
 }
 
 .clickable-link{
+    margin-top: 20px;
     cursor: pointer;
     color: #0077cc;
     text-decoration: underline; 

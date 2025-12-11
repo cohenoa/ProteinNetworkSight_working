@@ -1,33 +1,36 @@
 import { FC } from "react";
 import { IPanelProps } from "../@types/props";
 import "../styles/Panel.css";
-import { makePostRequest } from "../common/PostRequest";
 
 const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
   console.log(node);
 
   async function handleOrganismClick() {
-    // try {
-    //   const uniprotQueryUrl = `https://www.uniprot.org/uniprotkb?query=%28gene%3A${node.string_name}%29+AND+%28organism_id%3A${organism.value}%29+AND+%28reviewed%3Atrue%29`;
-    //   console.log(uniprotQueryUrl);
-    //   const body = JSON.stringify({ url: uniprotQueryUrl });
-    //   makePostRequest(body, "uniprot", handleUniprotResponse);
-    // } catch (err) {
-    //   console.error("Error fetching organism info:", err);
-    // }
-  }
+    try {
+      const uniprotQueryUrl = `https://rest.uniprot.org/uniprotkb/search?query=(reviewed:true)%20AND%20(organism_id:${organism.value})%20AND%20(gene:${node.string_name})`;
+      
+      const response = await fetch(uniprotQueryUrl);
+      if (!response.ok) {
+        throw new Error(`UniProt request failed: ${response.status}`);
+      }
 
-  function handleUniprotResponse(data: any) {
-    // console.log(data);
-    // const primaryAccession: string | undefined = data.results?.[0]?.primaryAccession;
+      const apiData = await response.json();
 
-    // if (!primaryAccession) {
-    //   throw new Error("No primaryAccession found in UniProt response.");
-    // }
+      // Safely extract the primary accession ID from the first result
+      const primaryAccession: string | undefined =
+        apiData.results?.[0]?.primaryAccession;
 
-    // const entryUrl = `https://www.uniprot.org/uniprotkb/${primaryAccession}/entry`;
+      if (!primaryAccession) {
+        throw new Error("No primaryAccession found in UniProt response.");
+      }
 
-    // window.open(entryUrl, "_blank");
+      // Build the final UniProt entry URL
+      const entryUrl = `https://www.uniprot.org/uniprotkb/${primaryAccession}/entry`;
+      console.log(entryUrl);
+      window.open(entryUrl, "_blank");
+    } catch (err) {
+      console.error("Error fetching organism info:", err);
+    }
   }
 
   return (

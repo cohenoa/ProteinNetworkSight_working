@@ -102,13 +102,6 @@ def cal_graph_data():
         }
     )
 
-@app.route("/api/uniprot", methods=["POST"])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
-def proxy_uniprot():
-    query_url = request.args.get("url")
-    r = requests.get(query_url)
-    return r.json()
-
 @app.route("/api/saveGraphs", methods=["POST"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def calc_all_graph_data():
