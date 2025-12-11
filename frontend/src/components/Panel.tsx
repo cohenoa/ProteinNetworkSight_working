@@ -1,27 +1,36 @@
 import { FC } from "react";
 import { IPanelProps } from "../@types/props";
+import { useState } from "react";
 import "../styles/Panel.css";
 
 const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
+
+  const [isLoadingUniprot, setIsLoadingUniprot] = useState(false);
+
   console.log(node);
 
-  async function handleOrganismClick() {
+  async function handleUniprotLinkClick() {
+    setIsLoadingUniprot(true);
     try {
       const uniprotQueryUrl = `https://rest.uniprot.org/uniprotkb/search?query=(reviewed:true)%20AND%20(organism_id:${organism.value})%20AND%20(gene:${node.string_name})`;
       
       const response = await fetch(uniprotQueryUrl);
       if (!response.ok) {
-        throw new Error(`UniProt request failed: ${response.status}`);
+        throw new Error(`Uniprot API call failed with status ${response.status}`);
       }
 
       const apiData = await response.json();
 
       // Safely extract the primary accession ID from the first result
-      const primaryAccession: string | undefined =
-        apiData.results?.[0]?.primaryAccession;
+      const primaryAccession: string | undefined = apiData.results?.[0]?.primaryAccession;
 
       if (!primaryAccession) {
-        throw new Error("No primaryAccession found in UniProt response.");
+        if (apiData.results?.length === 0) {
+          throw new Error("No results found in UniProt response.");
+        }
+        else{
+          throw new Error("No primaryAccession found in UniProt response.");
+        }
       }
 
       // Build the final UniProt entry URL
@@ -29,8 +38,10 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
       console.log(entryUrl);
       window.open(entryUrl, "_blank");
     } catch (err) {
-      console.error("Error fetching organism info:", err);
+      // console.error("Error fetching organism info:", err);
+      alert("Error fetching Uniprot link: " + err);
     }
+    setIsLoadingUniprot(false);
   }
 
   return (
@@ -50,9 +61,10 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
         <p>
           <span 
             className="panel-container-span clickable-link"
-            onClick={handleOrganismClick}>
+            onClick={handleUniprotLinkClick}>
               Link to UniProt
           </span>
+          {isLoadingUniprot && <span>Loading...</span>}
         </p>
         <p className="paragraph-style">
           <span className="panel-container-span">Weighted Node Degree:</span>
