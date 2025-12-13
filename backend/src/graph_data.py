@@ -1,4 +1,5 @@
 from src.common.configuration import pgdb, connection
+from dataclasses import dataclass
 import pandas as pd
 import time
 import logging
@@ -262,10 +263,38 @@ def get_score_multithread(f_score_thresh, good_pairs, obj,conn):
         good_pairs.append(obj)
     return 
 
-def get_pairs_score_optimized(threshold, ids) -> list[tuple]:
-    logging.info("threshold is:", threshold)
-    logging.info("threshold type is: ", type(threshold))
+# def get_pairs_score_optimized(threshold, ids) -> list[tuple]:
+#     logging.info("threshold is:", threshold)
+#     logging.info("threshold type is: ", type(threshold))
     
+#     search_query = """
+#         SELECT 
+#             LEAST(l.node_id_a, l.node_id_b) AS id1,
+#             GREATEST(l.node_id_a, l.node_id_b) AS id2,
+#             l.combined_score::float / 1000.0 AS score
+#         FROM network.node_node_links l
+#         JOIN temp_ids a ON l.node_id_a = a.id
+#         JOIN temp_ids b ON l.node_id_b = b.id
+#         WHERE l.combined_score >= %s
+#         GROUP BY id1, id2, score;
+#     """
+
+#     with pgdb.get_cursor() as cur:
+#         cur.execute("CREATE TEMP TABLE temp_ids (id INT);")
+#         cur.executemany("INSERT INTO temp_ids (id) VALUES (%s)", [(i,) for i in ids])
+
+#         cur.execute(search_query, (int(float(threshold) * 1000),))
+
+#         if cur.rowcount == 0:
+#             return SCORE_NOT_FOUND
+        
+#         rows = cur.fetchall()
+
+#         cur.execute("DROP TABLE temp_ids;")
+
+#     return rows
+
+def get_pairs_score_optimized(con: connection, threshold) -> list[tuple]:
     search_query = """
         SELECT 
             LEAST(l.node_id_a, l.node_id_b) AS id1,
@@ -278,18 +307,9 @@ def get_pairs_score_optimized(threshold, ids) -> list[tuple]:
         GROUP BY id1, id2, score;
     """
 
-    with pgdb.get_cursor() as cur:
-        cur.execute("CREATE TEMP TABLE temp_ids (id INT);")
-        cur.executemany("INSERT INTO temp_ids (id) VALUES (%s)", [(i,) for i in ids])
-
+    with con.cursor() as cur:
         cur.execute(search_query, (int(float(threshold) * 1000),))
-
-        if cur.rowcount == 0:
-            return SCORE_NOT_FOUND
-        
         rows = cur.fetchall()
-
-        cur.execute("DROP TABLE temp_ids;")
 
     return rows
 
