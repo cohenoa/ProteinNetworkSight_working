@@ -51,23 +51,18 @@ export const HomePage: FC = () => {
       <div className="detailsContainer">
         <div className="info first-info">
           <h5 className="about-h5">Noa Cohen</h5>
-          <h5 className="inlineText"><i className="fa fa-envelope"/>noace@ jce.ac.il</h5>
+          <h5 className="inlineText"><i className="fa fa-envelope"/>noace@jce.ac.il</h5>
         </div>
         <div className="info">
           <h5 className="about-h5">Nataly Kravchenko-Balasha</h5>
-          <h5 className="inlineText"><i className="fa fa-envelope"/>natalyk@ ekmd.huji.ac.il</h5>
+          <h5 className="inlineText"><i className="fa fa-envelope"/>natalyk@ekmd.huji.ac.il</h5>
         </div>
       </div>
 
       <div className="detailsContainer">
-    
-        <div className="info">
-          <h5 className="about-h5">Nitzan Migdal</h5>
-          <h5 className="inlineText"><i className="fa fa-envelope"/>nitzanmr@ gmail.com</h5>
-        </div>
         <div className="info">
           <h5 className="about-h5">Omri Nahor</h5>
-          <h5 className="inlineText"><i className="fa fa-envelope"/>omrinahor@ gmail.com</h5>
+          <h5 className="inlineText"><i className="fa fa-envelope"/>omrinahor@gmail.com</h5>
         </div>
       </div>
     </div>

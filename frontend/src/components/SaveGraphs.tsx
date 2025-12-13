@@ -183,10 +183,23 @@ const SaveGraphs = forwardRef((props, ref) => {
 
             const headers = val['headers'];
             const vectorsValues = val['vectorsValues'];
+            const idsList: string[] = [];
+            const stringNames: string[] = [];
+
+            Object.keys(state.namesStringMap).forEach((orgName) => {
+                const map = state.namesStringMap[orgName];
+                if (map) {
+                    idsList.push(map.stringId);
+                    stringNames.push(map.stringName);
+                }
+            });
 
             let body = {
                 user_id: state.uuid,
                 headers_data: {},
+                proteins: state.proteinsNames,
+                ids: idsList,
+                string_names: stringNames,
             };
 
             Object.entries(vectorsValues).forEach(([key, value]) => {

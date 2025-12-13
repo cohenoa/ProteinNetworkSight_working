@@ -1,22 +1,20 @@
-from flask import Flask, request,redirect
+from flask import Flask, request
 from src.validate import cal_string_id
-from src.graph_data import make_graph_data
+from src.graph_data import make_graph_data, clean_data, build_Network
 from src.organism_list import get_organism_list
-from src.user_register import register_user, make_user_df
 from src.names import cal_string_suggestions
 from src.common.configuration import pgdb
-import json
-import uuid
-import logging
-import requests
 from flask_cors import CORS, cross_origin
+from io import StringIO
+import json
+# import logging
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(message)s"
+# )
 
-logging.info("Flask app started")
+# logging.info("Flask app started")
 
 app = Flask(__name__)
 pgdb.init_app(app)
@@ -67,18 +65,6 @@ def validate_name():
     return json.dumps(matching_id)
 
 
-@app.route("/api/user", methods=["POST"])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
-def create_user_table():
-    request_data = request.get_json()
-    proteins = request_data["proteins"]
-    string_names = request_data["string_names"]
-    ids = request_data["ids"]
-    user_id = str(uuid.uuid4()).replace("-", "")
-    register_user(proteins, ids, user_id, string_names)
-    return json.dumps({"uuid": user_id})
-
-
 @app.route("/api/graphs", methods=["POST"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def cal_graph_data():
@@ -92,9 +78,21 @@ def cal_graph_data():
     string_names = request_data["string_names"]
     ids = request_data["ids"]
 
-    usr_df = make_user_df(proteins, ids, str(uuid.uuid4()).replace("-", ""), string_names)
+    clean_ids, id_to_nodes = clean_data(proteins, ids, string_names, values_map, thresh_pos, thresh_neg)
 
-    nodes_list, links_list = make_graph_data(usr_df, values_map, thresh_pos, thresh_neg, score_thresh)
+    with pgdb.get_connection() as con:
+        with con.cursor() as cur:
+            cur.execute("CREATE TEMP TABLE temp_ids(idx serial, id integer)")
+
+            buf = StringIO("\n".join(id for id in clean_ids))
+            sql = "COPY temp_ids (id) FROM STDIN WITH (FORMAT text);"
+            cur.copy_expert(sql, buf)
+
+        nodes_list, links_list = build_Network(con, id_to_nodes, score_thresh)
+
+        with con.cursor() as cur:
+            cur.execute("DROP TABLE temp_ids;")
+
     return json.dumps(
         {
             "nodes": [ob.__dict__ for ob in nodes_list],
@@ -106,9 +104,13 @@ def cal_graph_data():
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def calc_all_graph_data():
     request_data = request.get_json()
-    user_id = request_data["user_id"]
-    
     headers_data = request_data["headers_data"]
+
+    proteins = request_data["proteins"]
+    string_names = request_data["string_names"]
+    ids = request_data["ids"]
+
+    # usr_df = make_user_df(proteins, ids, string_names)
 
     allGraphs = {}
 
@@ -117,12 +119,13 @@ def calc_all_graph_data():
         thresh_pos = data["thresh_pos"]
         thresh_neg = data["thresh_neg"]
         score_thresh = data["score_thresh"]
-        nodes_list, links_list = make_graph_data(user_id, values_map, thresh_pos, thresh_neg, score_thresh)
 
-        allGraphs[key] = {
-            "nodes": [ob.__dict__ for ob in nodes_list],
-            "links": [ob.__dict__ for ob in links_list],
-        }
+        # nodes_list, links_list = make_graph_data(usr_df, values_map, thresh_pos, thresh_neg, score_thresh)
+
+        # allGraphs[key] = {
+        #     "nodes": [ob.__dict__ for ob in nodes_list],
+        #     "links": [ob.__dict__ for ob in links_list],
+        # }
     
     return json.dumps(allGraphs)
 

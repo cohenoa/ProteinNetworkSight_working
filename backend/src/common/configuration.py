@@ -30,6 +30,17 @@ class PostgresDB:
         finally:
             self.pool.putconn(con)
 
+    @contextmanager
+    def get_connection(self):
+        if self.pool is None:
+            self.connect()
+        con: connection = self.pool.getconn()
+        try:
+            yield con
+            con.commit()
+        finally:
+            self.pool.putconn(con)
+
 def configDb(filename='database.prod.ini', section='postgresql'):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(BASE_DIR, filename)

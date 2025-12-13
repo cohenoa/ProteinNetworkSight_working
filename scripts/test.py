@@ -1,13 +1,174 @@
-import requests
-import re
-import json
+import pandas as pd
+from collections import defaultdict
 
-url = "https://rest.uniprot.org/uniprotkb/search?query=(reviewed:true)%20AND%20(organism_id:9606)"
-text = requests.get(url).text
-jsonObj = json.loads(text)
+lines = []
+med_df = pd.read_csv("backend/src/common/cancerdrugsdb.txt", delimiter="\t")
 
-id = jsonObj["results"][0]["primaryAccession"]
-url2 = f"https://www.uniprot.org/uniprotkb/{id}/entry"
+med_df = med_df[["Product", "DrugBank ID", "Targets"]]
 
-url = "https://www.uniprot.org/uniprotkb?query=%28gene%3ATIGAR%29+AND+%28organism_id%3A9606%29+AND+%28reviewed%3Atrue%29"
-print(url2)
+target_product_map = defaultdict(list)
+for index, row in med_df.iterrows():
+    if pd.isna(row["Targets"]):
+        continue
+    infoLink = None
+    if row["DrugBank ID"].find("Not found in DrugBank") == -1:
+        infoLink = row["DrugBank ID"].split("\"")[1].split("\"")[0]
+    else:
+        print(row["DrugBank ID"])
+    target_list = row["Targets"].split("; ")
+    for target in target_list:
+        if (target == "Nab-Paclitaxel"):
+            print("hello")
+        target_product_map[target].append({
+            "name": row["Product"],
+            "infoLink": infoLink
+        })
+
+
+# for key, value in target_product_map.items():
+#     print(key, value)
+#     break
+
+print(target_product_map["FASN"])
+
+# with open()
+
+# print(len(target_product_map.keys()))
+
+# print(med_df["Nab-Paclitaxel"])
+
+
+# print(med_df)
+# print(med_df["Indications"])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@dataclass
+class Link:
+    def __init__(self, source, target, score) -> None:
+        self.source = source
+        self.target = target
+        self.score = score
+
+
+@dataclass
+class Node:
+    def __init__(self, original_name, string_name, color, size) -> None:
+        self.id = original_name
+        self.string_name = string_name
+        self.info = None
+        self.color = color
+        self.size = size
+        self.drug = []
+        self.links = []
+        self.linksWeights = 0
+
+def get_pairs_score_optimized(con: connection, threshold) -> list[tuple]:
+    search_query = """
+        SELECT 
+            LEAST(l.node_id_a, l.node_id_b) AS id1,
+            GREATEST(l.node_id_a, l.node_id_b) AS id2,
+            l.combined_score::float / 1000.0 AS score
+        FROM network.node_node_links l
+        JOIN temp_ids a ON l.node_id_a = a.id
+        JOIN temp_ids b ON l.node_id_b = b.id
+        WHERE l.combined_score >= %s
+        GROUP BY id1, id2, score;
+    """
+
+    with con.cursor() as cur:
+        cur.execute(search_query, (int(float(threshold) * 1000),))
+        rows = cur.fetchall()
+
+    return rows
+
+def go_back_to_original_optimized(id_to_nodes: dict[str, list[Node]], string_pairs_scores) -> list[Link]:
+    original_pairs_scores = []
+
+    for sid_a, sid_b, score in string_pairs_scores:
+        a_match_list = id_to_nodes.get(sid_a, [])
+        b_match_list = id_to_nodes.get(sid_b, [])
+
+        for a in a_match_list:
+            for b in b_match_list:
+                scoreObj = Link(a.id, b.id, score)
+                original_pairs_scores.append(scoreObj)
+                
+                a.links.append(scoreObj)
+                a.linksWeights += score
+
+                b.links.append(scoreObj)
+                b.linksWeights += score
+
+    return original_pairs_scores
+
+def make_links_list_optimized(con: connection, score_thresh, id_to_nodes):
+    string_pairs_scores = get_pairs_score_optimized(con, score_thresh)
+    original_pairs_scores = go_back_to_original_optimized(id_to_nodes, string_pairs_scores)
+    return original_pairs_scores
+
+def get_info_list_optimized(con: connection, ids_to_nodes: dict[str, list[Node]]):
+    with con.cursor() as cur:
+        sql = """ 
+            SELECT t.id, p.annotation
+            FROM temp_ids t
+            LEFT JOIN items.proteins p ON p.protein_id = t.id
+        """
+        cur.execute(sql)
+
+        rows = cur.fetchall()
+
+        for id, info in rows:
+            nodes = ids_to_nodes[id]
+            for node in nodes:
+                node.info = info
+
+def get_drug_list_optimized(con: connection, ids_to_nodes: dict[str, list[Node]]):
+    with con.cursor() as cur:
+        sql = """ 
+            SELECT t.id, d.drug_name, d.drugBankID
+            FROM items.drugs d
+            LEFT JOIN temp_ids t ON d.protein_id = t.id
+        """
+        cur.execute(sql)
+
+        rows = cur.fetchall()
+
+        for id, drugName, drugBankID in rows:
+            nodes = ids_to_nodes[id]
+            for node in nodes:
+                node.drug.append({"drugName": drugName, "drugBankID": drugBankID})
+
+def make_node_list_optimized(id_to_nodes: dict[str, list[Node]]):
+    nodes_list = []
+
+    for nodes in id_to_nodes.values():
+        nodes_list.extend(nodes)
+
+    return nodes_list
+
+def build_Network(con, ids_to_nodes, score_thresh):
+    get_info_list_optimized(con, ids_to_nodes)
+    get_drug_list_optimized(con, ids_to_nodes)
+
+    # for (info, drugs) in zip(info_map, drug_list):
+    #     ids_to_nodes
+
+    links_list = make_links_list_optimized(con, score_thresh, ids_to_nodes)
+    nodes_list = make_node_list_optimized(ids_to_nodes)
+
+    return nodes_list, links_list
