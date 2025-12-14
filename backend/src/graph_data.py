@@ -1,54 +1,30 @@
-from src.common.configuration import pgdb, connection
+from src.common.configuration import connection
 from dataclasses import dataclass
-import pandas as pd
-import time
 import logging
+from collections import defaultdict
 
 # import concurrent.futures
 
 RED = "#ff0000"
 BLUE = "#0047AB"
 SCORE_NOT_FOUND = "score not found"
+INFO_NOT_FOUND = "info not found"
+DRUG_NOT_FOUND = "drug not found"
 
 # ========class definitions =========
-class IdsPair:
-    def __init__(self, a_id, b_id, score) -> None:
-        self.a_id = a_id
-        self.b_id = b_id
-        self.score = score
-
-    def __eq__(self, other):
-        return (self.a_id == other.a_id and self.b_id == other.b_id) or (
-            self.a_id == other.b_id and self.b_id == other.a_id
-        )
-
-
-# class Link:
-#     def __init__(self, source, target, score) -> None:
-#         self.source = source
-#         self.target = target
-#         self.score = score
-
-
-# class Node:
-#     def __init__(
-#         self, original_name, string_name, info, color, size, drug, links, linksWeights
-#     ) -> None:
-#         self.id = original_name
-#         self.string_name = string_name
-#         self.info = info
-#         self.color = color
-#         self.size = size
-#         self.drug = drug
-#         self.links = links
-#         self.linksWeights = linksWeights
-
 @dataclass
 class Link:
+    source: str
+    target: str
+    score: float
+
     def __init__(self, source, target, score) -> None:
         self.source = source
         self.target = target
         self.score = score
+
+    def __repr__(self):
+        return "{}({})-{}({})-{}({})\n".format(self.source, type(self.source), self.target, type(self.target), self.score, type(self.score))
 
 
 @dataclass
@@ -56,37 +32,39 @@ class Node:
     def __init__(self, original_name, string_name, color, size) -> None:
         self.id = original_name
         self.string_name = string_name
-        self.info = None
+        self.info = INFO_NOT_FOUND
         self.color = color
         self.size = size
         self.drug = []
         self.links = []
         self.linksWeights = 0
 
+    def __repr__(self):
+        return "{}-{}-{}\n".format(self.id, self.string_name, self.size)
+    
 
-# ========init user info =========
-def read_user_info(user_id, conn):
-    sql = """ 
-            SELECT *
-            FROM  users.users_table
-            WHERE users_table.user = '%s'
-            """ % (
-        user_id
-    )
+# ======= data cleaning functions =========
+def clean_data(original_names, internal_ids, string_names, values_map, thresh_pos, thresh_neg):
+    clean_ids = []
+    ids_to_nodes = defaultdict(list)
 
-    usr_df = pd.read_sql_query(sql, conn)
-    return usr_df
+    for OriginalName, internal_id, string_name in zip(original_names, internal_ids, string_names):
+        if not isIdOk(internal_id):
+            continue
+        value = float(values_map[OriginalName])
+        if not isValueOk(value, thresh_pos, thresh_neg):
+            continue
 
+        color = get_color(value)
+        size = get_size(value)
 
-# ========making nodes functions =========
-def getValueById(node_id, values_map):
-    node_value = values_map[node_id]
-    # print("node_id=", node_id, " matched node_value=", node_value)
-    return node_value
+        clean_ids.append(internal_id)
+        ids_to_nodes[internal_id].append(Node(OriginalName, string_name, color, size))
 
+    return clean_ids, ids_to_nodes
 
+# ======== making nodes functions =========
 def isValueOk(value, thresh_pos, thresh_neg):
-    value = float(value)
     thresh_pos = float(thresh_pos)
     thresh_neg = float(thresh_neg)
 
@@ -94,307 +72,60 @@ def isValueOk(value, thresh_pos, thresh_neg):
         isOk = value < thresh_neg
     else:
         isOk = value > thresh_pos
-
-    # print(
-    #     "value=",
-    #     value,
-    #     "thresh_pos=",
-    #     thresh_pos,
-    #     "thresh_neg=",
-    #     thresh_neg,
-    #     "isOk=",
-    #     isOk,
-    # )
     return isOk
 
 
-def isIdOk(value):
-    value = int(value)
-    return value != 0
-
+def isIdOk(value: str):
+    return int(value) != 0
 
 def get_color(value):
-    value = float(value)
+    return BLUE if value > 0 else RED
 
-    if value < 0:
-        color = RED
-    else:
-        color = BLUE
+def get_size(value):
+    return round(value, 2)
 
-    # print("value=", value, "color=", color)
-    return color
+def add_info_optimized(con: connection, ids_to_nodes: dict[str, list[Node]]):
+    with con.cursor() as cur:
+        sql = """ 
+            SELECT t.id, p.annotation
+            FROM temp_ids t
+            LEFT JOIN items.proteins p ON p.protein_id = t.id
+        """
+        cur.execute(sql)
 
+        rows = cur.fetchall()
 
-def round_value(size):
-    """ """
-    return round(size, 2)
+        for id, info in rows:
+            nodes = ids_to_nodes[id]
+            for node in nodes:
+                node.info = info
 
+def add_drugs_optimized(con: connection, ids_to_nodes: dict[str, list[Node]]):
+    with con.cursor() as cur:
+        sql = """ 
+            SELECT t.id, d.drug_name, d.drugBankID
+            FROM items.drugs d
+            LEFT JOIN temp_ids t ON d.protein_id = t.id
+        """
+        cur.execute(sql)
 
-def findLinks(name, links_list):
-    links = []
+        rows = cur.fetchall()
 
-    for link in links_list:
-        if link.source == name:
-            links.append(link.target)
-        if link.target == name:
-            links.append(link.source)
+        for id, drugName, drugBankID in rows:
+            nodes = ids_to_nodes[id]
+            for node in nodes:
+                node.drug.append({"drugName": drugName, "drugBankID": drugBankID})
 
-    return links
-
-
-def make_node_list(usr_df, links_list):
-    # adding the colors column
-    usr_df["colors"] = usr_df.apply(lambda row: get_color(row["values"]), axis=1)
-
-    # adding round_values column
-    usr_df["round_values"] = usr_df.apply(
-        lambda row: round_value(row["values"]), axis=1
-    )
-
-    # adding links column
-    usr_df["links"] = usr_df.apply(
-        lambda row: findLinks(row["proteins"], links_list), axis=1
-    )
-
-     # adding linksWeights column
-    usr_df["linksWeights"] = usr_df.apply(lambda row: findLinksWeights(row["proteins"], links_list), axis=1)
-
+def make_nodes_list_optimized(id_to_nodes: dict[str, list[Node]]):
     nodes_list = []
-    for __, row in usr_df.iterrows():
-        node_obj = Node(
-            row["proteins"],
-            row["string_name"],
-            row["info"],
-            row["colors"],
-            row["round_values"],
-            row["drug"],
-            row["links"],
-            row["linksWeights"]
-        )
-        # print(
-        #     "final node object is:",
-        #     node_obj.id,
-        #     node_obj.string_name,
-        #     node_obj.info,
-        #     node_obj.color,
-        #     node_obj.size,
-        #     node_obj.drug,
-        #     node_obj.links,
-        # )
-        nodes_list.append(node_obj)
+
+    for nodes in id_to_nodes.values():
+        nodes_list.extend(nodes)
 
     return nodes_list
 
 
-# ========making links functions =========
-def is_in_list(target_obj, target_list) -> bool:
-    is_in = False
-    for obj in target_list:
-        if target_obj.__eq__(obj):
-            # print(
-            #     "found a duplicate!! first_obj=",
-            #     obj.a_id,
-            #     obj.b_id,
-            #     "second_obj=",
-            #     target_obj.a_id,
-            #     target_obj.b_id,
-            # )
-            is_in = True
-
-    return is_in
-
-
-def init_pairs_list(usr_df) -> list:
-    # print("BEFORE id=", usr_df["string_ids"].tolist(), "total is:", len(usr_df["string_ids"].tolist()))
-    uniq_df = usr_df.drop(usr_df[usr_df.string_ids == ""].index, inplace=False)
-    uniq_df = uniq_df.drop_duplicates(subset=["string_ids"], inplace=False)
-    string_ids = uniq_df["string_ids"].tolist()
-    # print("uniq string id=", string_ids, " total=", len(string_ids))
-
-    ids_pairs_list = []
-    for id1 in string_ids:
-        for id2 in string_ids:
-            if id1 == id2:
-                continue
-            pair_obj = IdsPair(id1, id2, 0)
-            if not is_in_list(pair_obj, ids_pairs_list):
-                ids_pairs_list.append(pair_obj)
-
-    # print("total pairs:", len(ids_pairs_list))
-    return ids_pairs_list
-
-
-def get_score(conn, id1, id2) -> float:
-    sql = """ 
-            SELECT combined_score
-            FROM network.node_node_links
-            WHERE (node_id_a = %s and node_id_b = %s) or (node_id_b=%s and node_id_a=%s)
-            """ % (
-        id1,
-        id2,
-        id1,
-        id2,
-    )
-    
-    cur = conn.cursor()
-    cur.execute(sql) 
-    if cur.rowcount == 0:
-        return SCORE_NOT_FOUND
-
-    rows = cur.fetchall()
-    result1 = rows[0][0] / 1000
-    # result2 = rows[1][0] / 1000
-
-    # if result1 != result2:
-    #     print("sql is:", sql, "results are different should not happen!!!!!!!!!!!", result1, result2)
-
-    return result1
-
-def get_score_multithread(f_score_thresh, good_pairs, obj,conn):
-    score = get_score(conn, obj.a_id, obj.b_id)
-    if score == SCORE_NOT_FOUND:
-        # print("score not found for:", obj.a_id, obj.b_id)
-        return
-
-    f_score = float(score)
-    # print(f_score, f_score_thresh, f_score > f_score_thresh )
-    if f_score > f_score_thresh:
-        obj.score = score
-        good_pairs.append(obj)
-    return 
-
-# def get_pairs_score_optimized(threshold, ids) -> list[tuple]:
-#     logging.info("threshold is:", threshold)
-#     logging.info("threshold type is: ", type(threshold))
-    
-#     search_query = """
-#         SELECT 
-#             LEAST(l.node_id_a, l.node_id_b) AS id1,
-#             GREATEST(l.node_id_a, l.node_id_b) AS id2,
-#             l.combined_score::float / 1000.0 AS score
-#         FROM network.node_node_links l
-#         JOIN temp_ids a ON l.node_id_a = a.id
-#         JOIN temp_ids b ON l.node_id_b = b.id
-#         WHERE l.combined_score >= %s
-#         GROUP BY id1, id2, score;
-#     """
-
-#     with pgdb.get_cursor() as cur:
-#         cur.execute("CREATE TEMP TABLE temp_ids (id INT);")
-#         cur.executemany("INSERT INTO temp_ids (id) VALUES (%s)", [(i,) for i in ids])
-
-#         cur.execute(search_query, (int(float(threshold) * 1000),))
-
-#         if cur.rowcount == 0:
-#             return SCORE_NOT_FOUND
-        
-#         rows = cur.fetchall()
-
-#         cur.execute("DROP TABLE temp_ids;")
-
-#     return rows
-
-def get_pairs_score_optimized(con: connection, threshold) -> list[tuple]:
-    search_query = """
-        SELECT 
-            LEAST(l.node_id_a, l.node_id_b) AS id1,
-            GREATEST(l.node_id_a, l.node_id_b) AS id2,
-            l.combined_score::float / 1000.0 AS score
-        FROM network.node_node_links l
-        JOIN temp_ids a ON l.node_id_a = a.id
-        JOIN temp_ids b ON l.node_id_b = b.id
-        WHERE l.combined_score >= %s
-        GROUP BY id1, id2, score;
-    """
-
-    with con.cursor() as cur:
-        cur.execute(search_query, (int(float(threshold) * 1000),))
-        rows = cur.fetchall()
-
-    return rows
-
-def get_pairs_score(score_thresh, pairs_list, conn) -> list:
-    good_pairs = []
-    f_score_thresh= float(score_thresh)
-    start = time.time()
-    
-    for obj in pairs_list:
-        score = get_score(conn, obj.a_id, obj.b_id)
-        
-        if score == SCORE_NOT_FOUND:
-            continue
-
-        f_score = float(score)
-        if f_score > f_score_thresh:
-            obj.score = score
-            good_pairs.append(obj)
-    
-    end = time.time()
-    print("time get_score is: ",end-start)
-    return good_pairs
-
-
-def get_matchings_proteins_from_df(usr_df, string_id):
-    match_df = usr_df.loc[usr_df["string_ids"] == string_id]
-    match_list = match_df["proteins"].tolist()
-    return match_list
-
-
-def go_back_to_original(usr_df, string_pairs_scores: list[tuple]) -> list:
-    original_pairs_scores = []
-    for obj in string_pairs_scores:
-        a_matching_names = get_matchings_proteins_from_df(usr_df, obj[0])
-        b_matching_names = get_matchings_proteins_from_df(usr_df, obj[1])
-
-        for a_match in a_matching_names:
-            for b_match in b_matching_names:
-                scoreObj = Link(a_match, b_match, obj[2])
-                print(a_match, b_match, obj[2])
-                original_pairs_scores.append(scoreObj)
-
-    return original_pairs_scores
-
-def findLinksWeights(name, links_list):   
-    linksWeights = 0
-    
-    for link in links_list:
-        if link.source == name or link.target == name:
-            linksWeights += link.score
-    
-    return linksWeights
-
-def make_links_list(usr_df, score_thresh):
-    # pairs_list = init_pairs_list(usr_df)
-
-    uniq_df = usr_df.drop(usr_df[usr_df.string_ids == ""].index, inplace=False)
-    uniq_df = uniq_df.drop_duplicates(subset=["string_ids"], inplace=False)
-    string_ids = uniq_df["string_ids"].tolist()
-
-    logging.info("make_links_list: " + score_thresh)
-    string_pairs_scores = get_pairs_score_optimized(score_thresh, string_ids)
-    original_pairs_scores = go_back_to_original(usr_df, string_pairs_scores)
-    return original_pairs_scores
-
-
-# ========main function =========
-def make_graph_data(usr_df: pd.DataFrame, values_map, thresh_pos, thresh_neg, score_thresh):
-    # deleting names with no id
-    mask = usr_df["string_ids"].apply(lambda v: not isIdOk(v))
-    usr_df.drop(usr_df[mask].index, inplace=True)
-
-    # applying values
-    usr_df["values"] = usr_df["proteins"].apply(lambda v: getValueById(v, values_map))
-
-    mask = usr_df["values"].apply(lambda v: not isValueOk(v, thresh_pos, thresh_neg))
-    usr_df.drop(usr_df[mask].index, inplace=True)
-
-    logging.info("make_graph_data: " + score_thresh)
-    links_list = make_links_list(usr_df, score_thresh)
-    nodes_list = make_node_list(usr_df, links_list)
-
-    return nodes_list, links_list
-
-
+# ======== making links functions =========
 def get_pairs_score_optimized(con: connection, threshold) -> list[tuple]:
     search_query = """
         SELECT 
@@ -426,67 +157,26 @@ def go_back_to_original_optimized(id_to_nodes: dict[str, list[Node]], string_pai
                 scoreObj = Link(a.id, b.id, score)
                 original_pairs_scores.append(scoreObj)
                 
-                a.links.append(scoreObj)
+                a.links.append(b.id)
                 a.linksWeights += score
 
-                b.links.append(scoreObj)
+                b.links.append(a.id)
                 b.linksWeights += score
 
     return original_pairs_scores
 
 def make_links_list_optimized(con: connection, score_thresh, id_to_nodes):
     string_pairs_scores = get_pairs_score_optimized(con, score_thresh)
-    original_pairs_scores = go_back_to_original_optimized(id_to_nodes, string_pairs_scores)
-    return original_pairs_scores
+    return go_back_to_original_optimized(id_to_nodes, string_pairs_scores)
 
-def get_info_list_optimized(con: connection, ids_to_nodes: dict[str, list[Node]]):
-    with con.cursor() as cur:
-        sql = """ 
-            SELECT t.id, p.annotation
-            FROM temp_ids t
-            LEFT JOIN items.proteins p ON p.protein_id = t.id
-        """
-        cur.execute(sql)
 
-        rows = cur.fetchall()
-
-        for id, info in rows:
-            nodes = ids_to_nodes[id]
-            for node in nodes:
-                node.info = info
-
-def get_drug_list_optimized(con: connection, ids_to_nodes: dict[str, list[Node]]):
-    with con.cursor() as cur:
-        sql = """ 
-            SELECT t.id, d.drug_name, d.drugBankID
-            FROM items.drugs d
-            LEFT JOIN temp_ids t ON d.protein_id = t.id
-        """
-        cur.execute(sql)
-
-        rows = cur.fetchall()
-
-        for id, drugName, drugBankID in rows:
-            nodes = ids_to_nodes[id]
-            for node in nodes:
-                node.drug.append({"drugName": drugName, "drugBankID": drugBankID})
-
-def make_node_list_optimized(id_to_nodes: dict[str, list[Node]]):
-    nodes_list = []
-
-    for nodes in id_to_nodes.values():
-        nodes_list.extend(nodes)
-
-    return nodes_list
+# ======== main function =========
 
 def build_Network(con, ids_to_nodes, score_thresh):
-    get_info_list_optimized(con, ids_to_nodes)
-    get_drug_list_optimized(con, ids_to_nodes)
-
-    # for (info, drugs) in zip(info_map, drug_list):
-    #     ids_to_nodes
+    add_info_optimized(con, ids_to_nodes)
+    add_drugs_optimized(con, ids_to_nodes)
 
     links_list = make_links_list_optimized(con, score_thresh, ids_to_nodes)
-    nodes_list = make_node_list_optimized(ids_to_nodes)
+    nodes_list = make_nodes_list_optimized(ids_to_nodes)
 
     return nodes_list, links_list

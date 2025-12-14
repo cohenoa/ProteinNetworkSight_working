@@ -9,74 +9,17 @@
 }
 .vector-bar{
     width: 100%;
-    height: 60px;
+    height: 65px;
 }
 .graph-wrapper{
     width: 100%;
     height: 100%;
 }
 .graph-buttons{
-    height: 110px;
+    height: 85px;
     width: 100%;
 }
 .graph-canvas{
-    height: 90%;
+    height: calc(100% - 85px);
     width: 100%;
 }
-
-/*
-
-.vectors-bar{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    height: 100%;
-    width: 20%;
-    border-right: 1px solid var(--border-color);
-}
-.graphs-container{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    width: 80%;
-}
-
-.type-bar {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-evenly;
-    height: 20%;
-    width: 100%;
-}
-
-.html-container {
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-background-color: red;
-}
-.scroll {
-    overflow-y: scroll;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-}
-.vector-button{
-    width: 100%;
-}
-.sideBar {
-
-    align-self: baseline;
-
-    width: 100%;
-    flex-direction: column;
-
-} */

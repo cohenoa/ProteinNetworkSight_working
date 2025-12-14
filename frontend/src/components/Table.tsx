@@ -1,89 +1,93 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { SortChangedEvent ,GridReadyEvent} from 'ag-grid-community';
+import { SortChangedEvent ,GridReadyEvent } from 'ag-grid-community';
 
-import "ag-grid-enterprise";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-alpine.css";
 import "../styles/Table.css";
-import { ICustomGraphData } from "../@types/graphs";
+import { ICustomGraphData, ICustomNode } from "../@types/graphs";
 import { useStateMachine } from "little-state-machine";
 import { updateSortTable } from "../common/UpdateActions";
 
+const columns = {
+  "Original Name": {
+    value: (node: ICustomNode) => String(node.id),
+    type: "string",
+    explanation: "The original name from the file you uploaded"
+  },
+
+  "STRING Name": {
+    value: (node: ICustomNode) => node.string_name ?? "",
+    type: "string",
+    explanation: "The matched name on STRING-db"
+  },
+
+  "Node Value": {
+    value: (node: ICustomNode) => node.size ?? 0,
+    type: "number",
+    explanation: "The value from the file you uploaded"
+  },
+
+  "Node Degree": {
+    value: (node: ICustomNode) => node.links?.length ?? 0,
+    type: "number",
+    explanation: "The number of links to other nodes"
+  },
+
+  "Weighted Node Degree": {
+    value: (node: ICustomNode) => node.linksWeights ? Number(node.linksWeights.toFixed(3)) : 0,
+    type: "number",
+    explanation: "The sum of the probability of the node connections"
+  },
+
+  "Drugs": {
+    value: (node: ICustomNode) => node.drug ? node.drug.map((d) => d.drugName).join(", ") : "drug not found",
+    type: "string",
+    explanation: "Drug targeting this node (see more in top bar)"
+  },
+
+  "Final Score": {
+    value: (node: ICustomNode) => node.linksWeights && node.size ? Number(((node.linksWeights + Math.abs(node.size)) / 2).toFixed(3)) : 0,
+    type: "number",
+    explanation: "Final score-is calculated equally between the sum of the probability of the node connections and the nodes weight."
+  },
+} as const;
+
+type columnsKey = keyof typeof columns;
 type row = {
-  "Original Name": string;
-  "string name": string;
-  "node value": number;
-  "node degree": number;
-  "weighted node degree": number;
-  "drug": string;
-  "final score": number;
+  [K in columnsKey]: typeof columns[K]["type"] extends "number" ? number : string;
 };
-const TableComponent: FC<{
-  data: ICustomGraphData;
-}> = ({ data }) => {
+
+const TableComponent: FC<{data: ICustomGraphData}> = ({ data }) => {
   const { state, actions } = useStateMachine({updateSortTable});
   const [rowData, setRowData] = useState<row[]>([]);
   const initialExplanation = "click on a cell to read information about it"
   const [explanation, setExplanation] = useState(initialExplanation)
   const gridRef = useRef<AgGridReact>(null);
-  const [columnDefs] = useState([
-    { field: "Original Name" },
-    { field: "string name" },
-    { field: "node value" },
-    { field: "node degree" },
-    { field: "weighted node degree" },
-    { field: "drug" },
-    { field: "final score" },
-  ]);
-const updateExplanationText = (cellColumn?:string)=>{
-  switch (cellColumn){
-    case "Original Name":
-      setExplanation("The original name from the file you uploaded")
-      break
-    case "string name":
-      setExplanation("The name we found on String-db")
-      break
-    case "node value":
-      setExplanation("The original value from the file you uploaded")
-      break
-    case "node degree":
-      setExplanation("The amount of connection we found for the node")
-      break
-    case "weighted node degree":
-      setExplanation("The sum of the probability of the node connections")
-      break
-    case "drug":
-      setExplanation("Drug we found at the drug database(see more in top bar)")
-      break
-    case "final score":
-      setExplanation("Final score-is calculated equally between the sum of the probability of the node connections and the nodes weight.")
-      break
-    default:
-      setExplanation(initialExplanation)
+  const [columnDefs] = useState(Object.keys(columns).map((key) => ({ field: key })));
+
+  const updateExplanationText = (cellColumn?:string)=>{
+    const cellColumnKey = cellColumn as columnsKey;
+    if (cellColumnKey && columns[cellColumnKey]) {
+      setExplanation(columns[cellColumnKey].explanation);
+    } else {
+      setExplanation(initialExplanation);
+    }
   }
 
+  function buildRow(node: any): row {
+    return Object.fromEntries(
+      Object.entries(columns).map(([key, col]) => [
+        key,
+        col.value(node),
+      ])
+    ) as row;
 }
-  useEffect(() => {
-    data.nodes.forEach((node) => {
-      let row: row = {
-        "Original Name": String(node.id),
-        "string name": node.string_name ? node.string_name : "",
-        //@ts-ignore
-        "node value": node.size ? node.size : 0,
-        "node degree": node.links?.length ? node.links.length : 0,
-        //@ts-ignore
-        "weighted node degree": node.linksWeights
-          ? node.linksWeights.toFixed(3)
-          : 0,
-        drug: node.drug ? node.drug : "drug not found",
-        //@ts-ignore
-        "final score":
-          node.linksWeights && node.size
-            ? ((node.linksWeights + Math.abs(node.size)) / 2).toFixed(3)
-            : 0,
-      };
 
+  useEffect(() => {
+    console.log(data.nodes);
+    data.nodes.forEach((node) => {
+      const row = buildRow(node);
       setRowData((prev) => [...prev, row]);
     });
   }, [data.nodes]);
@@ -123,9 +127,7 @@ const updateExplanationText = (cellColumn?:string)=>{
         columnDefs={columnDefs}
         onSortChanged={onSortChanged}
         onGridReady={onGridReady}
-        onCellClicked={(event) => {
-          updateExplanationText(event.colDef.field);
-        }}
+        onCellClicked={(event) => updateExplanationText(event.colDef.field)}
       />
     </div>
   );

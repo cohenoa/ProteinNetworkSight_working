@@ -50,49 +50,39 @@ const GraphBar: FC<IGraphBarProps> = ({
           Nodes: {nodesNum}, Links: {linksNum}
         </div>
         <div className="threashold-row">
-        <label htmlFor="positiveThreshold">P. Threshold: </label>
-        <input
-          id="positiveThreshold"
-          type="number"
-          step="0.01"
-          className="text-input"
-          min={0}
-          max={1}
-          value={tempThreashold.pos}
-          required
-          onChange={(e) => setPos(Number(e.target.value))}
-        />
-        <label htmlFor="negativeThreshold">N. Threshold: </label>
+          <label className="thresholdTitle" htmlFor="positiveThreshold">P. Threshold: </label>
+          <input
+            id="positiveThreshold"
+            type="number"
+            step="0.01"
+            className="text-input"
+            min={0}
+            max={1}
+            value={tempThreashold.pos}
+            required
+            onChange={(e) => setPos(Number(e.target.value))}
+          />
+          <label className="thresholdTitle" htmlFor="negativeThreshold">N. Threshold: </label>
 
-        <input
-          id="negativeThreshold"
-          type="number"
-          step="0.01"
-          className="text-input"
-          min={-1}
-          max={0}
-          value={tempThreashold.neg}
-          required
-          onChange={(e) => setNeg(Number(e.target.value))}
-        />
-         <button
-          className="btn btn--gray btn--small"
-          onClick={btnSubmitThresholds}
-        >
-          Submit
-        </button>
-        
+          <input
+            id="negativeThreshold"
+            type="number"
+            step="0.01"
+            className="text-input"
+            min={-1}
+            max={0}
+            value={tempThreashold.neg}
+            required
+            onChange={(e) => setNeg(Number(e.target.value))}
+          />
+          <button
+            className="btn btn--gray btn--small"
+            onClick={btnSubmitThresholds}
+          >
+            Submit
+          </button>
+        </div>
       </div>
-     
-      </div>
-
-     
-      <p className="graph-notice">
-        Once the graph has loaded, you can move any individual node (this may take a few seconds). To move a node, left-click and drag.
-        {/* It is possible to move any individual node,&nbsp;
-        <span className="bold">once the graph has loaded (may take a few seconds).</span> To move
-        a node, left-click and drag it */}
-      </p>
     </div>
   );
 };

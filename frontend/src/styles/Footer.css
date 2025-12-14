@@ -3,16 +3,15 @@
   left:0;
   bottom:0;
   right:0;
-  top:0;
+  top: 0;
   height: 75px;
   min-height: var(--frame-height);
   width: 100%;
   font-size: var(--medium-text);
   display: flex;
   flex-direction: row;
-  align-items: left;
+  align-items: center;
   background-color: #e1edfd;
-  /* background-color: red; */
   justify-content: space-between;
 }
 
@@ -23,6 +22,7 @@
   width: 20%;
   min-width: fit-content;
   justify-content: space-between;
+  padding-bottom: 20px;
 }
 
 .version{

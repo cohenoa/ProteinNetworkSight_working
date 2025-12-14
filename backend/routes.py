@@ -1,20 +1,20 @@
 from flask import Flask, request
 from src.validate import cal_string_id
-from src.graph_data import make_graph_data, clean_data, build_Network
+from src.graph_data import clean_data, build_Network
 from src.organism_list import get_organism_list
 from src.names import cal_string_suggestions
 from src.common.configuration import pgdb
 from flask_cors import CORS, cross_origin
 from io import StringIO
 import json
-# import logging
+import logging
 
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(message)s"
-# )
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
 
-# logging.info("Flask app started")
+logging.info("Flask app started")
 
 app = Flask(__name__)
 pgdb.init_app(app)
@@ -84,7 +84,7 @@ def cal_graph_data():
         with con.cursor() as cur:
             cur.execute("CREATE TEMP TABLE temp_ids(idx serial, id integer)")
 
-            buf = StringIO("\n".join(id for id in clean_ids))
+            buf = StringIO("\n".join(str(id) for id in clean_ids))
             sql = "COPY temp_ids (id) FROM STDIN WITH (FORMAT text);"
             cur.copy_expert(sql, buf)
 
@@ -92,7 +92,7 @@ def cal_graph_data():
 
         with con.cursor() as cur:
             cur.execute("DROP TABLE temp_ids;")
-
+    
     return json.dumps(
         {
             "nodes": [ob.__dict__ for ob in nodes_list],
@@ -103,6 +103,7 @@ def cal_graph_data():
 @app.route("/api/saveGraphs", methods=["POST"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def calc_all_graph_data():
+    allGraphs = {}
     request_data = request.get_json()
     headers_data = request_data["headers_data"]
 
@@ -110,22 +111,31 @@ def calc_all_graph_data():
     string_names = request_data["string_names"]
     ids = request_data["ids"]
 
-    # usr_df = make_user_df(proteins, ids, string_names)
+    with pgdb.get_connection() as con:
 
-    allGraphs = {}
+        for key, data in headers_data.items():
+            values_map = data["values_map"]
+            thresh_pos = data["thresh_pos"]
+            thresh_neg = data["thresh_neg"]
+            score_thresh = data["score_thresh"]
 
-    for key, data in headers_data.items():
-        values_map = data["values_map"]
-        thresh_pos = data["thresh_pos"]
-        thresh_neg = data["thresh_neg"]
-        score_thresh = data["score_thresh"]
+            clean_ids, id_to_nodes = clean_data(proteins, ids, string_names, values_map, thresh_pos, thresh_neg)
+            with con.cursor() as cur:
+                cur.execute("CREATE TEMP TABLE temp_ids(idx serial, id integer)")
 
-        # nodes_list, links_list = make_graph_data(usr_df, values_map, thresh_pos, thresh_neg, score_thresh)
+                buf = StringIO("\n".join(str(id) for id in clean_ids))
+                sql = "COPY temp_ids (id) FROM STDIN WITH (FORMAT text);"
+                cur.copy_expert(sql, buf)
 
-        # allGraphs[key] = {
-        #     "nodes": [ob.__dict__ for ob in nodes_list],
-        #     "links": [ob.__dict__ for ob in links_list],
-        # }
+            nodes_list, links_list = build_Network(con, id_to_nodes, score_thresh)
+
+            with con.cursor() as cur:
+                cur.execute("DROP TABLE temp_ids;")
+
+            allGraphs[key] = {
+                "nodes": [ob.__dict__ for ob in nodes_list],
+                "links": [ob.__dict__ for ob in links_list],
+            }
     
     return json.dumps(allGraphs)
 

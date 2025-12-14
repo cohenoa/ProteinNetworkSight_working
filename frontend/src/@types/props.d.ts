@@ -2,6 +2,7 @@ import { Font } from "three/examples/jsm/loaders/FontLoader";
 import { IOthers } from "./forms";
 import { threshMap } from "./global";
 import { SupportedLayout, SupportedNodeColor, SupportedNodeSize, SupportedOpacity } from "../common/GraphSettings";
+import { ICustomNode } from "./graphs";
 /*
   This file define all the props interface - the argument for components.
 */
@@ -49,7 +50,7 @@ export interface IStepProps {
 }
 
 export interface IPanelProps {
-  node: true | ICustomNode;
+  node: ICustomNode | null;
   organism: OptionType;
   onClickClose: () => void;
 }

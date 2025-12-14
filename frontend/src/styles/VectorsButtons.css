@@ -3,9 +3,9 @@
     height:  100%;
     justify-content: center;
     align-items: center;
-     flex: 1;
+    flex: 1;
     display: flex;
     overflow: auto;
-      flex-wrap: wrap;
-      flex-direction: row;
+    flex-wrap: wrap;
+    flex-direction: row;
 }

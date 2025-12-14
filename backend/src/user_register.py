@@ -29,17 +29,11 @@ def get_match_info(cur, id):
 
 def get_info_list(ids):
     with pgdb.get_cursor() as cur:
-        sql = """ 
-                SELECT annotation
-                FROM items.proteins
-                WHERE protein_id = %s
-                LIMIT 1
-                """
         info_list = []
-        # for id in ids:
-        #     info = get_match_info(cur, id)
-        #     info = info.replace("'", "''")
-        #     info_list.append(info)
+        for id in ids:
+            info = get_match_info(cur, id)
+            info = info.replace("'", "''")
+            info_list.append(info)
 
     return info_list
 

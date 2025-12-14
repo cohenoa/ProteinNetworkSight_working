@@ -74,6 +74,16 @@ const Tutorial: FC = () => {
         <div>
           <h2 className="t-h2">Starting Point </h2>
           <p className="t-p">
+            For the user to begin, they must upload an Excel / CSV / TSV file on a single sheet (or a TXT that represents an Excel file), 
+            where each row represents a protein or gene and each column represents a feature. 
+            The file must not contains more than 2000 rows, 
+            where each row represents a protein/gene and the columns are features to be analysed. 
+            The file should contain a column of protein/gene names as well as additional column(s) of numeric values. 
+            These numeric values represent gene/protein scores or quantitative metrics—such as loadings obtained from Principal Component Analysis (PCA), 
+            weights from information-theoretic analyses, or simple fold changes. The first line is the header, 
+            specifying column names. Note that the names of the numeric columns should start with the same prefix.
+          </p>
+          {/* <p className="t-p">
             For the user to begin, they must upload an Excel / CSV / TSV file on a single sheet (or a TXT that represents an Excel file),
             where each row represents a protein or gene and each column represents a feature. 
             It is recommended that the file contains up to 2000 rows.
@@ -85,16 +95,23 @@ const Tutorial: FC = () => {
             information-theoretic) or simple fold changes. The first line is the
             header, specifying column names. Note that the names of the numeric
             columns should start with the same prefix.
-          </p>
+          </p> */}
           <p className="t-p">
             <button className="btn--here" onClick={downloadExampleFile}>
               Here
             </button>
-            &nbsp;you can find an example file (fetched from Vasudevan et al.,
+            &nbsp;you can find an example file (fetched from Vasudevan et al., npj Precision Oncology, 2021, Supplementary Data 1). 
+            For example, here are 10 rows of the example file, 
+            where the gene column is named “UID” and the header of the numerical columns start with “G”, followed by some index. In this specific example, 
+            the columns labeled "G" represent the weights of proteins participating in computed patterns as dictated by 
+            the information-theoretic analysis presented in Vasudevan et al. 
+            However, this format is flexible: the "G" columns can be replaced by any other scores, 
+            coefficients, or fold changes, depending on the specific method the user employs to find co-expression patterns.
+            {/* &nbsp;you can find an example file (fetched from Vasudevan et al.,
             npj Precision Oncology, 2021, Supplementary Data 1). For example,
             here are 10 rows of the example file, where the gene column is named
             “UID” the header of the numerical columns start with “G”, followed
-            by some index.
+            by some index. */}
           </p>
           <img className="" src={example_rows} alt="example_rows" />
         </div>

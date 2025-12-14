@@ -9,10 +9,34 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
 
   console.log(node);
 
+  function getDrugComponent() {
+    if (node == undefined || node.drug == undefined || node.drug.length == 0) {
+      return "drug not found";
+    }
+    return node.drug.map((drug, index) => {
+      const key = drug.drugBankID ?? `${drug.drugName}-${index}`;
+      const ending = index == node.drug.length - 1 ? "" : ", ";
+
+      if (drug.drugBankID == undefined || drug.drugBankID == null || drug.drugBankID == "None"){
+        return (
+          <span className="paragraph-style" key={key} style={{color: "black"}}>
+            {drug.drugName}{ending}
+          </span>
+        );
+      }
+      const link = "https://go.drugbank.com/drugs/" + drug.drugBankID;
+      return (
+        <span key={key}>
+          <a href={link} target="_blank" rel="noopener noreferrer">{drug.drugName}</a>{ending}
+        </span>
+      );
+    });
+  }
+
   async function handleUniprotLinkClick() {
     setIsLoadingUniprot(true);
     try {
-      const uniprotQueryUrl = `https://rest.uniprot.org/uniprotkb/search?query=(reviewed:true)%20AND%20(organism_id:${organism.value})%20AND%20(gene:${node.string_name})`;
+      const uniprotQueryUrl = `https://rest.uniprot.org/uniprotkb/search?query=(reviewed:true)%20AND%20(organism_id:${organism.value})%20AND%20(gene:${node?.string_name})`;
       
       const response = await fetch(uniprotQueryUrl);
       if (!response.ok) {
@@ -52,7 +76,7 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
       <div>
         <p className="paragraph-style">
           <span className="panel-container-span">ID:</span>
-          {node.id}
+          {node?.id}
         </p>
         <p>
           <span className="panel-container-span">Organism:</span>
@@ -68,26 +92,26 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
         </p>
         <p className="paragraph-style">
           <span className="panel-container-span">Weighted Node Degree:</span>
-          {node.linksWeights}
+          {node?.linksWeights}
         </p>
         <p className="paragraph-style">
           <span className="panel-container-span">Node Value:</span>
-          {node.size}
+          {node?.size}
         </p>
         <p className="paragraph-style">
           <span className="panel-container-span">Final Score:</span>
-          {node.size / 2 + node.linksWeights / 2}
+          {node && node.size / 2 + node.linksWeights / 2}
         </p>
         <p className="paragraph-style">
-          <span className="panel-container-span">Info:</span> {node.info}
+          <span className="panel-container-span">Info:</span> {node?.info}
         </p>
         <p className="paragraph-style">
-          <span className="panel-container-span">Drug:</span>
-          {node.drug}
+          <span className="panel-container-span">Drugs:</span>
+          {getDrugComponent()}
         </p>
         <p className="paragraph-style">
           <span className="panel-container-span">Links:</span>
-          {node.links.join(', ')}
+          {node?.links.join(', ')}
         </p>
        
       </div>

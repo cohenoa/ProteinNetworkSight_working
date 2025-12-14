@@ -1,12 +1,11 @@
 .prompt{  
-    display: flex;
-    flex-direction: column;
-    align-items: left;
-    height: 100%;
-    width: 100%;
-    /* background-color: red; */
-    padding-left: 100px;
-    padding-bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  height: 100%;
+  width: 100%;
+  padding-left: 100px;
+  /* padding-bottom: 100px; */
 }
 
 #video{
@@ -61,13 +60,44 @@
   display: flex;
   flex-direction: row;
   justify-content: left;
-  align-items: left;
+  align-items: center;
 }
 
 .info {
   margin-right: 40px;
-  margin-top: 40px;
+  margin-top: 20px;
   font-size: var(--big-text);
+}
+
+.creditsContainer {
+  width: 80%;
+  height: 200px;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+}
+
+.credits {
+  margin-top: 20px;
+  margin-bottom: 40px;
+  color: var(--text-blue);
+  font-size: var(--big-text);
+  /* background-color: green; */
+}
+
+.credits-list {
+  margin-left: 65px;
+  margin-top: 20px;
+  margin-bottom: 40px;
+  height: calc(100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.creditRow {
+  font-size: var(--medium-text);
 }
 
 .about-h5 {

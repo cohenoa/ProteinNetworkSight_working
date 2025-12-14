@@ -4,7 +4,7 @@ import "../styles/Home.css";
 import "../styles/Button.css";
 import { openLink } from "../common/GeneralCommon";
 import backgroundVideo from "../assets/video.mp4";
-const gitLink = "https://github.com/1laggerman/ProteinNetworkSight";
+const gitLink = "https://github.com/cohenoa/ProteinNetworkSight_working";
 
 export const HomePage: FC = () => {
   return (
@@ -47,7 +47,7 @@ export const HomePage: FC = () => {
       <h5>
         We provide free and open access to all users, including commercial users. 
       </h5>
-      <h5>Contact details are below:</h5>
+      <h5>Support contact details:</h5>
       <div className="detailsContainer">
         <div className="info first-info">
           <h5 className="about-h5">Noa Cohen</h5>
@@ -63,6 +63,21 @@ export const HomePage: FC = () => {
         <div className="info">
           <h5 className="about-h5">Omri Nahor</h5>
           <h5 className="inlineText"><i className="fa fa-envelope"/>omrinahor@gmail.com</h5>
+        </div>
+      </div>
+
+      <div className="creditsContainer">
+        <div className="credits">
+          <h5>The website has been<br/> 
+            continuously developed<br/> 
+            since 2022, by:</h5>
+        </div>
+        <div className="credits-list">
+          <h5 className="creditRow">Tohar Tsivtman and Ayelet Gibli (2022)</h5>
+          <h5 className="creditRow">Aviv Eldad (2023)</h5>
+          <h5 className="creditRow">Nitzan Migdal (2023-2024)</h5>
+          <h5 className="creditRow">Omri Nahor (2023-2025)</h5>
+          {/* <h5 className="inlineText">Tohar Tsivtman and Ayelet Gibli (2022), Aviv Eldad (2023), Nitzan Migdal (2023-2024), and Omri Nahor (2023-2025).</h5> */}
         </div>
       </div>
     </div>

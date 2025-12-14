@@ -92,6 +92,9 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       } else if (fileType === "csv") {
         processCSVFile(e.target.result as string);
       }
+      else if (fileType === "tsv"){
+        processTSVFile(e.target.result as string);
+      }
     };
 
     if (fileType === "xlsx") {
@@ -112,6 +115,11 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   const processCSVFile = (data: string) => {
     const fileData = data.split("\n").map(row => row.split(","));
+    processParsedData(fileData);
+  };
+
+  const processTSVFile = (data: string) => {
+    const fileData = data.split("\n").map(row => row.split("\t"));
     processParsedData(fileData);
   };
 

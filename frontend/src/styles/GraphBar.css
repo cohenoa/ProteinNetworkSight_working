@@ -1,16 +1,17 @@
 .graphbar-container{
     width: 100%;
-    height: 100%;
+    height: 110px;
     display: flex;
     flex-direction: column;
 }
 .btns-row{
     background-color: white;
     width: 100%;
-    height: 80%;
+    height: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
     padding: 5px;
 }
 .title{
@@ -32,16 +33,15 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    /* margin-right: 20px; */
     color: var(--primary);
     padding-right: 20px;
-
 }
 
 .threashold-row
 {
     display: flex;
     flex-direction: row;
+    align-items: center;
     width: 50%;
     height: 100%;
     padding: 10px;
