@@ -20,7 +20,7 @@ const OthersS: FC<IStepProps> = ({ step, goNextStep }) => {
   const { handleSubmit } = useForm<namesFormValues>({});
 
   useEffect(() => {
-    const others: string[] = state.suggestionsObj.no_match;
+    const others = Object.entries(state.namesStringMap).filter(([orgName, {stringName, stringId}]) => stringId == "0").map(([orgName, {stringName, stringId}]) => orgName);
 
     // Object.keys(state.namesStringMap).forEach((orgName) => {
     //   const match = state.namesStringMap[orgName]?.stringId;

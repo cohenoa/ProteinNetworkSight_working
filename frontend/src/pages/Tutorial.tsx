@@ -31,10 +31,10 @@ const Tutorial: FC = () => {
     <div className="page-container">
       <div className="tutorial-container">
         <h1 className="t-h1">ProteinNetworkSight Tutorial</h1>
-        <p className="t-p note">
+        {/* <p className="t-p note">
           Note: In addition to the documentation a video tutorial will be
           uploaded soon.
-        </p>
+        </p> */}
         {/* Summary DIV */}
         <div>
           <h2 className="t-h2">Summary</h2>
