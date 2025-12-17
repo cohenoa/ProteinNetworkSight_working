@@ -33,7 +33,7 @@ for index, row in med_df.iterrows():
 print(max_len_id)
 print(len(target_product_map.keys()))
 
-conn = open_conn("DB/database.example.ini")
+conn = open_conn("DB/database.prod.ini")
 
 cur = conn.cursor()
 

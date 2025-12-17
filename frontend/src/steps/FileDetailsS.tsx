@@ -101,12 +101,11 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
 
   const onSubmit =  async (data: formValues) => {
-    console.log(new Error().stack);
     console.log(state);
     get(state.fileName).then((val) => {
       console.log(val);
       const headers = val['headers'];
-      // proteins = val['json'];
+      // let proteins_json = val['json'];
       proteins.forEach((protein:string[]) => {
         if (protein[0].includes(';')){
           var otherNames = protein[0].split(';');

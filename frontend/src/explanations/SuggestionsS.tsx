@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { ISuggestionsJson } from "../@types/json";
 import { IStepProps } from "../@types/props";
 import { makePostRequest } from "../common/PostRequest";
+import { get, set } from "idb-keyval"
 import LoadingComponent from "../components/Loading";
 import { useStateMachine } from "little-state-machine";
 import {
@@ -49,7 +50,7 @@ const SuggestionsS: FC<IStepProps> = ({ step, goNextStep }) => {
 
       // Prepare the request body
       const body = JSON.stringify({
-        org_names: state.proteinsNames,
+        org_names: get(state.proteinsNames),
         organism: state.organism.value,
       });
 
