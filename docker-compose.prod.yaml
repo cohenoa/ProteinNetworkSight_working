@@ -20,6 +20,8 @@ services:
       - 5654:5000
     environment:
       - DB_CONFIG=database.prod.ini
+      - DB_minconn = 1
+      - DB_maxconn = 20
 
   nginx:
     image: nginx
