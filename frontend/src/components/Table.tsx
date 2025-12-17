@@ -116,10 +116,34 @@ const TableComponent: FC<{data: ICustomGraphData}> = ({ data }) => {
     console.log("after applay", e.columnApi.getColumnState());
   };
 
+  const downloadTable = () => {
+    const columns_names: string[] = Object.keys(columns);
+    const csv = columns_names.join(",") + "\n" + rowData.map((row) => {
+      row["Drugs"] = "\"" + row["Drugs"] + "\"";
+      return Object.values(row).join(",")
+    }).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "table.csv";
+    link.click();
+  };
+
   return (
     <div className="ag-theme-alpine table-container">
-      <div className="cell-explanation">
-        {explanation}</div>
+      <div className="Top-Table-Components">
+        <div className="DownloadBtnContainer">
+          <button 
+            className="btn btn--outline" 
+            onClick={() => downloadTable()}>
+              Download
+          </button>
+        </div>
+        <div className="cell-explanation">
+          {explanation}
+        </div>
+      </div>
       <AgGridReact
         ref={gridRef}
         defaultColDef={defaultColDef}

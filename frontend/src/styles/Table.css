@@ -1,6 +1,6 @@
 .table-container{
-    height: 100%;
-    width: 100%;
+  height: calc(100% - 55px);
+  width: 100%;
 }
 .right{
   float: right;
@@ -13,6 +13,24 @@
   color: #4E7FB0;
   text-align: center;
 }
+
+.Top-Table-Components {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  height: 55px;
+  width: 100%;
+}
+
+.DownloadBtnContainer {
+  justify-self: start;   /* leftmost */
+}
+
+.cell-explanation {
+  align-self: center;
+  justify-self: center;  /* perfectly centered */
+}
+
 /* .ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group{
   overflow-x: auto !important;
 }
