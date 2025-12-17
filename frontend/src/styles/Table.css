@@ -31,9 +31,14 @@
   justify-self: center;  /* perfectly centered */
 }
 
-/* .ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group{
+.ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group{
   overflow-x: auto !important;
 }
-.ag-cell .ag-cell-not-inline-editing .ag-cell-normal-height .ag-cell-value{
-  height: 100px;
+
+/* .ag-cell .ag-cell-not-inline-editing .ag-cell-normal-height .ag-cell-value{
+  height: 50px;
 } */
+
+.ag-cell {
+  user-select: text;
+}
