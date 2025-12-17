@@ -124,14 +124,20 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const processParsedData = (fileData: any[][]) => {
-    const { filtered_data, num_duplicates } = filterByFirstColumnUnique(fileData);
+    const { filtered_data, num_invalid, num_duplicates} = filterInvalidAndDuplicatData(fileData);
     fileData = filtered_data;
 
-    console.log(num_duplicates);
-
-    if (num_duplicates > 0) {
-      setHasWarning(`File contains ${num_duplicates} duplicate entries. Only the first occurrence will be used. click next again to continue.`);
+    if (num_duplicates > 0 || num_invalid > 0) {
+      let warning_string = "";
+      if (num_invalid > 0){
+        warning_string += `File contains ${num_invalid} invalid rows. these rows will not be used.\n`
+      }
+      if (num_duplicates > 0){
+        warning_string += `File contains ${num_duplicates} duplicate entries. Only the first occurrence will be used.\n`
+      }
+      warning_string += "click next again to continue.";
       if (!hasWarning){
+        setHasWarning(warning_string);
         return;
       }
     }
@@ -154,12 +160,21 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     }
   };
 
-  function filterByFirstColumnUnique(data: any[][]): { filtered_data: any[][], num_duplicates: number } {
-    const seen = new Set<any>();
+  function filterInvalidAndDuplicatData(data: any[][]): { filtered_data: any[][], num_invalid: number, num_duplicates: number } {
+    const seen = new Set<string>();
+    let num_invalid = 0;
     let num_duplicates = 0;
+    let invalid_sample: any[] = [];
 
     const filtered_data = data.filter(row => {
       const key = row[0];
+      if (key === undefined || key === null || key === "" || typeof key !== 'string') {
+        if (num_invalid < 10){
+          invalid_sample.push(row);
+        }
+        num_invalid++;
+        return false;
+      };
       if (seen.has(key)) {
         num_duplicates++;
         return false;
@@ -168,9 +183,11 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       return true;
     })
 
-    console.log("num duplicates: ", num_duplicates);
+    console.log("num duplicates: " + num_duplicates);
+    console.log("num invalid: " + num_invalid);
+    console.log(invalid_sample);
 
-    return { filtered_data, num_duplicates };
+    return { filtered_data, num_invalid, num_duplicates };
   }
 
   const processStringNameFile = (fileData: any[][], headers: string[]) => {
