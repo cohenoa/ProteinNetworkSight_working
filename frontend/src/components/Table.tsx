@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { SortChangedEvent ,GridReadyEvent, ColDef } from 'ag-grid-community';
-// import "ag-grid-enterprise";
+import "ag-grid-enterprise";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-alpine.css";
 import "../styles/Table.css";
@@ -83,8 +83,6 @@ const TableComponent: FC<{data: ICustomGraphData}> = ({ data }) => {
   const [columnDefs] = useState<ColDef[]>(
     Object.entries(columns).map(([key, col]) => ({
       field: key,
-      // flex: 1,
-      // tooltipField: col.tooltipField,
       cellRenderer: col.cellRenderer,
       wrapText: true,        // REQUIRED
       autoHeight: true,      // REQUIRED
@@ -192,28 +190,11 @@ const TwoLineCell = (props: any) => {
   return (
     <div
       className="two-line-cell"
-      title={props.value}   // full text on hover
+      title={props.value}
     >
       {props.value}
     </div>
   );
 };
-// const ExpandableCell = (props: any) => {
-//   return (
-//     <div
-//       style={{
-//         whiteSpace: "nowrap",
-//         overflow: "hidden",
-//         textOverflow: "ellipsis",
-//         cursor: "pointer",
-//         lineHeight: "1.4",
-//         userSelect: "text",
-//       }}
-//       title={props.value}
-//     >
-//       {props.value}
-//     </div>
-//   );
-// };
 
 export default TableComponent;
