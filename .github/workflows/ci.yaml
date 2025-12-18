@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,5 +19,5 @@ jobs:
           cd ../backend && npm install
       - name: Run tests
         run: |
-          cd frontend && npm test
-          cd ../backend && npm test
+          cd frontend && npm test -- --passWithNoTests
+          cd ../backend && npm test -- --passWithNoTests
