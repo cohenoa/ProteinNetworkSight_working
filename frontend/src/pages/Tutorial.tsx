@@ -359,7 +359,45 @@ const Tutorial: FC = () => {
             A summary of the website's browser compatibility, specifying the
             checked version per OS and browser:
           </p>
-          <img className="t-img" src={browser}  alt="browser"/>
+          <table className="browser-support">
+            <thead>
+              <tr>
+                <th>OS</th>
+                <th>Version</th>
+                <th>Chrome</th>
+                <th>Edge</th>
+                <th>Firefox</th>
+                <th>Safari</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Windows</td>
+                <td>10/11</td>
+                <td>143</td>
+                <td>143</td>
+                <td>145</td>
+                <td>n/a</td>
+              </tr>
+              <tr>
+                <td>MacOS</td>
+                <td>Sonoma</td>
+                <td>143</td>
+                <td>143</td>
+                <td>n/a</td>
+                <td>17.3</td>
+              </tr>
+              <tr>
+                <td>Linux</td>
+                <td>PopOS</td>
+                <td>143</td>
+                <td>n/a</td>
+                <td>n/a</td>
+                <td>n/a</td>
+              </tr>
+            </tbody>
+          </table>
+          {/* <img className="t-img" src={browser}  alt="browser"/> */}
         </div>
       </div>
     </div>

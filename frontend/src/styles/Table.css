@@ -31,9 +31,9 @@
   justify-self: center;  /* perfectly centered */
 }
 
-.ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group{
+/* .ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group{
   overflow-x: auto !important;
-}
+} */
 
 /* .ag-cell .ag-cell-not-inline-editing .ag-cell-normal-height .ag-cell-value{
   height: 50px;
@@ -41,4 +41,18 @@
 
 .ag-cell {
   user-select: text;
+}
+
+.two-line-cell {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;      /* limit to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  white-space: normal;        /* MUST be normal */
+  word-break: break-word;
+  cursor: text;
+  user-select: text;
+  align-items: center;
+  /* justify-content: center; */
 }

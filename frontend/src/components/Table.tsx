@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { SortChangedEvent ,GridReadyEvent, ColDef } from 'ag-grid-community';
-
+import "ag-grid-enterprise";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-alpine.css";
 import "../styles/Table.css";
@@ -14,7 +14,6 @@ interface ColumnConfig {
   type: "string" | "number";
   explanation: string;
   flex: number;
-  tooltipField?: string;
   cellRenderer?: string;
 }
 
@@ -58,8 +57,7 @@ const columns: { [key: string]: ColumnConfig } = {
     value: (node: ICustomNode) => node.drug.length !== 0 ? node.drug.map((d) => d.drugName).join(", ") : "drug not found",
     type: "string",
     explanation: "Drug targeting this node (see more in top bar)",
-    flex: 3,
-    tooltipField: "Drugs",
+    flex: 1,
     cellRenderer: "expandableCell",
   },
 
@@ -85,9 +83,11 @@ const TableComponent: FC<{data: ICustomGraphData}> = ({ data }) => {
   const [columnDefs] = useState<ColDef[]>(
     Object.entries(columns).map(([key, col]) => ({
       field: key,
-      flex: col.flex,
-      tooltipField: col.tooltipField,
+      // flex: 1,
+      // tooltipField: col.tooltipField,
       cellRenderer: col.cellRenderer,
+      wrapText: true,        // REQUIRED
+      autoHeight: true,      // REQUIRED
     }))
   );
 
@@ -139,7 +139,7 @@ const TableComponent: FC<{data: ICustomGraphData}> = ({ data }) => {
     console.log("onGridReady\n");
     e.columnApi.applyColumnState({state : state.sortTable});
     console.log("after applay", e.columnApi.getColumnState());
-    // e.api.sizeColumnsToFit();
+    e.api.sizeColumnsToFit();
   };
 
   const downloadTable = () => {
@@ -180,32 +180,40 @@ const TableComponent: FC<{data: ICustomGraphData}> = ({ data }) => {
         onCellClicked={(event) => updateExplanationText(event.colDef.field)}
         enableBrowserTooltips={true}
         components={{
-          expandableCell: ExpandableCell,
+          twoLineCell: TwoLineCell,
         }}
       />
     </div>
   );
 };
 
-const ExpandableCell = (props: any) => {
-  const [expanded, setExpanded] = useState(true);
 
+const TwoLineCell = (props: any) => {
   return (
     <div
-      // onClick={() => setExpanded((e) => !e)}
-      style={{
-        whiteSpace: expanded ? "normal" : "nowrap",
-        overflow: "hidden",
-        textOverflow: expanded ? "clip" : "ellipsis",
-        cursor: "pointer",
-        lineHeight: "1.4",
-        userSelect: "text",
-      }}
-      title={!expanded ? props.value : undefined}
+      className="two-line-cell"
+      title={props.value}   // full text on hover
     >
       {props.value}
     </div>
   );
 };
+// const ExpandableCell = (props: any) => {
+//   return (
+//     <div
+//       style={{
+//         whiteSpace: "nowrap",
+//         overflow: "hidden",
+//         textOverflow: "ellipsis",
+//         cursor: "pointer",
+//         lineHeight: "1.4",
+//         userSelect: "text",
+//       }}
+//       title={props.value}
+//     >
+//       {props.value}
+//     </div>
+//   );
+// };
 
 export default TableComponent;

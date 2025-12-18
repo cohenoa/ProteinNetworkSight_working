@@ -105,18 +105,17 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
         const ids_arr = state.proteinsNames || [];
         const idsList: string[] = [];
         const stringNames: string[] = [];
+        const proteins: string[] = [];
 
         let values_map: { [key: string]: number } = {};
         for (let i = 0; i < values_arr.length; i++) {
           values_map[ids_arr[i]] = values_arr[i];
         }
 
-        Object.keys(state.namesStringMap).forEach((orgName) => {
-          const map = state.namesStringMap[orgName];
-          if (map) {
-            idsList.push(map.stringId);
-            stringNames.push(map.stringName);
-          }
+        Object.entries(state.namesStringMap).forEach(([orgName, { stringName, stringId}]) => {
+          idsList.push(stringId);
+          stringNames.push(stringName);
+          proteins.push(orgName);
         });
 
         const body = {
@@ -124,7 +123,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
           thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
           thresh_neg: state.thresholds[clickedVector][1],//^
           score_thresh: state.scoreThreshold,
-          proteins: state.proteinsNames,
+          proteins: proteins,
           ids: idsList,
           string_names: stringNames,
         };
@@ -142,6 +141,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   const handleJsonGraphData = (jsonString: string) => {
     const tempGraphData: ICustomGraphData = JSON.parse(jsonString);
     setGraphData(tempGraphData);
+    console.log("graph data: ", tempGraphData);
     actions.updateIsLoading({ isLoading: false });
   };
 

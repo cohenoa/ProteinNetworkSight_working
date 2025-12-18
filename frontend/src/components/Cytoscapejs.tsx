@@ -153,11 +153,15 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
       cyRef.current.on("click", "node", (event) => {
         const node = event.target;
-        const clickedNode = graphData.nodes.find(
-          (n: ICustomNode) => n.id === node.id()
-        );
+        console.log("clicked node", node.id());
+        console.log("graph data nodes", graphData.nodes);
+        const clickedNode = (graphData.nodes as ICustomNode[]).find((n: ICustomNode) => n.id === node.id());
+        // const clickedNode = graphData.nodes.find(
+        //   (n: ICustomNode) => n.id === node.id()
+        // );
+        console.log("clicked node", clickedNode);
+        setSelectedNode({...clickedNode} as ICustomNode);
         setOpenPanel(true);
-        setSelectedNode(clickedNode);
       });
 
       try {
