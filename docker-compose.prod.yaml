@@ -2,7 +2,7 @@ services:
   medmolnet-front:
     image: medmolnet-frontend
     container_name: medmolnet-frontend
-    restart: unless-stopped
+    # restart: unless-stopped
     build:
       context: ./frontend 
       dockerfile: Dockerfile 
@@ -14,7 +14,7 @@ services:
   medmolnet-back:
     image: medmolnet-backend
     container_name: medmolnet-backend
-    restart: unless-stopped
+    # restart: unless-stopped
     build:
       context: ./backend 
       dockerfile: Dockerfile  

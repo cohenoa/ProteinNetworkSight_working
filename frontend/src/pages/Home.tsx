@@ -44,9 +44,11 @@ export const HomePage: FC = () => {
         </button>
         .
       </h5>
-      <h5>
+      <h5>This web-based research tool is provided free of charge and may be used</h5>
+      <h5>by any user, including commercial entities, for any purpose without restrictions</h5>
+      {/* <h5>
         We provide free and open access to all users, including commercial users. 
-      </h5>
+      </h5> */}
       <h5>Support contact details:</h5>
       <div className="detailsContainer">
         <div className="info first-info">
@@ -77,7 +79,6 @@ export const HomePage: FC = () => {
           <h5 className="creditRow">Aviv Eldad (2023)</h5>
           <h5 className="creditRow">Nitzan Migdal (2023-2024)</h5>
           <h5 className="creditRow">Omri Nahor (2023-2025)</h5>
-          {/* <h5 className="inlineText">Tohar Tsivtman and Ayelet Gibli (2022), Aviv Eldad (2023), Nitzan Migdal (2023-2024), and Omri Nahor (2023-2025).</h5> */}
         </div>
       </div>
     </div>
