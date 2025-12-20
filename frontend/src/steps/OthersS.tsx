@@ -32,40 +32,6 @@ const OthersS: FC<IStepProps> = ({ step, goNextStep }) => {
   }, []);
 
   const onSubmit = () => {
-    console.log(state.namesStringMap);
-
-    const idsList: string[] = [];
-    const stringNames: string[] = [];
-
-    Object.keys(state.namesStringMap).forEach((orgName) => {
-      const map = state.namesStringMap[orgName];
-      if (map) {
-        idsList.push(map.stringId);
-        stringNames.push(map.stringName);
-      }
-    });
-
-    const body = JSON.stringify({
-      proteins: state.proteinsNames,
-      ids: idsList,
-      string_names: stringNames,
-    });
-
-    console.log("body of users request: ");
-    console.log({
-      proteins: state.proteinsNames,
-      ids: idsList,
-      string_names: stringNames,
-    });
-
-    actions.updateIsLoading({ isLoading: true });
-    // makePostRequest(body, "user", handleJsonResponse);
-    handleJsonResponse("");
-  };
-
-  const handleJsonResponse = (jsonString: string) => {
-    // const uidJson: IUidJson = JSON.parse(jsonString);
-    // actions.updateUuid({ uuid: uidJson.uuid });
     goNextStep();
   };
 

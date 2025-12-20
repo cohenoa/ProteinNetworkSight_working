@@ -1,6 +1,6 @@
 .table-container{
-    height: 100%;
-    width: 100%;
+  height: calc(100% - 55px);
+  width: 100%;
 }
 .right{
   float: right;
@@ -13,9 +13,46 @@
   color: #4E7FB0;
   text-align: center;
 }
+
+.Top-Table-Components {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  height: 55px;
+  width: 100%;
+}
+
+.DownloadBtnContainer {
+  justify-self: start;   /* leftmost */
+}
+
+.cell-explanation {
+  align-self: center;
+  justify-self: center;  /* perfectly centered */
+}
+
 /* .ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group{
   overflow-x: auto !important;
-}
-.ag-cell .ag-cell-not-inline-editing .ag-cell-normal-height .ag-cell-value{
-  height: 100px;
 } */
+
+/* .ag-cell .ag-cell-not-inline-editing .ag-cell-normal-height .ag-cell-value{
+  height: 50px;
+} */
+
+.ag-cell {
+  user-select: text;
+}
+
+.two-line-cell {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;      /* limit to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  white-space: normal;        /* MUST be normal */
+  word-break: break-word;
+  cursor: text;
+  user-select: text;
+  align-items: center;
+  /* justify-content: center; */
+}

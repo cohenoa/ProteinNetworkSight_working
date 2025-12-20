@@ -71,3 +71,27 @@
     font-size: var(--medium-text);
   /* list-style-position: inside; */
 }
+
+/* browser table */
+
+.browser-support {
+  border-collapse: collapse;
+  width: 80%;
+  font-size: 14px;
+}
+
+.browser-support th,
+.browser-support td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.browser-support thead th {
+  background-color: #f3f3f3;
+  font-weight: 600;
+}
+
+.browser-support td {
+  background-color: #fff;
+}

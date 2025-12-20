@@ -16,7 +16,7 @@ class PostgresDB:
 
     def connect(self):
         params = configDb(filename=os.environ['DB_CONFIG'])
-        self.pool = SimpleConnectionPool(**params)
+        self.pool = SimpleConnectionPool(**params, minconn=os.environ["DB_minconn"], maxconn=os.environ["DB_maxconn"])
         return self.pool
 
     @contextmanager

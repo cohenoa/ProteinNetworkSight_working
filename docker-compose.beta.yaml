@@ -30,6 +30,8 @@ services:
       - 5000:5000
     environment:
       - DB_CONFIG=database.example.ini
+      - DB_minconn=1
+      - DB_maxconn=20
     extra_hosts:
     - "host.docker.internal:host-gateway"
 

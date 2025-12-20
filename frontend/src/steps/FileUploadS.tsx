@@ -161,17 +161,13 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   function filterInvalidAndDuplicatData(data: any[][]): { filtered_data: any[][], num_invalid: number, num_duplicates: number } {
-    const seen = new Set<any>();
+    const seen = new Set<string>();
     let num_invalid = 0;
     let num_duplicates = 0;
-    let invalid_sample: any[] = [];
 
     const filtered_data = data.filter(row => {
       const key = row[0];
       if (key === undefined || key === null || key === "" || typeof key !== 'string') {
-        if (num_invalid < 10){
-          invalid_sample.push(row);
-        }
         num_invalid++;
         return false;
       };
@@ -185,7 +181,6 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
     console.log("num duplicates: " + num_duplicates);
     console.log("num invalid: " + num_invalid);
-    console.log(invalid_sample);
 
     return { filtered_data, num_invalid, num_duplicates };
   }
