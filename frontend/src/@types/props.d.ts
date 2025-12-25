@@ -42,6 +42,7 @@ export interface formRefProps {
 
 export interface IErrorInputTextProps {
   orgName: string;
+  stringName: string;
 }
 
 export interface IStepProps {
@@ -88,11 +89,10 @@ export interface IGraphBarProps {
 }
 
 export interface ISwitchableProps {
-  setNamesStringMap: React.Dispatch<
-    React.SetStateAction<INamesStringMap | undefined>
-  >;
+  setNamesStringMap: React.Dispatch<React.SetStateAction<INamesStringMap | undefined>>;
   orgName: string;
-  suggestions: { [key: string]: string };
+  suggestions: { [key: string]: number };
+  selected: string;
 }
 
 interface MenuItem {

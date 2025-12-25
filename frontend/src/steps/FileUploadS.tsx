@@ -6,10 +6,10 @@ import { updateFileUpload, updateFileName, updateIsLoading, updatestringNames, u
 import { clearAction } from "../common/ClearAction";
 import "../styles/FileUpload.css";
 import { getExampleFile } from "../common/ExampleFileAction";
-import { set } from "idb-keyval";
+import { set, setMany } from "idb-keyval";
 import { INamesStringMap } from "../@types/global";
 
-const MAX_ROWS = 2000;
+const MAX_ROWS = 20000;
 
 const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
@@ -61,9 +61,16 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
     if (isExampleFile) {
       console.log("using example file");
-      actions.updateFileUpload(getExampleFile());
-      set(state.fileName, getExampleFile());
-      goNextStep();
+      // actions.updateFileUpload(getExampleFile());
+      const {json, headers} = getExampleFile();
+      set("json", json).then(() => {
+        actions.updateFileUpload({headers: headers});
+        goNextStep();
+      })
+      .catch(error => {
+        console.log(error);
+        setHasError("Failed to load example file.");
+      });
       return;
     }
 
@@ -73,7 +80,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     }
 
     const fileType = file.name.split(".").pop()?.toLowerCase();
-    if (!fileType || !["xlsx", "csv"].includes(fileType)) {
+    if (!fileType || !["xlsx", "csv", "tsv"].includes(fileType)) {
       setHasError("Invalid file format. Please upload an XLSX or CSV file.");
       return;
     }
@@ -193,14 +200,19 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       if (row[1]) {
         namesStringMap[row[0]] = { stringId: row[2], stringName: row[1] };
       } else {
-        namesStringMap[row[0]] = { stringId: "0", stringName: "" };
+        namesStringMap[row[0]] = { stringId: 0, stringName: "other" };
       }
       row.splice(1, 2);
     });
 
     headers = headers.filter(h => h !== "STRING id" && h !== "STRING Name");
-    set(state.fileName, {json: fileData, headers: headers, namesStringMap: namesStringMap});
-    goNextStep();
+    setMany([
+      ["json", fileData],
+      ["namesStringMap", namesStringMap]
+    ]).then(() => {
+      actions.updateFileUpload({headers: headers});
+      goNextStep();
+    })
   };
 
   const uploadFileData = (fileData: any[][], headers: string[]) => {
@@ -208,9 +220,10 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       setHasError("File is empty or invalid.");
       return;
     }
-    // actions.updateFileUpload({ json: fileData, headers });
-    set(state.fileName, {json: fileData, headers: headers});
-    goNextStep();
+    actions.updateFileUpload({headers: headers});
+    set("json", fileData).then(() => {
+      goNextStep();
+    });
   };
 
   return (

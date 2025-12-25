@@ -12,7 +12,7 @@ export interface INamesStringMap {
   [key: string]:
     {
       stringName: string;
-      stringId: string;
+      stringId: number;
     };
 }
 
@@ -36,27 +36,27 @@ export interface IVectorsValues {
 declare module "little-state-machine" {
   interface GlobalState {
     fileName: string;
-    json: any[];
+    // json: any[];
     idHeader: string;
     vectorsPrefix: string;
     headers: string[];
-    proteinsNames: string[];
+    // proteinsNames: string[];
     organism: OptionType;
     scoreThreshold: number;
-    positiveThreshold: number;
-    negativeThreshold: number;
+    // positiveThreshold: number;
+    // negativeThreshold: number;
     vectorsHeaders: string[];
     isLoading: boolean;
     isSetSuggestions: boolean;
-    suggestionsObj: ISuggestionsJson;
+    // suggestionsObj: ISuggestionsJson;
     isSetNamesMap: boolean;
-    namesStringMap: INamesStringMap;
+    // namesStringMap: INamesStringMap;
     vectorsValues: IVectorsValues;
-    uuid: string;
+    // uuid: string;
     showError:boolean
-    thresholds:{[x: string]: number[];}
+    thresholds:{[x: string]: threshMap;}
     sortTable:Array<ColumnState>;
-    stringNames:Array<string>;
+    // stringNames:Array<string>;
   }
 };
 

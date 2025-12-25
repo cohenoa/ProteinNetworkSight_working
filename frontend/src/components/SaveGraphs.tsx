@@ -186,36 +186,35 @@ const SaveGraphs = forwardRef((props, ref) => {
             const idsList: string[] = [];
             const stringNames: string[] = [];
 
-            Object.keys(state.namesStringMap).forEach((orgName) => {
-                const map = state.namesStringMap[orgName];
-                if (map) {
-                    idsList.push(map.stringId);
-                    stringNames.push(map.stringName);
-                }
-            });
+            // Object.keys(state.namesStringMap).forEach((orgName) => {
+            //     const map = state.namesStringMap[orgName];
+            //     if (map) {
+            //         idsList.push(map.stringId);
+            //         stringNames.push(map.stringName);
+            //     }
+            // });
 
             let body = {
-                user_id: state.uuid,
                 headers_data: {},
-                proteins: state.proteinsNames,
+                // proteins: state.proteinsNames,
                 ids: idsList,
                 string_names: stringNames,
             };
 
-            Object.entries(vectorsValues).forEach(([key, value]) => {
-                const values_arr = vectorsValues[key] || [];
-                const ids_arr = state.proteinsNames || [];
-                let values_map: { [key: string]: number } = {};
-                for (let i = 0; i < values_arr.length; i++) {
-                    values_map[ids_arr[i]] = values_arr[i];
-                }
-                (body.headers_data as { [key: string]: any })[key] = {
-                    values_map: values_map,
-                    thresh_pos: state.thresholds[key][0],
-                    thresh_neg: state.thresholds[key][1],
-                    score_thresh: state.scoreThreshold,
-                }
-            });
+            // Object.entries(vectorsValues).forEach(([key, value]) => {
+            //     const values_arr = vectorsValues[key] || [];
+            //     const ids_arr = state.proteinsNames || [];
+            //     let values_map: { [key: string]: number } = {};
+            //     for (let i = 0; i < values_arr.length; i++) {
+            //         values_map[ids_arr[i]] = values_arr[i];
+            //     }
+            //     (body.headers_data as { [key: string]: any })[key] = {
+            //         values_map: values_map,
+            //         thresh_pos: state.thresholds[key][0],
+            //         thresh_neg: state.thresholds[key][1],
+            //         score_thresh: state.scoreThreshold,
+            //     }
+            // });
 
             makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
 
@@ -345,8 +344,8 @@ const SaveGraphs = forwardRef((props, ref) => {
                             graphData={value as ICustomGraphData} 
                             clickedVector={key} 
                             thresholds={{ 
-                                pos: state.thresholds[key][0], 
-                                neg: state.thresholds[key][1]
+                                pos: state.thresholds[key].pos, 
+                                neg: state.thresholds[key].neg
                             }}
                             alertLoading={() => {buildGraph(key, index)}} 
                             ref={graphRefs[index]}

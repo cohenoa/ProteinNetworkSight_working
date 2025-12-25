@@ -1,4 +1,3 @@
-// Import necessary modules and types
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ISuggestionsJson } from "../@types/json";
@@ -9,9 +8,9 @@ import { useStateMachine } from "little-state-machine";
 import {
   updateSuggestionsObj,
   updateNamesMap,
-  updateUuid,
   updateIsLoading,
 } from "../common/UpdateActions";
+import { set, setMany, get, getMany } from "idb-keyval";
 import "../styles/StringSuggestions.css";
 import Switchable from "../components/Switchable";
 import { INamesStringMap } from "../@types/global";
@@ -27,93 +26,100 @@ const SuggestionsS: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
     updateSuggestionsObj,
     updateNamesMap,
-    updateUuid,
     updateIsLoading,
   });
 
   // Define state variables and initialize them with empty values
   const [suggestionsObj, setSuggestionsObj] = useState<ISuggestionsJson>();
   const [namesStringMap, setNamesStringMap] = useState<INamesStringMap>();
+  const [proteinsNames, setProteinsNames] = useState<string[]>([]);
   const { handleSubmit } = useForm<namesFormValues>({});
 
   // Effect hook to fetch suggestions data and update state when component mounts or when dependencies change
   useEffect(() => {
-    if (!state.isSetSuggestions) {
-      // Callback function to handle JSON data from the server
-      const handleSuggestionsJson = (jsonString: string) => {
-        const suggestionsJson: ISuggestionsJson = JSON.parse(jsonString);
-        setSuggestionsObj(suggestionsJson);
-        actions.updateSuggestionsObj({ suggestionsObj: suggestionsJson });
-        actions.updateIsLoading({ isLoading: false });
-      };
+    actions.updateIsLoading({ isLoading: true });
+    setupSuggestions();
+  }, []);
 
-      // Prepare the request body
+  const setupSuggestions = async () => {
+    let proteinsNames = await get("proteinsNames")
+    console.log("names: ", proteinsNames);
+    setProteinsNames(proteinsNames);
+    console.log("state: ", state);
+    if (!state.isSetSuggestions) {
       const body = JSON.stringify({
-        org_names: state.proteinsNames,
+        org_names: proteinsNames,
         organism: state.organism.value,
       });
 
-      // Update loading state and make a POST request
-      actions.updateIsLoading({ isLoading: true });
+      console.log("names body: ", body);
+
       makePostRequest(body, "names", handleSuggestionsJson);
     } else {
+      const [suggestionsObjMem, namesStringMapMem] = await getMany(["suggestionsObj", "namesStringMap"]);
+      console.log("suggestionsObj: ", suggestionsObjMem);
+      console.log("namesStringMap: ", namesStringMapMem);
+      setSuggestionsObj(suggestionsObjMem);
+      setNamesStringMap(namesStringMapMem);
       actions.updateIsLoading({ isLoading: false });
-      setSuggestionsObj(state.suggestionsObj);
     }
-  }, [actions, state.isSetSuggestions, state.organism.value, state.proteinsNames, state.suggestionsObj]);
+  }
 
-  // Effect hook to compute and update the namesStringMap
+  const handleSuggestionsJson = (jsonString: string) => {
+    const suggestionsJson: ISuggestionsJson = JSON.parse(jsonString);
+    console.log("suggestionsJson: ", suggestionsJson);
+    set("suggestionsObj", suggestionsJson);
+    setSuggestionsObj(suggestionsJson);
+    actions.updateSuggestionsObj({ suggestionsObj: suggestionsJson });
+    actions.updateIsLoading({ isLoading: false });
+  };
+
   useEffect(() => {
-    if (suggestionsObj) {
-      let namesStringMap: INamesStringMap = {};
-
-      if (state.isSetNamesMap) {
-        namesStringMap = state.namesStringMap;
-      } else {
-        state.proteinsNames.forEach((orgName) => {
-          // console.log(orgName);
-          if (Object.keys(suggestionsObj.perfect_match).includes(orgName)) {
-            namesStringMap[orgName] = {
-              stringName: orgName,
-              stringId: suggestionsObj.perfect_match[orgName],
-            };
-          } else if (
-            Object.keys(suggestionsObj.alternative_match).includes(orgName)
-          ) {
-            const suggestions = suggestionsObj.alternative_match[orgName];
-            const sugFirstKey = Object.keys(suggestions)[0];
-            namesStringMap[orgName] = {
-              stringName: sugFirstKey,
-              stringId: suggestions[sugFirstKey],
-            };
-          } else {
-            namesStringMap[orgName] = {
-              stringName: "other",
-              stringId: "0",
-            };
+    if (suggestionsObj && !namesStringMap) {
+      const namesStringMap_build: INamesStringMap = {};
+      proteinsNames.forEach((orgName) => {
+        if (Object.keys(suggestionsObj.perfect_match).includes(orgName)) {
+          namesStringMap_build[orgName] = {
+            stringName: orgName,
+            stringId: suggestionsObj.perfect_match[orgName],
+          };
+        } 
+        else if ( Object.keys(suggestionsObj.alternative_match).includes(orgName)) {
+          const suggestions = suggestionsObj.alternative_match[orgName];
+          const sugFirstKey = Object.keys(suggestions)[0];
+          if (orgName == "ACC1"){
+            console.log("for acc1 2: ", suggestions);
+            let a = suggestions[sugFirstKey];
+            console.log(suggestions[sugFirstKey]);
           }
-        });
-      }
-
-      // Set the updated namesStringMap in the component's state
-      setNamesStringMap(namesStringMap);
+          namesStringMap_build[orgName] = {
+            stringName: sugFirstKey,
+            stringId: suggestions[sugFirstKey],
+          };
+        }
+        else {
+          namesStringMap_build[orgName] = {
+            stringName: "other",
+            stringId: 0,
+          };
+        }
+      })
+      console.log("namesStringMap_build: ", namesStringMap_build);
+      set("namesStringMap", namesStringMap_build);
+      setNamesStringMap(namesStringMap_build);
     }
-  }, [suggestionsObj, state.isSetNamesMap, state.namesStringMap, state.proteinsNames]);
+  }, [suggestionsObj]);
 
   // Handle form submission
   const onSubmit = () => {
-    if (namesStringMap)
-      actions.updateNamesMap({ namesStringMap: namesStringMap });
-
-    // Proceed to the next step
+    set("namesStringMap", namesStringMap);
+    console.log(namesStringMap);
     goNextStep();
   };
 
   return state.isLoading ? (
-    // Display loading component while data is being fetched
     <LoadingComponent />
   ) : (
-    // <div className="suggestions-container">
       <div className="suggestions-scroll">
         <div className="suggestions-stats">
           {suggestionsObj && 
@@ -128,46 +134,27 @@ const SuggestionsS: FC<IStepProps> = ({ step, goNextStep }) => {
           {suggestionsObj &&
             Object.keys(suggestionsObj.alternative_match).map((orgName) => {
               const suggestions = suggestionsObj.alternative_match[orgName];
+              let selectedName = Object.keys(suggestions)[0];
+              if (orgName == "ACC1"){
+                console.log("for acc1: ", namesStringMap);
+              }
+              if (namesStringMap !== undefined && namesStringMap[orgName] !== undefined) {
+                selectedName = namesStringMap[orgName].stringName;
+              }
               return (
                 <Switchable
                   key={orgName}
                   setNamesStringMap={setNamesStringMap}
                   orgName={orgName}
                   suggestions={suggestions}
+                  selected={selectedName}
                 />
               );
             })}
             <div className="suggestions-buffer"></div>
         </form>
       </div>
-    // </div>
-    // Render the form with Switchable components based on suggestions
-    // <div className="suggestions-scroll">
-    //   {/* <div className="suggestions-stats">
-    //     {suggestionsObj && <h4 style={{fontWeight: "bold"}}>
-    //       {Object.keys(suggestionsObj.perfect_match).length} Perfect matches, {"\t"}
-    //       {Object.keys(suggestionsObj.alternative_match).length} Alternative names, {"\t"}
-    //       {suggestionsObj.no_match.length} No matches
-    //       </h4>
-    //       }
-    //   </div> */}
-    //   {/* <form className="suggestions-form" id={"form" + step} onSubmit={handleSubmit(onSubmit)}>
-    //     {suggestionsObj &&
-    //       Object.keys(suggestionsObj.alternative_match).map((orgName) => {
-    //         const suggestions = suggestionsObj.alternative_match[orgName];
-    //         return (
-    //           <Switchable
-    //             key={orgName}
-    //             setNamesStringMap={setNamesStringMap}
-    //             orgName={orgName}
-    //             suggestions={suggestions}
-    //           />
-    //         );
-    //       })}
-    //   </form> */}
-    // </div>
   );
 };
 
-// Export the SuggestionsS component as the default export
 export default SuggestionsS;

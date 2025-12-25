@@ -31,8 +31,8 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   });
   const [openTable, setOpenTable] = useState<boolean>(false);
   const [thresholds, setThresholds] = useState<threshMap>({
-    pos: state.thresholds[clickedVector][0],
-    neg: state.thresholds[clickedVector][1],
+    pos: state.thresholds[clickedVector].pos,
+    neg: state.thresholds[clickedVector].neg,
   });
   let vectorsValues: IVectorsValues = {} as IVectorsValues;
 
@@ -71,20 +71,17 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     if (!clickedVector) return;
     console.log("before",thresholds)
     setThresholds({
-      pos: state.thresholds[clickedVector][0],
-      neg:  state.thresholds[clickedVector][1],
+      pos: state.thresholds[clickedVector].pos,
+      neg:  state.thresholds[clickedVector].neg,
     });
     console.log("after", thresholds)
     getGraphData(clickedVector);
-  }, [clickedVector, state.positiveThreshold, state.negativeThreshold]);
+  }, [clickedVector, state.thresholds]);
 
   useEffect(() => {
-    if (
-      thresholds.pos !== state.thresholds[clickedVector][0] ||
-      thresholds.neg !== state.thresholds[clickedVector][1]
-    ) {
-      state.thresholds[clickedVector][0] = thresholds.pos;
-      state.thresholds[clickedVector][1] = thresholds.neg;
+    if ( thresholds.pos !== state.thresholds[clickedVector].pos || thresholds.neg !== state.thresholds[clickedVector].neg) {
+      state.thresholds[clickedVector].pos = thresholds.pos;
+      state.thresholds[clickedVector].neg = thresholds.neg;
       
       getGraphData(clickedVector);
     }
@@ -100,41 +97,41 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     setError(false);
     get(state.fileName)
       .then((val) => {
-        vectorsValues = val['vectorsValues'];
-        const values_arr = vectorsValues[vectorName] || [];
-        const ids_arr = state.proteinsNames || [];
-        const idsList: string[] = [];
-        const stringNames: string[] = [];
-        const proteins: string[] = [];
+        // vectorsValues = val['vectorsValues'];
+        // const values_arr = vectorsValues[vectorName] || [];
+        // const ids_arr = state.proteinsNames || [];
+        // const idsList: string[] = [];
+        // const stringNames: string[] = [];
+        // const proteins: string[] = [];
 
-        let values_map: { [key: string]: number } = {};
-        for (let i = 0; i < values_arr.length; i++) {
-          values_map[ids_arr[i]] = values_arr[i];
-        }
+        // let values_map: { [key: string]: number } = {};
+        // for (let i = 0; i < values_arr.length; i++) {
+        //   values_map[ids_arr[i]] = values_arr[i];
+        // }
 
-        Object.entries(state.namesStringMap).forEach(([orgName, { stringName, stringId}]) => {
-          idsList.push(stringId);
-          stringNames.push(stringName);
-          proteins.push(orgName);
-        });
+        // Object.entries(state.namesStringMap).forEach(([orgName, { stringName, stringId}]) => {
+        //   idsList.push(stringId);
+        //   stringNames.push(stringName);
+        //   proteins.push(orgName);
+        // });
 
-        const body = {
-          values_map: values_map,
-          thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
-          thresh_neg: state.thresholds[clickedVector][1],//^
-          score_thresh: state.scoreThreshold,
-          proteins: proteins,
-          ids: idsList,
-          string_names: stringNames,
-        };
-        console.log("body", body);
-        actions.updateIsLoading({isLoading: true});
+        // const body = {
+        //   values_map: values_map,
+        //   thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
+        //   thresh_neg: state.thresholds[clickedVector][1],//^
+        //   score_thresh: state.scoreThreshold,
+        //   proteins: proteins,
+        //   ids: idsList,
+        //   string_names: stringNames,
+        // };
+        // console.log("body", body);
+        // actions.updateIsLoading({isLoading: true});
 
-        console.log("body of users request in graph_data: ");
-        console.log({
-        });
+        // console.log("body of users request in graph_data: ");
+        // console.log({
+        // });
 
-        makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
+        // makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
       
   })};
 

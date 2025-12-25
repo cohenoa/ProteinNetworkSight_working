@@ -24,31 +24,31 @@ const SaveData = forwardRef((props, ref) => {
 
             let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(val['vectorsValues']))];
 
-            Object.entries(state.namesStringMap).forEach(([name, match], index) => {
-                if (match === null || typeof match !== "object" || !("stringId" in match) || !("stringName" in match)) return;
-                if (name in unMatchedMap && unMatchedMap[name].accepted) return;
+            // Object.entries(state.namesStringMap).forEach(([name, match], index) => {
+            //     if (match === null || typeof match !== "object" || !("stringId" in match) || !("stringName" in match)) return;
+            //     if (name in unMatchedMap && unMatchedMap[name].accepted) return;
 
-                let orgName = name;
-                let orgSTRINGname = match.stringName;
-                let orgSTRINGId = match.stringId;
+            //     let orgName = name;
+            //     let orgSTRINGname = match.stringName;
+            //     let orgSTRINGId = match.stringId;
 
-                if (orgSTRINGId == "0"){
-                    orgSTRINGname = "";
-                    orgSTRINGId = "";
-                };
+            //     if (orgSTRINGId == "0"){
+            //         orgSTRINGname = "";
+            //         orgSTRINGId = "";
+            //     };
 
-                if (name in replacementMap && replacementMap[name].accepted) {
-                    orgName = replacementMap[name].string_name;
-                }
+            //     if (name in replacementMap && replacementMap[name].accepted) {
+            //         orgName = replacementMap[name].string_name;
+            //     }
 
-                const row: string[] = [orgName, String(orgSTRINGname), String(orgSTRINGId)];
+            //     const row: string[] = [orgName, String(orgSTRINGname), String(orgSTRINGId)];
 
-                Object.keys(val['vectorsValues']).forEach((vectorName) => {
-                    row.push(val['vectorsValues'][vectorName][index]);
-                });
+            //     Object.keys(val['vectorsValues']).forEach((vectorName) => {
+            //         row.push(val['vectorsValues'][vectorName][index]);
+            //     });
 
-                xlsxContent.push(row);
-            })
+            //     xlsxContent.push(row);
+            // })
       
             const worksheet = utils.aoa_to_sheet(xlsxContent);
             const workbook = utils.book_new();
@@ -84,18 +84,18 @@ const SaveData = forwardRef((props, ref) => {
         let manmap: { [key: string]: replaceNameStatus } = {};
         let unMatched: { [key: string]: nameStatus } = {};
 
-        for (const [name, match] of Object.entries(state.namesStringMap)) {
-            if (match === undefined || match === null || typeof match !== "object" || !("stringName" in match) || !("stringId" in match)) continue;
+        // for (const [name, match] of Object.entries(state.namesStringMap)) {
+        //     if (match === undefined || match === null || typeof match !== "object" || !("stringName" in match) || !("stringId" in match)) continue;
 
-            if (name in state.suggestionsObj.alternative_match) {
-                altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
-                manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-            }
-            else if (match.stringId === "0") {
-                unMatched[name] = {accepted: false} as nameStatus;
-            }
-        }
+        //     if (name in state.suggestionsObj.alternative_match) {
+        //         altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
+        //     } else if (state.suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
+        //         manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
+        //     }
+        //     else if (match.stringId === "0") {
+        //         unMatched[name] = {accepted: false} as nameStatus;
+        //     }
+        // }
 
         let replacementMap: { [key: string]: replaceNameStatus } = {...manmap, ...altmap};
 
