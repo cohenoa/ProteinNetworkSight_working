@@ -27,6 +27,18 @@ const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName, stringName }) => {
   useEffect(() => {
     if (!isChecked) {
       setIsValid(validOption.disabled);
+      if (enteredName !== ""){
+        get("namesStringMap").then((namesStringMap: any) => {
+        const newNamesMap = {
+          ...namesStringMap,
+          [orgName]: {
+            stringName: "other",
+            stringId: 0,
+          },
+        };
+        set("namesStringMap", newNamesMap);
+      })
+      }
       setEnteredName("");
     }
 

@@ -23,14 +23,15 @@ const OthersS: FC<IStepProps> = ({ step, goNextStep }) => {
 
   useEffect(() => {
     getMany(["suggestionsObj", "namesStringMap"]).then(([suggestionsObj, namesStringMap]) => {
+      console.log("no match: ", (suggestionsObj as ISuggestionsJson).no_match);
 
-      const other_unset = new Set(Object.entries(namesStringMap as INamesStringMap).filter(([orgName, {stringName, stringId}]) => stringId === 0));
-      const other_set = new Set((suggestionsObj as ISuggestionsJson).no_match.filter((orgName) => (orgName in other_unset)));
-
+      const other_unset = new Set(Object.entries(namesStringMap as INamesStringMap).filter(([orgName, {stringName, stringId}]) => stringId === 0).map(([orgName]) => orgName));
       console.log("other_unset: ", other_unset);
+      const other_set = new Set((suggestionsObj as ISuggestionsJson).no_match.filter((orgName) => (!other_unset.has(orgName))));
       console.log("other_set: ", other_set);
 
-      const othersList = Array.from(other_set).map((orgName) => ({ orgName: orgName, stringName: namesStringMap[orgName].stringName })).concat(Array.from(other_unset).map(([orgName]) => ({orgName: orgName, stringName: ""})));
+
+      const othersList = Array.from(other_set).map((orgName) => ({ orgName: orgName, stringName: namesStringMap[orgName].stringName })).concat(Array.from(other_unset).map((orgName) => ({orgName: orgName, stringName: ""})));
       othersList.sort(({orgName: orgName1, stringName: stringName1}, {orgName: orgName2, stringName: stringName2}) => orgName1.localeCompare(orgName2));
       console.log("othersList: ", othersList);
       setOthersNames(othersList);
