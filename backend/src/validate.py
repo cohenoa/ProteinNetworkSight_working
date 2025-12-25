@@ -2,7 +2,7 @@ from src.common.configuration import pgdb
 
 ID_NOT_FOUND = "id not found"
 
-def get_id_by_name(conn, name, organism) -> str:
+def get_id_by_name(name, organism) -> str:
     with pgdb.get_cursor() as cur:
         sql = """ 
                 SELECT protein_id 
@@ -10,7 +10,6 @@ def get_id_by_name(conn, name, organism) -> str:
                 WHERE preferred_name = %s and species_id =  %s
                 """
         
-        cur = conn.cursor()
         cur.execute(sql, (name, organism))
 
         if cur.rowcount == 0:
