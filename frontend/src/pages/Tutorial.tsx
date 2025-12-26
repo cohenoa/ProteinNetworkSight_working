@@ -25,7 +25,7 @@ import { downloadExampleFile } from "../common/ExampleFileAction";
 
 const Tutorial: FC = () => {
   const stringdbLink = "https://string-db.org/";
-  const drugsDatabaseLink = "https://www.anticancerfund.org/en/cancerdrugs-db";
+  const drugsDatabaseLink = "https://www.anticancerfund.org/en/news/open-access-database-licensed-cancer-drugs";
   return (
     <div className="page-container">
       <div className="tutorial-container">
