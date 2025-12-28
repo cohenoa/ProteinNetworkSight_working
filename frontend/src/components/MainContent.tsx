@@ -145,13 +145,7 @@ const MainContent = () => {
       bar.push(saveButton);
     }
 
-    console.log(bar);
-
-    let formID = "form" + step;
-
-    console.log(formID);
-
-    return <ButtonsBar formId={formID} buttons={bar}></ButtonsBar>;
+    return <ButtonsBar formId={"form" + step} buttons={bar}></ButtonsBar>;
   }
 
   return (

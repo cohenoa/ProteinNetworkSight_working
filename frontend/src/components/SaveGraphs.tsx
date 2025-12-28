@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
-import { get } from 'idb-keyval';
+import { get, getMany, keys, set } from 'idb-keyval';
 import { makePostRequest } from "../common/PostRequest";
 import WindowedSelect from "react-windowed-select";
 import { ICustomAllGraphData, ICustomGraphData } from "../@types/graphs";
@@ -11,6 +11,10 @@ import { graphRef } from "../@types/props";
 import { GraphSettings, GraphsStatus, getWindowSelectItem } from "../common/GraphSettings";
 import LoadingComponent from "./Loading";
 import { copySettings, baseDownloadAllGraphSetting, supportedSettings, getWindowSelectItemByValue } from "../common/GraphSettings";
+import {
+  INamesStringMap,
+  threshMap,
+} from "../@types/global";
 
 const presetOption = getWindowSelectItem('layouts', 'PRESET');
 
@@ -39,22 +43,20 @@ const SaveGraphs = forwardRef((props, ref) => {
 
         let newGraphStatus: GraphsStatus = {};
 
-        state.vectorsHeaders.forEach((header: string) => {
+        state.vectorsHeaders.forEach(async (header: string) => {
             
-            if (header in clickedVectors) {
+            const graphLayout = await get(header + "_layout");
+            if (graphLayout) {
                 newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, true);
-
-                if (clickedVectors[header].layout === supportedSettings.layouts.PRESET) {
+                if (graphLayout.layout === supportedSettings.layouts.PRESET) {
                     newGraphStatus[header].Layout.options.push(presetOption);
                 }
 
-                console.log("clickedVectors[header]", clickedVectors[header]);
-
-                const layoutOption = getWindowSelectItemByValue('layouts', clickedVectors[header].layout);
-                const nodeSizeOption = getWindowSelectItemByValue('nodeSizes', clickedVectors[header].nodeSize);
-                const opacityOption = getWindowSelectItemByValue('opacities', clickedVectors[header].opacity);
-                const posNodeColorOption = getWindowSelectItemByValue('nodeColors', clickedVectors[header].color.pos);
-                const negNodeColorOption = getWindowSelectItemByValue('nodeColors', clickedVectors[header].color.neg);
+                const layoutOption = getWindowSelectItemByValue('layouts', graphLayout.layout);
+                const nodeSizeOption = getWindowSelectItemByValue('nodeSizes', graphLayout.nodeSize);
+                const opacityOption = getWindowSelectItemByValue('opacities', graphLayout.opacity);
+                const posNodeColorOption = getWindowSelectItemByValue('nodeColors', graphLayout.color.pos);
+                const negNodeColorOption = getWindowSelectItemByValue('nodeColors', graphLayout.color.neg);
 
                 newGraphStatus[header].Layout.current = layoutOption || newGraphStatus[header].Layout.default;
                 newGraphStatus[header].NodeSize.current = nodeSizeOption || newGraphStatus[header].NodeSize.default;
@@ -62,7 +64,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                 newGraphStatus[header].PosNodeColor.current = posNodeColorOption || newGraphStatus[header].PosNodeColor.default;
                 newGraphStatus[header].NegNodeColor.current = negNodeColorOption || newGraphStatus[header].NegNodeColor.default;
             }
-            else {
+            else{
                 newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, false);
                 newGraphStatus[header].Layout.current = newGraphStatus[header].Layout.default;
                 newGraphStatus[header].NodeSize.current = newGraphStatus[header].NodeSize.default;
@@ -71,13 +73,40 @@ const SaveGraphs = forwardRef((props, ref) => {
                 newGraphStatus[header].NegNodeColor.current = newGraphStatus[header].NegNodeColor.default;
             }
             newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default;
+            // if (header in clickedVectors) {
+            //     newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, true);
+
+            //     if (clickedVectors[header].layout === supportedSettings.layouts.PRESET) {
+            //         newGraphStatus[header].Layout.options.push(presetOption);
+            //     }
+
+            //     const layoutOption = getWindowSelectItemByValue('layouts', clickedVectors[header].layout);
+            //     const nodeSizeOption = getWindowSelectItemByValue('nodeSizes', clickedVectors[header].nodeSize);
+            //     const opacityOption = getWindowSelectItemByValue('opacities', clickedVectors[header].opacity);
+            //     const posNodeColorOption = getWindowSelectItemByValue('nodeColors', clickedVectors[header].color.pos);
+            //     const negNodeColorOption = getWindowSelectItemByValue('nodeColors', clickedVectors[header].color.neg);
+
+            //     newGraphStatus[header].Layout.current = layoutOption || newGraphStatus[header].Layout.default;
+            //     newGraphStatus[header].NodeSize.current = nodeSizeOption || newGraphStatus[header].NodeSize.default;
+            //     newGraphStatus[header].Opacity.current = opacityOption || newGraphStatus[header].Opacity.default;
+            //     newGraphStatus[header].PosNodeColor.current = posNodeColorOption || newGraphStatus[header].PosNodeColor.default;
+            //     newGraphStatus[header].NegNodeColor.current = negNodeColorOption || newGraphStatus[header].NegNodeColor.default;
+            // }
+            // else {
+            //     newGraphStatus[header] = copySettings(baseDownloadAllGraphSetting, false);
+            //     newGraphStatus[header].Layout.current = newGraphStatus[header].Layout.default;
+            //     newGraphStatus[header].NodeSize.current = newGraphStatus[header].NodeSize.default;
+            //     newGraphStatus[header].Opacity.current = newGraphStatus[header].Opacity.default;
+            //     newGraphStatus[header].PosNodeColor.current = newGraphStatus[header].PosNodeColor.default;
+            //     newGraphStatus[header].NegNodeColor.current = newGraphStatus[header].NegNodeColor.default;
+            // }
+            // newGraphStatus[header].fileType.current = newGraphStatus[header].fileType.default;
         });
 
         console.log(newGraphStatus);
         console.log(applyAllStatus);
 
         setGraphsStatus(newGraphStatus);
-
     }
 
     useEffect(() => {
@@ -170,36 +199,55 @@ const SaveGraphs = forwardRef((props, ref) => {
 
     const handleJsonGraphData = (jsonString: string) => {
         const tempGraphData: ICustomAllGraphData = JSON.parse(jsonString);
-        setAllGraphData(tempGraphData);
+        // setAllGraphData(tempGraphData);
+        setAllGraphData({
+            ...allGraphData,
+            ...tempGraphData
+        })
         setIsBuildingGraphs(true);
     };
 
     useImperativeHandle(ref, () => ({
         getFormData: async () => {
-            // setIsLoading(true);
             actions.updateIsLoading({ isLoading: true });
             setGraphRefs(Array.from({ length: Object.keys(state.vectorsHeaders).length }, (): graphRef => React.createRef<graphRef>() as graphRef));
-            const val = await get(state.fileName);
-
-            const headers = val['headers'];
-            const vectorsValues = val['vectorsValues'];
-            const idsList: string[] = [];
+            
+            const [ids_arr, namesStringMap] = await getMany(["proteinsNames", "namesStringMap"]);
+            const idsList: number[] = [];
             const stringNames: string[] = [];
 
-            // Object.keys(state.namesStringMap).forEach((orgName) => {
-            //     const map = state.namesStringMap[orgName];
-            //     if (map) {
-            //         idsList.push(map.stringId);
-            //         stringNames.push(map.stringName);
-            //     }
-            // });
+
+            Object.entries(namesStringMap as INamesStringMap).forEach(([orgName, { stringName, stringId }]) => {
+                idsList.push(stringId);
+                stringNames.push(stringName);
+            });
 
             let body = {
                 headers_data: {},
-                // proteins: state.proteinsNames,
                 ids: idsList,
                 string_names: stringNames,
+                score_thresh: state.scoreThreshold,
             };
+
+            // const calculatedGraphs = new Set((await keys()).filter((key) => String(key).endsWith("_graph")).map((key) => String(key).replace("_graph", "")));
+            // console.log("calculatedGraphs", calculatedGraphs);
+            // const unCalculatedGraphs = Array.from(calculatedGraphs.difference(new Set(state.vectorsHeaders))).map((key) => key + "_data");
+
+            // // const headersData: { [key: string]: any } = {};
+            // getMany(unCalculatedGraphs).then((values) => {
+            //     values.forEach((values_arr, index) => {
+            //         const key = unCalculatedGraphs[index].replace("_data", "");
+            //         const values_map: { [key: string]: number } = {};
+            //         for (let i = 0; i < values_arr.length; i++) {
+            //             values_map[ids_arr[i]] = values_arr[i];
+            //         }
+            //         uncalculatedHeadersData[key] = {
+            //             values_map: values_map,
+            //             thresh_pos: state.thresholds[key].pos,
+            //             thresh_neg: state.thresholds[key].neg,
+            //         };
+            //     })
+            // })
 
             // Object.entries(vectorsValues).forEach(([key, value]) => {
             //     const values_arr = vectorsValues[key] || [];
@@ -216,7 +264,45 @@ const SaveGraphs = forwardRef((props, ref) => {
             //     }
             // });
 
-            makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
+            // makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
+
+            const calculatedGraphData: { [key: string]: ICustomGraphData } = {};
+            const uncalculatedHeadersData: { [key: string]: { values_map: { [key: string]: number }; thresh_pos: number; thresh_neg: number; } } = {};
+            
+            const memValues = await getMany(state.vectorsHeaders.map((key) => key + "_graph"))
+            memValues.forEach((val, index) => {
+                const key = state.vectorsHeaders[index];
+
+                if (val && val.graphData && (val.thresholds as threshMap).pos === state.thresholds[key].pos && (val.thresholds as threshMap).neg === state.thresholds[key].neg) {
+                    calculatedGraphData[key] = val.graphData as ICustomGraphData;
+                }
+                else{
+                    uncalculatedHeadersData[key] = {
+                        values_map: {},
+                        thresh_pos: state.thresholds[key].pos,
+                        thresh_neg: state.thresholds[key].neg,
+                    };
+                }
+            });
+
+            body.headers_data = uncalculatedHeadersData;
+            console.log(calculatedGraphData);
+            setAllGraphData(calculatedGraphData);
+
+            const uncalculatedHeaders: string[] = Object.keys(uncalculatedHeadersData);
+
+            await getMany(uncalculatedHeaders.map((key) => key + "_data")).then((values) => {
+                values.forEach((values_arr, index) => {
+                    const key = uncalculatedHeaders[index].replace("_data", "");
+                    const values_map: { [key: string]: number } = {};
+                    for (let i = 0; i < values_arr.length; i++) {
+                        values_map[ids_arr[i]] = values_arr[i];
+                    }
+                    uncalculatedHeadersData[key].values_map = values_map;
+                })
+                console.log(body);
+                makePostRequest(JSON.stringify(body), "saveGraphs", handleJsonGraphData, handleError);
+            })
 
             return "downloaded graphs";
         }
@@ -342,11 +428,7 @@ const SaveGraphs = forwardRef((props, ref) => {
                         <CytoscapejsComponentself 
                             key={key}
                             graphData={value as ICustomGraphData} 
-                            clickedVector={key} 
-                            thresholds={{ 
-                                pos: state.thresholds[key].pos, 
-                                neg: state.thresholds[key].neg
-                            }}
+                            clickedVector={key}
                             alertLoading={() => {buildGraph(key, index)}} 
                             ref={graphRefs[index]}
                         />

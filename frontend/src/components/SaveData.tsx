@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
-import { get } from 'idb-keyval';
+import { get, getMany } from 'idb-keyval';
 import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig, nameStatus, replaceNameStatus } from "../@types/props";
 import { write, utils } from "xlsx";
+import { INamesStringMap } from "../@types/global";
+import { stat } from "fs";
 
 const SaveData = forwardRef((props, ref) => {
 
@@ -19,20 +21,45 @@ const SaveData = forwardRef((props, ref) => {
 
     useImperativeHandle(ref, () => ({
         getFormData: async () => {
+            actions.updateIsLoading({ isLoading: true });
 
-            const val = await get(state.fileName);
+            const headersValues = columnsToRows(await getMany(state.headers.map((header) => header + "_data")));
+            const [namesStringMap, proteinsNames] = await getMany(["namesStringMap", "proteinsNames"]);
 
-            let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(val['vectorsValues']))];
+            let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(state.vectorsHeaders))];
 
-            // Object.entries(state.namesStringMap).forEach(([name, match], index) => {
-            //     if (match === null || typeof match !== "object" || !("stringId" in match) || !("stringName" in match)) return;
+            (proteinsNames as string[]).forEach((name, index) => {
+                if (name in unMatchedMap && unMatchedMap[name].accepted) return;
+                const match = namesStringMap[name];
+
+                let orgName = name;
+                let orgSTRINGname = match.stringName;
+                let orgSTRINGId = String(match.stringId);
+
+                if (orgSTRINGId === "0") {
+                    orgSTRINGname = "";
+                    orgSTRINGId = "";
+                };
+
+                if (name in replacementMap && replacementMap[name].accepted) {
+                    orgName = replacementMap[name].string_name;
+                }
+
+                const row = [orgName, orgSTRINGname, orgSTRINGId];
+
+                row.concat(headersValues[index]);
+                xlsxContent.push(row);
+            })
+
+            // Object.entries(namesStringMap as INamesStringMap).forEach(([name, match], index) => {
+            //     if (match === null || match === undefined || typeof match !== "object" || !("stringId" in match) || !("stringName" in match)) return;
             //     if (name in unMatchedMap && unMatchedMap[name].accepted) return;
 
             //     let orgName = name;
             //     let orgSTRINGname = match.stringName;
-            //     let orgSTRINGId = match.stringId;
+            //     let orgSTRINGId = String(match.stringId);
 
-            //     if (orgSTRINGId == "0"){
+            //     if (orgSTRINGId === "0") {
             //         orgSTRINGname = "";
             //         orgSTRINGId = "";
             //     };
@@ -41,13 +68,20 @@ const SaveData = forwardRef((props, ref) => {
             //         orgName = replacementMap[name].string_name;
             //     }
 
-            //     const row: string[] = [orgName, String(orgSTRINGname), String(orgSTRINGId)];
+            //     UID_col.push(orgName);
+            //     STRING_name_col.push(String(orgSTRINGname));
+            //     STRING_id_col.push(String(orgSTRINGId));
+            //     // const row: string[] = [orgName, orgSTRINGname, orgSTRINGId];
 
-            //     Object.keys(val['vectorsValues']).forEach((vectorName) => {
-            //         row.push(val['vectorsValues'][vectorName][index]);
-            //     });
+                
+            //     // headersValues.forEach((val, index) => {
+            //     //     row.push(val[orgName]);
+            //     // })
+            //     // Object.keys(state.vectorsHeaders).forEach((vectorName) => {
+            //     //     row.push(val['vectorsValues'][vectorName][index]);
+            //     // });
 
-            //     xlsxContent.push(row);
+            //     // xlsxContent.push(row);
             // })
       
             const worksheet = utils.aoa_to_sheet(xlsxContent);
@@ -70,7 +104,21 @@ const SaveData = forwardRef((props, ref) => {
 
             return "downloaded XLSX data file";
         }
-      }));
+    }));
+
+    function columnsToRows<T>(columns: T[][]): T[][] {
+        const rowCount = Math.max(...columns.map(c => c.length));
+        const rows = Array.from({ length: rowCount }, () => Array(columns.length));
+
+        for (let col = 0; col < columns.length; col++) {
+            const column = columns[col];
+            for (let row = 0; row < column.length; row++) {
+            rows[row][col] = column[row];
+            }
+        }
+
+        return rows;
+    }
 
     useEffect(() => {
         actions.updateIsLoading({ isLoading: true });
@@ -84,18 +132,19 @@ const SaveData = forwardRef((props, ref) => {
         let manmap: { [key: string]: replaceNameStatus } = {};
         let unMatched: { [key: string]: nameStatus } = {};
 
-        // for (const [name, match] of Object.entries(state.namesStringMap)) {
-        //     if (match === undefined || match === null || typeof match !== "object" || !("stringName" in match) || !("stringId" in match)) continue;
+        const [suggestionsObj, namesStringMap] = await getMany(["suggestionsObj", "namesStringMap"]);
+        for (const [name, match] of Object.entries(await get('namesStringMap'))) {
+            if (match === undefined || match === null || typeof match !== "object" || !("stringName" in match) || !("stringId" in match)) continue;
 
-        //     if (name in state.suggestionsObj.alternative_match) {
-        //         altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-        //     } else if (state.suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
-        //         manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-        //     }
-        //     else if (match.stringId === "0") {
-        //         unMatched[name] = {accepted: false} as nameStatus;
-        //     }
-        // }
+            if (name in suggestionsObj.alternative_match) {
+                altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
+            } else if (suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
+                manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
+            }
+            else if (match.stringId === "0") {
+                unMatched[name] = {accepted: false} as nameStatus;
+            }
+        }
 
         let replacementMap: { [key: string]: replaceNameStatus } = {...manmap, ...altmap};
 

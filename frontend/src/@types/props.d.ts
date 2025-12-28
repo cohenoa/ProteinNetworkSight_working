@@ -59,8 +59,7 @@ export interface IPanelProps {
 export interface IGraphProps {
   graphData: ICustomGraphData;
   clickedVector: string;
-  thresholds: threshMap;
-  alertLoading: () => any;
+  alertLoading: () => void;
 }
 
 export interface IStepsBarProps {

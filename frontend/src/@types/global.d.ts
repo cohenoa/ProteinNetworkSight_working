@@ -4,7 +4,7 @@ import { ISuggestionsJson, OptionType } from "./json";
 
 declare module 'cytoscape' {
   interface Core {
-      svg(options?: any): string;
+    svg(options?: any): string;
   }
 }
 
@@ -20,43 +20,22 @@ export interface IVectorsValues {
   [key: string]: number[];
 }
 
-// declare module 'cytoscape-svg' {
-//   import cytoscape from 'cytoscape';
-
-//   const svg: cytoscape.Ext;
-//   export default svg;
-// }
-
-// declare module 'cytoscape' {
-//   interface Core {
-//     svg(options?: any): string; // Modify `options` type if needed
-//   }
-// }
-
 declare module "little-state-machine" {
   interface GlobalState {
     fileName: string;
-    // json: any[];
     idHeader: string;
     vectorsPrefix: string;
     headers: string[];
-    // proteinsNames: string[];
     organism: OptionType;
     scoreThreshold: number;
-    // positiveThreshold: number;
-    // negativeThreshold: number;
     vectorsHeaders: string[];
+    vectorsLastLayout: string[];
     isLoading: boolean;
     isSetSuggestions: boolean;
-    // suggestionsObj: ISuggestionsJson;
     isSetNamesMap: boolean;
-    // namesStringMap: INamesStringMap;
-    vectorsValues: IVectorsValues;
-    // uuid: string;
     showError:boolean
     thresholds:{[x: string]: threshMap;}
     sortTable:Array<ColumnState>;
-    // stringNames:Array<string>;
   }
 };
 

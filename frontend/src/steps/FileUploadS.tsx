@@ -6,7 +6,7 @@ import { updateFileUpload, updateFileName, updateIsLoading, updatestringNames, u
 import { clearAction } from "../common/ClearAction";
 import "../styles/FileUpload.css";
 import { getExampleFile } from "../common/ExampleFileAction";
-import { set, setMany } from "idb-keyval";
+import { set, setMany, clear } from "idb-keyval";
 import { INamesStringMap } from "../@types/global";
 
 const MAX_ROWS = 20000;
@@ -28,6 +28,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   useEffect(() => {
     actions.clearAction();
+    clear();
   }, []);
 
   useEffect(() => {
@@ -50,6 +51,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   const useExampleFile = () => {
     actions.clearAction();
+    clear();
     actions.updateFileName({ fileName: "example_data.xlsx" });
     setIsExampleFile(true);
     setHasError(null);
@@ -63,8 +65,8 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       console.log("using example file");
       // actions.updateFileUpload(getExampleFile());
       const {json, headers} = getExampleFile();
+      actions.updateFileUpload({headers: headers});
       set("json", json).then(() => {
-        actions.updateFileUpload({headers: headers});
         goNextStep();
       })
       .catch(error => {

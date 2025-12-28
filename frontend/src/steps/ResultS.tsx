@@ -6,13 +6,14 @@ import LoadingComponent from "../components/Loading";
 import GraphBar from "../bars/GraphBar";
 import TableComponent from "../components/Table";
 import { useStateMachine } from "little-state-machine";
-import { updateIsLoading, updateShowError } from "../common/UpdateActions";
+import { updateIsLoading, updateShowError, updateThresholds } from "../common/UpdateActions";
 import { Font, FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import "../styles/Result.css";
 import ErrorScreen from "../components/ErrorScreen";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
-import { get } from 'idb-keyval';
+import { set, get, getMany } from 'idb-keyval';
 import {
+  INamesStringMap,
   IVectorsValues,
 } from "../@types/global";
 import { threshMap } from "../@types/global";
@@ -22,6 +23,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
     updateIsLoading,
     updateShowError,
+    updateThresholds,
   });
 
   const [clickedVector, setClickedVector] = useState<string>(state.vectorsHeaders[0]);
@@ -41,9 +43,6 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-          // Retrieve vectorsValues here
-          // vectorsValues = val['vectorsValues'];
-          // console.log("vectors headers in place 0",state.vectorsHeaders[0])
           setClickedVector(state.vectorsHeaders[0]);
           let loader = new FontLoader();
           loader.load(
@@ -53,7 +52,6 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
               setFont(loaded_font);
             }
           );
-          // console.log(vectorsValues);
       } catch (err) {
         console.log('It failed!', err);
         return;
@@ -61,7 +59,6 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     };
 
     fetchData();
-    // console.log("state vector headers: ", state.vectorsHeaders);
   }, [state.fileName, state.vectorsHeaders]);
 
   const [font, setFont] = useState<Font | null>(null);
@@ -69,21 +66,26 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
 
   useEffect(() => {
     if (!clickedVector) return;
-    console.log("before",thresholds)
     setThresholds({
       pos: state.thresholds[clickedVector].pos,
       neg:  state.thresholds[clickedVector].neg,
     });
-    console.log("after", thresholds)
     getGraphData(clickedVector);
   }, [clickedVector, state.thresholds]);
 
   useEffect(() => {
     if ( thresholds.pos !== state.thresholds[clickedVector].pos || thresholds.neg !== state.thresholds[clickedVector].neg) {
-      state.thresholds[clickedVector].pos = thresholds.pos;
-      state.thresholds[clickedVector].neg = thresholds.neg;
+      actions.updateThresholds({ 
+        thresholds: {
+          ...state.thresholds,
+          [clickedVector]: {
+            pos: thresholds.pos,
+            neg: thresholds.neg
+          }
+        }
+      });
       
-      getGraphData(clickedVector);
+      console.log("changed thresholds");
     }
   }, [thresholds]);
 
@@ -94,50 +96,102 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const getGraphData = (vectorName: string) => {
+    console.log("getting graph data");
     setError(false);
-    get(state.fileName)
-      .then((val) => {
-        // vectorsValues = val['vectorsValues'];
-        // const values_arr = vectorsValues[vectorName] || [];
-        // const ids_arr = state.proteinsNames || [];
-        // const idsList: string[] = [];
-        // const stringNames: string[] = [];
-        // const proteins: string[] = [];
+    console.log(clickedVector);
+    actions.updateIsLoading({ isLoading: true });
 
-        // let values_map: { [key: string]: number } = {};
-        // for (let i = 0; i < values_arr.length; i++) {
-        //   values_map[ids_arr[i]] = values_arr[i];
-        // }
+    get(vectorName + "_graph").then((val) => {
+      if (val && val.graphData && (val.thresholds as threshMap).pos === state.thresholds[clickedVector].pos && (val.thresholds as threshMap).neg === state.thresholds[clickedVector].neg) {
+        console.log("graph data from mem: ", val.graphData);
+        console.log("thresholds from mem: ", val.thresholds);
+        setGraphData(val.graphData as ICustomGraphData);
+        actions.updateIsLoading({ isLoading: false });
+      }
+      else {
+        console.log("getting graph data from server");
+        getMany([vectorName + "_data", "proteinsNames", "namesStringMap"]).then(([values_arr, ids_arr, namesStringMap]) => {
+          const idsList: number[] = [];
+          const stringNames: string[] = [];
+          const proteins: string[] = [];
 
-        // Object.entries(state.namesStringMap).forEach(([orgName, { stringName, stringId}]) => {
-        //   idsList.push(stringId);
-        //   stringNames.push(stringName);
-        //   proteins.push(orgName);
-        // });
+          let values_map: { [key: string]: number } = {};
+          for (let i = 0; i < values_arr.length; i++) {
+            values_map[ids_arr[i]] = values_arr[i];
+          }
 
-        // const body = {
-        //   values_map: values_map,
-        //   thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
-        //   thresh_neg: state.thresholds[clickedVector][1],//^
-        //   score_thresh: state.scoreThreshold,
-        //   proteins: proteins,
-        //   ids: idsList,
-        //   string_names: stringNames,
-        // };
-        // console.log("body", body);
-        // actions.updateIsLoading({isLoading: true});
+          Object.entries(namesStringMap as INamesStringMap).forEach(([orgName, { stringName, stringId }]) => {
+            idsList.push(stringId);
+            stringNames.push(stringName);
+            proteins.push(orgName);
+          });
 
-        // console.log("body of users request in graph_data: ");
-        // console.log({
-        // });
+          const body = {
+            values_map: values_map,
+            thresh_pos: state.thresholds[clickedVector].pos,
+            thresh_neg: state.thresholds[clickedVector].neg,
+            score_thresh: state.scoreThreshold,
+            proteins: proteins,
+            ids: idsList,
+            string_names: stringNames,
+          };
+          console.log("body", body);
 
-        // makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
+          makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
+        });
+      }
+    });
+    
+    
+
+    // get(state.fileName)
+    //   .then((val) => {
+    //     vectorsValues = val['vectorsValues'];
+    //     const values_arr = vectorsValues[vectorName] || [];
+    //     const ids_arr = state.proteinsNames || [];
+    //     const idsList: string[] = [];
+    //     const stringNames: string[] = [];
+    //     const proteins: string[] = [];
+
+    //     let values_map: { [key: string]: number } = {};
+    //     for (let i = 0; i < values_arr.length; i++) {
+    //       values_map[ids_arr[i]] = values_arr[i];
+    //     }
+
+    //     Object.entries(state.namesStringMap).forEach(([orgName, { stringName, stringId}]) => {
+    //       idsList.push(stringId);
+    //       stringNames.push(stringName);
+    //       proteins.push(orgName);
+    //     });
+
+    //     const body = {
+    //       values_map: values_map,
+    //       thresh_pos: state.thresholds[clickedVector][0],//can be changed to an array and set for each of the G's.
+    //       thresh_neg: state.thresholds[clickedVector][1],//^
+    //       score_thresh: state.scoreThreshold,
+    //       proteins: proteins,
+    //       ids: idsList,
+    //       string_names: stringNames,
+    //     };
+    //     console.log("body", body);
+    //     actions.updateIsLoading({isLoading: true});
+
+    //     console.log("body of users request in graph_data: ");
+    //     console.log({
+    //     });
+
+    //     makePostRequest(JSON.stringify(body), "graphs", handleJsonGraphData, handleError);
       
-  })};
+  // })
+  };
 
   const handleJsonGraphData = (jsonString: string) => {
     const tempGraphData: ICustomGraphData = JSON.parse(jsonString);
     setGraphData(tempGraphData);
+    set(clickedVector + "_graph", {
+      graphData: tempGraphData,
+      thresholds: {...state.thresholds[clickedVector]} as threshMap,
+    });
     console.log("graph data: ", tempGraphData);
     actions.updateIsLoading({ isLoading: false });
   };
@@ -173,7 +227,6 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
               <CytoscapejsComponentself
                 graphData={graphData}
                 clickedVector={clickedVector}
-                thresholds={thresholds}
                 alertLoading={() => {}}
               />
             )}
