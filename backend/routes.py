@@ -110,7 +110,7 @@ def calc_all_graph_data():
     proteins = request_data["proteins"]
     string_names = request_data["string_names"]
     ids = request_data["ids"]
-    score_thresh = data["score_thresh"]
+    score_thresh = request_data["score_thresh"]
 
     with pgdb.get_connection() as con:
 

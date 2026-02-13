@@ -76,12 +76,6 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
       },
     },
   ]);
-
-  const resetElements = async () => {
-    setElements(() => {
-      return [];
-    });
-  };
   
   const [layout, setLayout] = useState<any>({
     name: supportedSettings.layouts.CIRCLE,
@@ -93,8 +87,9 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     condense: true, // uses all available space on false, uses minimal space on true
     animate: false,
     positions: false,
-    stop: function() {
+    stop: async function() {
       setLayoutStop(true);
+      alertLoading();
     }
   });
 
@@ -214,9 +209,15 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     // });
   }, [ graphData.nodes, graphData.links, state.fileName, fetchData]);
 
-  useEffect(() => {
+  const layoutRender = () => {
     console.log("applying layout");
     cyRef.current?.layout(layout).run();
+  }
+
+  useEffect(() => {
+    layoutRender();
+    // console.log("applying layout");
+    // cyRef.current?.layout(layout).run();
   }, [layout, curNodeSize, elements]);
 
   // useEffect(() => {
@@ -319,7 +320,33 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     return false;
   }
 
-  const downloadGraph = (type: SupportedFileType) => {
+  const getGraphBlob = (type: SupportedFileType) => {
+    const cy = cyRef.current;
+    if (cy){
+      let blob: Blob;
+      switch (type) {
+        case supportedSettings.fileTypes.SVG:
+          blob = new Blob([cy.svg()], { type: "image/svg+xml;charset=utf-8" });
+          break;
+        case supportedSettings.fileTypes.PNG:
+          blob = cy.png({ output: "blob", full: true });
+          break;
+        case supportedSettings.fileTypes.JSON:
+          blob = new Blob([JSON.stringify(cy.json())], { type: "application/json" });
+          break;
+        default:
+          console.log("type not supported");
+          return null;
+      }
+      return blob;
+    }
+    else{
+      console.log("no cy");
+    }
+    return null;
+  }
+
+  const downloadGraph = async (type: SupportedFileType) => {
     const cy = cyRef.current;
     if (cy){
       let blob: Blob;
@@ -348,7 +375,9 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     applyNodeSize,
     applyOpacity,
     applyNodeColor,
-    downloadGraph
+    getGraphBlob,
+    layoutRender,
+    // downloadGraph
   }));
 
   // right click menu
@@ -415,11 +444,20 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
 const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
   console.log("setting node color");
-  const newNodeColors = {...curNodeColor, [nodeType]: color};
 
   cyRef.current?.nodes().forEach(function(node){
-    node.data('color', node.data('positive') ? newNodeColors.pos : newNodeColors.neg);
+    node.data('color', (node.data('positive') !== (nodeType === 'pos')) ? node.data('color') : color);
   });
+
+  const posNodes = cyRef.current?.nodes().filter(function(node){return node.data('positive')})
+  const negNodes = cyRef.current?.nodes().filter(function(node){return !node.data('positive')})
+
+  const newNodeColors = {
+    pos: posNodes ? posNodes[0].data('color') : color,
+    neg: negNodes ? negNodes[0].data('color') : color
+  };
+
+  console.log(newNodeColors);
 
   setCurNodeColor(newNodeColors);
 }

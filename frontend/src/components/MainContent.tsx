@@ -132,14 +132,14 @@ const MainContent = () => {
         className: "btn btn--primary btn--wide",
         onClick: () => {
           if (saveFormRef.current) {
-            const formData = saveFormRef.current.getFormData();
-            console.log('Data from Son:', formData);
+            saveFormRef.current.getFormData();
+            // saveFormRef.current;
+            // console.log('Data from Son:', formData);
           }
           else{
             console.log("formRef is null: " + saveFormRef);
           }
           console.log('clicked button');
-          
         },
       }
       bar.push(saveButton);

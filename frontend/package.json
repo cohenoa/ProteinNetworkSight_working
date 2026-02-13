@@ -24,6 +24,7 @@
     "html2canvas": "^1.4.1",
     "idb-keyval": "^6.2.1",
     "jspdf": "^2.5.1",
+    "jszip": "^3.10.1",
     "little-state-machine": "^4.8.0",
     "react": "^18.2.0",
     "react-cytoscapejs": "^2.0.0",

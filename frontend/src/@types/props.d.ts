@@ -13,7 +13,7 @@ export interface nameStatus {
 
 export interface replaceNameStatus extends nameStatus {
   string_name: string,
-  string_id: string,
+  string_id: int,
 }
 
 export interface formRef {
@@ -28,7 +28,8 @@ interface GraphExposedMethods extends HTMLDivElement {
   applyNodeSize: (size: SupportedNodeSize) => void,
   applyOpacity: (op: SupportedOpacity) => void,
   applyNodeColor: (type: 'pos' | 'neg', color: SupportedNodeColor) => void
-  downloadGraph: (type: downloadFileTypes) => void,
+  getGraphBlob: (type: downloadFileTypes) => Blob | null,
+  layoutRender: () => void
 }
 
 export interface graphRef extends React.RefObject<HTMLDivElement>{
