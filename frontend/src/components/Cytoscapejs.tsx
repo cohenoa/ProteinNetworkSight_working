@@ -174,6 +174,13 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      const newElements: any[] = [];
+      createNodes(newElements, graphData.nodes);
+      createLinks(newElements, graphData.links);
+      
+      setElements(newElements);
+
       if ((await keys()).includes(clickedVector + "_layout")) {
         applySavedGraph();
       }      
@@ -185,11 +192,11 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
         //   await set(state.fileName,val);
         //   console.log(val.clicked_vectors)
         // }
-        const newElements: any[] = [];
-        createNodes(newElements, graphData.nodes);
-        createLinks(newElements, graphData.links);
+        // const newElements: any[] = [];
+        // createNodes(newElements, graphData.nodes);
+        // createLinks(newElements, graphData.links);
         
-        setElements(newElements);
+        // setElements(newElements);
       }
     } catch (error) {
       console.error("Error loading graph data", error);
@@ -291,9 +298,10 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
         console.log(graphLayout);
         console.log("graphLayout found in local storage, applying it");
         
-        setElements(graphLayout.elements);
         applyOpacity(graphLayout.opacity);
-        setCurNodeColor(graphLayout.color);
+        applyNodeSize(graphLayout.nodeSize);
+        applyNodeColor('pos', graphLayout.color.pos);
+        applyNodeColor('neg', graphLayout.color.neg);
         setCurNodeSize(graphLayout.nodeSize);
 
         let layoutName = graphLayout.layout;
