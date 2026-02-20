@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useImperativeHandle, forwardRef, useRef } from "react";
+import React, { useEffect, useState, useImperativeHandle, forwardRef, useRef, useCallback, useMemo } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get, getMany, setMany } from 'idb-keyval';
@@ -17,6 +17,7 @@ import {
 } from "../@types/global";
 import JSZip from "jszip";
 import { time } from "console";
+import { use } from "cytoscape";
 
 type FileEntry = {
   filename: string;
@@ -35,13 +36,6 @@ enum BuildPhase {
   WAIT_FOR_LAYOUT,
   SAVE
 }
-// enum BuildPhase {
-//   IDLE,
-//   APPLY_SETTINGS,
-//   WAIT_FOR_LAYOUT,
-//   FORCE_RENDER,
-//   SAVE
-// }
 
 const presetOption = getWindowSelectItem('layouts', 'PRESET');
 
@@ -58,6 +52,7 @@ const SaveGraphs = forwardRef((props, ref) => {
     const [currGraphBuildIdx, setCurrGraphBuildIdx] = useState<number | null>(null);
     const [currGraphData, setCurrGraphData] = useState<ICustomGraphData | null>(null);
     const [currGraphRef, setCurrGraphRef] = useState<graphRef>();
+    const [lastCalled, setLastCalled] = useState<{time: number, phase: BuildPhase}>({time: 0, phase: BuildPhase.IDLE});
 
     const graphIdxRef = useRef<number>(0);
     const phaseRef = useRef<BuildPhase>(BuildPhase.IDLE);
@@ -188,7 +183,7 @@ const SaveGraphs = forwardRef((props, ref) => {
         });
     }
 
-    const buildGraph = () => {
+    const buildGraph = async () => {
         const idx = graphIdxRef.current;
         const ref = currGraphRef?.current;
 
@@ -199,7 +194,19 @@ const SaveGraphs = forwardRef((props, ref) => {
             time: performance.now()
         });
 
-        if (!ref) return;
+        if (!ref) {
+            setTimeout(() => {
+                console.log("what about now?", {
+                    refidx: graphIdxRef.current,
+                    stateIdx: currGraphBuildIdx,
+                    ref: currGraphRef?.current,
+                    time: performance.now()
+                })
+                if (!currGraphRef?.current) return;
+                currGraphRef.current.layoutRender();
+            }, 1000)
+            return;
+        };
 
         if (currGraphBuildIdx !== idx){
             return;
@@ -209,61 +216,6 @@ const SaveGraphs = forwardRef((props, ref) => {
         console.log("header", state.vectorsHeaders[idx])
         console.log("thisGraph", thisGraph);
         switch (phaseRef.current) {
-
-            // case BuildPhase.APPLY_SETTINGS: {
-            //     console.log("APPLY_SETTINGS", {
-            //         refidx: idx,
-            //         stateIdx: currGraphBuildIdx,
-            //         ref: ref,
-            //         time: performance.now()
-            //     });
-
-            //     console.log("APPLY_SETTINGS", idx);
-
-            //     ref.applyNodeColor('pos', thisGraph.PosNodeColor.current?.value);
-            //     ref.applyNodeColor('neg', thisGraph.NegNodeColor.current?.value);
-            //     ref.applyOpacity(thisGraph.Opacity.current?.value);
-            //     ref.applyNodeSize(thisGraph.NodeSize.current?.value);
-            //     ref.applyLayout(thisGraph.Layout.current?.value, false);
-
-            //     let waitApply = 0;
-            //     if (thisGraph.Opacity.current?.value !== thisGraph.Opacity.default?.value) {
-            //         console.log(thisGraph.Opacity.current)
-            //         console.log(thisGraph.Opacity.default)
-            //         waitApply++;
-            //     }
-            //     if (thisGraph.NodeSize.current?.value !== thisGraph.NodeSize.default?.value) {
-            //         console.log(thisGraph.NodeSize.current)
-            //         console.log(thisGraph.NodeSize.default)
-            //         waitApply++;
-            //     }
-            //     if (thisGraph.PosNodeColor.current?.value !== thisGraph.PosNodeColor.default?.value) {
-            //         console.log(thisGraph.PosNodeColor.current)
-            //         console.log(thisGraph.PosNodeColor.default)
-            //         // waitApply++;
-            //     }
-            //     if (thisGraph.NegNodeColor.current?.value !== thisGraph.NegNodeColor.default?.value) {
-            //         console.log(thisGraph.NegNodeColor.current)
-            //         console.log(thisGraph.NegNodeColor.default)
-            //         // waitApply++;
-            //     }
-            //     if (thisGraph.Layout.current?.value !== thisGraph.Layout.default?.value) {
-            //         console.log(thisGraph.Layout.current)
-            //         console.log(thisGraph.Layout.default)
-            //         // waitApply++;
-            //     }
-
-            //     numApplyedRef.current = waitApply;
-
-            //     if (waitApply === 0) {
-            //         phaseRef.current = BuildPhase.SAVE;
-            //     }
-            //     else{
-            //         phaseRef.current = BuildPhase.WAIT_FOR_LAYOUT;
-            //     }
-
-            //     return;
-            // }
 
             case BuildPhase.APPLY_SETTINGS: {
                 console.log("APPLY_SETTINGS", idx);
@@ -312,8 +264,13 @@ const SaveGraphs = forwardRef((props, ref) => {
 
             case BuildPhase.APPLY_POSITIONS: {
                 console.log("APPLY_POSITIONS", idx);
+                const forceRender = thisGraph.Layout.current?.value === thisGraph.Layout.default?.value;
                 ref.applyLayout(thisGraph.Layout.current?.value, false);
                 phaseRef.current = BuildPhase.WAIT_FOR_LAYOUT;
+                // if (forceRender) {
+                //     console.log("force render");
+                //     ref.layoutRender();
+                // }
                 return;
             }
 
@@ -376,70 +333,6 @@ const SaveGraphs = forwardRef((props, ref) => {
             default:
             return;
         }
-        
-        // if (currGraphBuildIdx === null || !currGraphRef || !currGraphRef.current) return;
-
-        // console.log("building graph " + currGraphBuildIdx);
-        // const thisGraph = graphsStatus[state.vectorsHeaders[currGraphBuildIdx] as keyof GraphsStatus];
-        // const thisGraphRef = currGraphRef.current;
-
-        // if (thisGraphRef === null) return;
-        // if (thisGraph.Layout.current === null || thisGraph.NodeSize.current === null || thisGraph.Opacity.current === null || thisGraph.fileType.current === null || thisGraph.PosNodeColor.current === null || thisGraph.NegNodeColor.current === null){
-        //     return;
-        // }
-
-        // if (firstTime && thisGraph.Layout.current.value !== thisGraph.Layout.default.value){
-        //     console.log("first time");
-        //     thisGraphRef.applyOpacity(thisGraph.Opacity.current.value);
-        //     thisGraphRef.applyNodeSize(thisGraph.NodeSize.current.value);
-        //     thisGraphRef.applyNodeColor('pos', thisGraph.PosNodeColor.current.value);
-        //     thisGraphRef.applyNodeColor('neg', thisGraph.NegNodeColor.current.value);
-        //     thisGraphRef.applyLayout(thisGraph.Layout.current.value, false);
-        //     setFirstTime(false);
-        // }
-        // else{
-        //     console.log("not first time");
-        //     blobsRef.current[currGraphBuildIdx] = thisGraphRef.getGraphBlob(thisGraph.fileType.current.value);
-        //     // blobs[currGraphBuildIdx] = thisGraphRef.getGraphBlob(thisGraph.fileType.current.value);
-        //     if (currGraphBuildIdx + 1 === state.vectorsHeaders.length) {
-        //         console.log("all graphs built");
-        //         setCurrGraphData(null);
-        //         setCurrGraphBuildIdx(null);
-        //         actions.updateIsLoading({ isLoading: false });
-        //         console.log(blobsRef.current);
-        //         zipBlobs(
-        //             blobsRef.current.map((blob, i) => ({
-        //                 filename: state.vectorsHeaders[i] + "." + graphsStatus[state.vectorsHeaders[i] as keyof GraphsStatus].fileType.current?.value,
-        //                 blob: blob as Blob
-        //             }))
-        //         ).then((zipBlob) => {
-        //             const url = URL.createObjectURL(zipBlob);
-        //             const a = document.createElement("a");
-        //             a.href = url;
-        //             a.download = "graphs.zip";
-        //             a.click();
-        //             URL.revokeObjectURL(url);
-        //         });
-        //         // zipBlobs(blobsRef.current.map((blob, index) => ({ filename: state.vectorsHeaders[index] + ".png", blob: blob as Blob }))).then((zipBlob) => {
-        //         //     const url = URL.createObjectURL(zipBlob);
-        //         //     const a = document.createElement("a");
-        //         //     a.href = url;
-        //         //     a.download = "graphs.zip";
-        //         //     a.click();
-        //         //     URL.revokeObjectURL(url);
-        //         // })
-        //     }
-        //     else{
-        //         const val = await get(state.vectorsHeaders[currGraphBuildIdx] + "_graph");
-        //         if (val) {
-        //             val as { graphData: ICustomGraphData, thresholds: threshMap };
-        //             console.log("updating graph data");
-        //             setCurrGraphData(val.graphData);
-        //             setFirstTime(true);
-        //             setCurrGraphBuildIdx((prev: number | null) => prev === null ? null : prev + 1);
-        //         }
-        //     }
-        // }
     }
 
     async function zipBlobs(files: FileEntry[]): Promise<Blob> {
@@ -451,20 +344,6 @@ const SaveGraphs = forwardRef((props, ref) => {
 
         return zip.generateAsync({ type: "blob" });
     }
-
-    // useEffect(() => {
-    //     if (currGraphBuildIdx === null && blobs.length > 0) {
-    //         // console.log(blobs);
-    //         // zipBlobs(blobs.map((blob, index) => ({ filename: state.vectorsHeaders[index] + ".png", blob: blob as Blob }))).then((zipBlob) => {
-    //         //     const url = URL.createObjectURL(zipBlob);
-    //         //     const a = document.createElement("a");
-    //         //     a.href = url;
-    //         //     a.download = "graphs.zip";
-    //         //     a.click();
-    //         //     URL.revokeObjectURL(url);
-    //         // })
-    //     }
-    // }, [currGraphBuildIdx])
 
 
     const handleError = (err: string) => {

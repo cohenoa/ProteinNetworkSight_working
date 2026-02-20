@@ -88,14 +88,38 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     animate: false,
     positions: false,
     stop: async function() {
+      console.log("layout stop on cytoscape");
       setLayoutStop(true);
       alertLoading();
+      // setTimeout(() => {
+      //   alertLoading();
+      // }, 100);
     }
   });
+
+  const setRef = (el: HTMLDivElement | null) => {
+    if (typeof ref === "function") ref(el);
+    else if (ref) ref.current = el;
+
+    if (el) {
+      // graphReadyResolveRef.current?.();
+    }
+  };
 
   const [layoutStop, setLayoutStop] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // useEffect(() => {
+  //   if (layoutStop) {
+  //     if (ref) {
+  //       alertLoading();
+  //     }
+  //     else{
+  //       console.log("no ref");
+  //     }
+  //   }
+  // }, [layoutStop]);
 
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
@@ -432,6 +456,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
   const applyLayout = async (name: SupportedLayout, animate: boolean) => {
     if (cyRef.current) {
+      // setLayoutStop(false);
       if (name === supportedSettings.layouts.PRESET) {
         if (!await applySavedGraph()) {
           alert("there is no saved layout. \nto save a layout open the submenu and click 'save'");
@@ -452,6 +477,7 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
 const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
   console.log("setting node color");
+  // setLayoutStop(false);
 
   cyRef.current?.nodes().forEach(function(node){
     node.data('color', (node.data('positive') !== (nodeType === 'pos')) ? node.data('color') : color);
@@ -471,6 +497,7 @@ const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
 }
 const applyNodeSize = (size: SupportedNodeSize) => {
   console.log("setting node size");
+  // setLayoutStop(false);
   cyRef.current?.nodes().forEach(function(node){
     node.data('size', (parseInt(node.data('size')) / curNodeSize) * size);
   });
@@ -478,6 +505,7 @@ const applyNodeSize = (size: SupportedNodeSize) => {
 }
 const applyOpacity = (op: SupportedOpacity) => {
   console.log("setting opacity");
+  // setLayoutStop(false);
   const newStyle = [myStyle[0], {...(myStyle[1])}];
   newStyle[1].style.opacity = op;
   setMyStyle(newStyle);
