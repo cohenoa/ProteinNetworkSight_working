@@ -18,6 +18,7 @@ import {
 import JSZip from "jszip";
 import { time } from "console";
 import { use } from "cytoscape";
+import LoadingBarComponent from "./LoadingBar";
 
 type FileEntry = {
   filename: string;
@@ -264,13 +265,8 @@ const SaveGraphs = forwardRef((props, ref) => {
 
             case BuildPhase.APPLY_POSITIONS: {
                 console.log("APPLY_POSITIONS", idx);
-                const forceRender = thisGraph.Layout.current?.value === thisGraph.Layout.default?.value;
                 ref.applyLayout(thisGraph.Layout.current?.value, false);
                 phaseRef.current = BuildPhase.WAIT_FOR_LAYOUT;
-                // if (forceRender) {
-                //     console.log("force render");
-                //     ref.layoutRender();
-                // }
                 return;
             }
 
@@ -280,9 +276,6 @@ const SaveGraphs = forwardRef((props, ref) => {
                     refidx: idx,
                     numApplyWait: numApplyedRef.current,
                 });
-                // console.log("Next step: save");
-                // phaseRef.current = BuildPhase.SAVE;
-                // ref.layoutRender();
                 
                 if (numApplyedRef.current > 0) {
                     numApplyedRef.current -= 1;
@@ -496,9 +489,24 @@ const SaveGraphs = forwardRef((props, ref) => {
         )
     }
 
+    const getPercentage = () => {
+        const fullBar = state.vectorsHeaders.length + 1
+        if (currGraphBuildIdx === null) return 0
+        return Math.round(((1 + currGraphBuildIdx) / fullBar) * 100)
+    }
+
+    const getLabel = () => {
+        if (currGraphBuildIdx === null) return "getting graphs's data"
+        return "Building graph " + state.vectorsHeaders[currGraphBuildIdx]
+    }
+
     return state.isLoading ? (
         <div className="SaveGraphWrapper">
-            <LoadingComponent />
+            {/* <LoadingComponent /> */}
+            <LoadingBarComponent
+                percent={getPercentage()} 
+                label={getLabel()}
+            />
             {renderInvisibleGraph()}
         </div>
     ) : (
