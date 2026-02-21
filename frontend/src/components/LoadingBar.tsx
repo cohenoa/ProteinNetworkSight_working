@@ -11,8 +11,6 @@ const LoadingBarComponent: FC<{percent: number, label: string}> = ({percent, lab
         Please be patient, this may take a few minutes (depending on the data
         size).
       </p>
-      {/* <ClipLoader size={80} color="#217BF4" /> */}
-      {/* <ProgressBar now={0} label={`${0}% - ${"hello"}`} /> */}
       <Progress percent={percent} label={`${percent}% - ${label}`} />
     </div>
   );

@@ -7,8 +7,6 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
 
   const [isLoadingUniprot, setIsLoadingUniprot] = useState(false);
 
-  console.log(node);
-
   function getDrugComponent() {
     if (node == undefined || node.drug == undefined || node.drug.length == 0) {
       return "drug not found";
@@ -75,8 +73,12 @@ const Panel: FC<IPanelProps> = ({ node, organism, onClickClose }) => {
       </div>
       <div>
         <p className="paragraph-style">
-          <span className="panel-container-span">ID:</span>
+          <span className="panel-container-span">Name:</span>
           {node?.id}
+        </p>
+        <p className="paragraph-style">
+          <span className="panel-container-span">STRING Name:</span>
+          {node?.string_name}
         </p>
         <p>
           <span className="panel-container-span">Organism:</span>

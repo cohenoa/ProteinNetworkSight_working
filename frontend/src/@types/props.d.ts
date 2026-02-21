@@ -83,7 +83,7 @@ export interface IGraphBarProps {
   setOpenTable: React.Dispatch<React.SetStateAction<boolean>>;
   nodesNum: number;
   linksNum: number;
-  clickedVector: string;
+  filteredNodes: {orgName: string; stringName: string}[];
   thresholds: threshMap;
   setThresholds: React.Dispatch<React.SetStateAction<threshMap>>;
 }

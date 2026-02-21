@@ -1,8 +1,8 @@
 import type { NodeObject, LinkObject, GraphData } from "react-force-graph-3d";
 
 export interface ICustomNode extends NodeObject {
-  originalName?: string;
-  string_name?: string;
+  id: string;
+  string_name: string;
   info: string;
   color: string;
   size: number;

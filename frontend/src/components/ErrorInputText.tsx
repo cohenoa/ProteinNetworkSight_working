@@ -46,7 +46,7 @@ const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName, stringName }) => {
 
   const getStringId = (name: string) => {
     const body = JSON.stringify({
-      name: name,
+      name: name.trim(),
       organism: state.organism.value,
     });
     console.log("body: ", body);
@@ -69,20 +69,12 @@ const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName, stringName }) => {
         const newNamesMap = {
           ...namesStringMap,
           [orgName]: {
-            stringName: enteredName,
+            stringName: enteredName.trim(),
             stringId: stringId,
           },
         };
         set("namesStringMap", newNamesMap);
       })
-      // const newNamesMap = {
-      //   ...state.namesStringMap,
-      //   [orgName]: {
-      //     stringName: enteredName,
-      //     stringId: stringId,
-      //   },
-      // };
-      // actions.updateNamesMap({ namesStringMap: newNamesMap });
     }
     setSmallLoad(false)
     actions.updateIsLoading({isLoading: false});

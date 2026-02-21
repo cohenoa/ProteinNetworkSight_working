@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useImperativeHandle, forwardRef, useRef, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useImperativeHandle, forwardRef, useRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
 import { get, getMany, setMany } from 'idb-keyval';
@@ -8,16 +8,13 @@ import { ICustomAllGraphData, ICustomGraphData } from "../@types/graphs";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
 import "../styles/SaveGraphs.css";
 import { graphRef } from "../@types/props";
-import { GraphSettings, GraphsStatus, SupportedLayout, getWindowSelectItem } from "../common/GraphSettings";
-import LoadingComponent from "./Loading";
+import { GraphSettings, GraphsStatus, getWindowSelectItem } from "../common/GraphSettings";
 import { copySettings, baseDownloadAllGraphSetting, supportedSettings, getWindowSelectItemByValue } from "../common/GraphSettings";
 import {
   INamesStringMap,
   threshMap,
 } from "../@types/global";
 import JSZip from "jszip";
-import { time } from "console";
-import { use } from "cytoscape";
 import LoadingBarComponent from "./LoadingBar";
 
 type FileEntry = {
@@ -53,13 +50,10 @@ const SaveGraphs = forwardRef((props, ref) => {
     const [currGraphBuildIdx, setCurrGraphBuildIdx] = useState<number | null>(null);
     const [currGraphData, setCurrGraphData] = useState<ICustomGraphData | null>(null);
     const [currGraphRef, setCurrGraphRef] = useState<graphRef>();
-    const [lastCalled, setLastCalled] = useState<{time: number, phase: BuildPhase}>({time: 0, phase: BuildPhase.IDLE});
 
     const graphIdxRef = useRef<number>(0);
     const phaseRef = useRef<BuildPhase>(BuildPhase.IDLE);
     const numApplyedRef = useRef<number>(0);
-
-    // const [blobs, setBlobs] = useState<(Blob | null)[]>([]);
     const blobsRef = useRef<(Blob | null)[]>([]);
 
     const getData = async () => {
