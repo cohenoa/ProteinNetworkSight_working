@@ -3,13 +3,12 @@ import { Link } from "react-router-dom";
 import "../styles/Home.css";
 import "../styles/Button.css";
 import { openLink } from "../common/GeneralCommon";
-import homeImageLight from "../assets/HomeImageBLWhite.png";
+import homeImageLight from "../assets/HomeImageSCWhite.png";
 const gitLink = "https://github.com/cohenoa/ProteinNetworkSight_working";
 
 export const HomePage: FC = () => {
   return (
     <div className="prompt" style={{ backgroundImage: `url(${homeImageLight})`, backgroundRepeat: "no-repeat", backgroundSize: "cover" }}>
-      {/* <img src={homeImage} alt="homeImage" /> */}
       <h1>
         Simultaneous building
         <br /> of multiple molecular
