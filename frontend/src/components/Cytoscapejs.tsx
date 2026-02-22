@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
-import { graphRef, IGraphProps } from "../@types/props";
+import { IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
 import "../styles/Button.css";
 import CytoscapeComponent from "react-cytoscapejs";

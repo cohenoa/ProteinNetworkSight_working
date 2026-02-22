@@ -1,6 +1,4 @@
 import { FC } from "react";
-// import ClipLoader from "react-spinners/ClipLoader";
-// import ProgressBar from 'react-bootstrap/ProgressBar';
 import "../styles/Loading.css";
 
 const LoadingBarComponent: FC<{percent: number, label: string}> = ({percent, label}) => {

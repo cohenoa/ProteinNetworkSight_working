@@ -9,7 +9,7 @@ const GraphBar: FC<IGraphBarProps> = ({
   setOpenTable,
   nodesNum,
   linksNum,
-  filteredNodes,
+  missingNodes,
   thresholds,
   setThresholds,
 }) => {
@@ -17,7 +17,6 @@ const GraphBar: FC<IGraphBarProps> = ({
     pos: thresholds.pos,
     neg: thresholds.neg,
   });
-  console.log("filteredNodes: ", filteredNodes)
 
   const setPos = (posValue: number) => {
     setTempThresholds((curr: threshMap) => {
@@ -50,10 +49,10 @@ const GraphBar: FC<IGraphBarProps> = ({
         <div className="graph-info">
           Nodes: {nodesNum}, Links: {linksNum}
           {CollapseSection({
-            label: "Filtered Nodes",
-            children: filteredNodes.map((node) => (
-              <div key={node.orgName + node.stringName}>
-                {`${node.orgName}(${node.stringName})`}
+            label: "Missing Nodes",
+            children: missingNodes.map((node) => (
+              <div key={node.orgName + node.value}>
+                {`${node.orgName}(${node.value.toFixed(3)})`}
               </div>
             )),
           })

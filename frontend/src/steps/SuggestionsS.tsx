@@ -10,7 +10,7 @@ import {
   updateNamesMap,
   updateIsLoading,
 } from "../common/UpdateActions";
-import { set, setMany, get, getMany } from "idb-keyval";
+import { set, get, getMany } from "idb-keyval";
 import "../styles/StringSuggestions.css";
 import Switchable from "../components/Switchable";
 import { INamesStringMap } from "../@types/global";

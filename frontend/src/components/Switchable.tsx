@@ -3,7 +3,6 @@ import { ISwitchableProps } from "../@types/props";
 import Switch, { Item } from "react-switchable-next";
 import "react-switchable-next/dist/index.esm.css";
 import { INamesStringMap } from "../@types/global";
-import { useStateMachine } from "little-state-machine";
 import "../styles/Switchable.css";
 
 const Switchable: FC<ISwitchableProps> = ({setNamesStringMap, orgName, suggestions, selected}) => {

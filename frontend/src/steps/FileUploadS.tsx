@@ -83,7 +83,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
     const fileType = file.name.split(".").pop()?.toLowerCase();
     if (!fileType || !["xlsx", "csv", "tsv"].includes(fileType)) {
-      setHasError("Invalid file format. Please upload an XLSX or CSV file.");
+      setHasError("Invalid file format. Please upload an XLSX, CSV or TSV file.");
       return;
     }
 

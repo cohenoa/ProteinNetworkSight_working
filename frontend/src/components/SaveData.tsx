@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
-import { get, getMany } from 'idb-keyval';
+import { getMany } from 'idb-keyval';
 import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig, nameStatus, replaceNameStatus } from "../@types/props";
 import { write, utils } from "xlsx";
 import { INamesStringMap } from "../@types/global";
-import { stat } from "fs";
 
 const SaveData = forwardRef((props, ref) => {
 

@@ -31,7 +31,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     nodes: [],
     links: [],
   });
-  const [filteredNodes, setFilteredNodes] = useState<{orgName: string; stringName: string}[]>([]);
+  const [missingNodes, setMissingNodes] = useState<{orgName: string, value: number}[]>([]);
   const [openTable, setOpenTable] = useState<boolean>(false);
   const [thresholds, setThresholds] = useState<threshMap>({
     pos: state.thresholds[clickedVector].pos,
@@ -113,6 +113,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
           const idsList: number[] = [];
           const stringNames: string[] = [];
           const proteins: string[] = [];
+          const missing: {orgName: string, value: number}[] = [];
 
           let values_map: { [key: string]: number } = {};
           for (let i = 0; i < values_arr.length; i++) {
@@ -120,10 +121,23 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
           }
 
           Object.entries(namesStringMap as INamesStringMap).forEach(([orgName, { stringName, stringId }]) => {
-            idsList.push(stringId);
-            stringNames.push(stringName);
-            proteins.push(orgName);
+            // idsList.push(stringId);
+            // stringNames.push(stringName);
+            // proteins.push(orgName);
+            const val = values_map[orgName];
+            if (val > state.thresholds[clickedVector].pos || val < state.thresholds[clickedVector].neg) {
+              if (stringName === "other"){
+                missing.push({orgName: orgName, value: val});
+              }
+              else{
+                idsList.push(stringId);
+                stringNames.push(stringName);
+                proteins.push(orgName);
+              }
+            }
           });
+
+          setMissingNodes(missing);
 
           const body = {
             values_map: values_map,
@@ -150,17 +164,23 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
       thresholds: {...state.thresholds[clickedVector]} as threshMap,
     });
     console.log("graph data: ", tempGraphData);
-    get("namesStringMap").then((namesStringMap: INamesStringMap) => {
-      const graphNodes: string[] = tempGraphData.nodes.map((node) => node.id);
-      console.log("graphNodes in results: ", graphNodes);
-      const filteredNodes: { orgName: string; stringName: string }[] = Object.entries(namesStringMap)
-        .filter(([orgName, { stringName, stringId }]) => !graphNodes.includes(orgName) || stringName !== "other")
-        .map(([orgName, { stringName, stringId }]) => {
-          return { orgName: orgName, stringName: stringName };
-        });
-        console.log("filteredNodes in results: ", filteredNodes);
-      setFilteredNodes(filteredNodes);
-    });
+    // getMany([clickedVector + "_data", "namesStringMap"]).then(([values_arr, namesStringMap]) => {
+    //   const graphNodes: string[] = tempGraphData.nodes.map((node) => node.id);
+    //   console.log("graphNodes in results: ", graphNodes);
+
+    //   let values_map: { [key: string]: number } = {};
+    //   for (let i = 0; i < values_arr.length; i++) {
+    //     values_map[ids_arr[i]] = values_arr[i];
+    //   }
+
+    //   const filteredNodes: { orgName: string; stringName: string }[] = Object.entries(namesStringMap)
+    //     .filter(([orgName, { stringName, stringId }]) => !graphNodes.includes(orgName) || stringName === "other")
+    //     .map(([orgName, { stringName, stringId }]) => {
+    //       return { orgName: orgName, stringName: stringName };
+    //     });
+    //     console.log("filteredNodes in results: ", filteredNodes);
+    //   // setFilteredNodes(filteredNodes);
+    // });
     actions.updateIsLoading({ isLoading: false });
   };
 
@@ -183,7 +203,7 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
               setOpenTable={setOpenTable}
               nodesNum={graphData.nodes.length}
               linksNum={graphData.links.length}
-              filteredNodes={filteredNodes}
+              missingNodes={missingNodes}
               thresholds={thresholds}
               setThresholds={setThresholds}
             />

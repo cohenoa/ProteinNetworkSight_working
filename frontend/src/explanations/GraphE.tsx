@@ -1,7 +1,7 @@
 import { FC } from "react";
 import "../styles/Explanation.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faDiagramProject, faDownload, faFloppyDisk, faArrowPointer, faPencil, faComputerMouse, faBrush, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faDiagramProject, faDownload, faFloppyDisk, faArrowPointer, faPencil, faComputerMouse, faBrush, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 
 const GraphExplanation: FC = () => {
   return (
@@ -16,13 +16,17 @@ const GraphExplanation: FC = () => {
       </p>
       <p className="please">
         in this page you can interact with individual graphs. 
-        if you wish to make download your data or all the graphs at once click the "save" button below
+        if you wish to download your data or all the graphs at once click the "save" button below
       </p>
       <ul>
         <span>Nodes:</span>
         <li className="must-item">
           <i className="fa fa-question-circle-o" style={{ color: "black" }} />
           Network nodes represent proteins \ genes.
+        </li>
+        <li className="must-item">
+          <i className="fa fa-question-circle-o" style={{ color: "black" }} />
+          Missing nodes passed the thresholds but have no STRING match. Find them a match in the previous step to see them on the graph.
         </li>
         <li className="must-item">
           <i className="fa fa-circle" style={{ color: "blue" }} />
@@ -79,11 +83,11 @@ const GraphExplanation: FC = () => {
         </li>
         <li className="must-item">
           <FontAwesomeIcon className="icon" icon={faFloppyDisk} fixedWidth={true} style={{ fontSize: "20px" }}/>
-          like your graph? Save it for future use! go to Layouts -{">"} Preset -{">"} save
+          like the layout? Save it so you can come back to it later!
         </li>
         <li className="must-item">
           <FontAwesomeIcon className="icon" icon={faFloppyDisk} fixedWidth={true} style={{ fontSize: "20px" }}/>
-          to reload your saved graph go to Layouts -{">"} Preset -{">"} load
+          reload your saved graph from the right click menu
         </li>
         <li className="must-item">
           <FontAwesomeIcon className="icon" icon={faDownload} fixedWidth={true} style={{ fontSize: "20px" }}/>
