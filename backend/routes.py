@@ -110,6 +110,7 @@ def calc_all_graph_data():
     proteins = request_data["proteins"]
     string_names = request_data["string_names"]
     ids = request_data["ids"]
+    score_thresh = request_data["score_thresh"]
 
     with pgdb.get_connection() as con:
 
@@ -117,7 +118,6 @@ def calc_all_graph_data():
             values_map = data["values_map"]
             thresh_pos = data["thresh_pos"]
             thresh_neg = data["thresh_neg"]
-            score_thresh = data["score_thresh"]
 
             clean_ids, id_to_nodes = clean_data(proteins, ids, string_names, values_map, thresh_pos, thresh_neg)
             with con.cursor() as cur:

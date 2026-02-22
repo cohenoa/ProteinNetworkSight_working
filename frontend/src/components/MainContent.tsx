@@ -132,26 +132,20 @@ const MainContent = () => {
         className: "btn btn--primary btn--wide",
         onClick: () => {
           if (saveFormRef.current) {
-            const formData = saveFormRef.current.getFormData();
-            console.log('Data from Son:', formData);
+            saveFormRef.current.getFormData();
+            // saveFormRef.current;
+            // console.log('Data from Son:', formData);
           }
           else{
             console.log("formRef is null: " + saveFormRef);
           }
           console.log('clicked button');
-          
         },
       }
       bar.push(saveButton);
     }
 
-    console.log(bar);
-
-    let formID = "form" + step;
-
-    console.log(formID);
-
-    return <ButtonsBar formId={formID} buttons={bar}></ButtonsBar>;
+    return <ButtonsBar formId={"form" + step} buttons={bar}></ButtonsBar>;
   }
 
   return (

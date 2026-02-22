@@ -6,10 +6,10 @@ import { updateFileUpload, updateFileName, updateIsLoading, updatestringNames, u
 import { clearAction } from "../common/ClearAction";
 import "../styles/FileUpload.css";
 import { getExampleFile } from "../common/ExampleFileAction";
-import { set } from "idb-keyval";
+import { set, setMany, clear } from "idb-keyval";
 import { INamesStringMap } from "../@types/global";
 
-const MAX_ROWS = 2000;
+const MAX_ROWS = 20000;
 
 const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const { state, actions } = useStateMachine({
@@ -28,6 +28,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   useEffect(() => {
     actions.clearAction();
+    clear();
   }, []);
 
   useEffect(() => {
@@ -50,6 +51,7 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
   const useExampleFile = () => {
     actions.clearAction();
+    clear();
     actions.updateFileName({ fileName: "example_data.xlsx" });
     setIsExampleFile(true);
     setHasError(null);
@@ -61,9 +63,16 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
     if (isExampleFile) {
       console.log("using example file");
-      actions.updateFileUpload(getExampleFile());
-      set(state.fileName, getExampleFile());
-      goNextStep();
+      // actions.updateFileUpload(getExampleFile());
+      const {json, headers} = getExampleFile();
+      actions.updateFileUpload({headers: headers});
+      set("json", json).then(() => {
+        goNextStep();
+      })
+      .catch(error => {
+        console.log(error);
+        setHasError("Failed to load example file.");
+      });
       return;
     }
 
@@ -73,8 +82,8 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     }
 
     const fileType = file.name.split(".").pop()?.toLowerCase();
-    if (!fileType || !["xlsx", "csv"].includes(fileType)) {
-      setHasError("Invalid file format. Please upload an XLSX or CSV file.");
+    if (!fileType || !["xlsx", "csv", "tsv"].includes(fileType)) {
+      setHasError("Invalid file format. Please upload an XLSX, CSV or TSV file.");
       return;
     }
 
@@ -164,14 +173,10 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
     const seen = new Set<string>();
     let num_invalid = 0;
     let num_duplicates = 0;
-    let invalid_sample: any[] = [];
 
     const filtered_data = data.filter(row => {
       const key = row[0];
       if (key === undefined || key === null || key === "" || typeof key !== 'string') {
-        if (num_invalid < 10){
-          invalid_sample.push(row);
-        }
         num_invalid++;
         return false;
       };
@@ -185,7 +190,6 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
     console.log("num duplicates: " + num_duplicates);
     console.log("num invalid: " + num_invalid);
-    console.log(invalid_sample);
 
     return { filtered_data, num_invalid, num_duplicates };
   }
@@ -198,15 +202,19 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       if (row[1]) {
         namesStringMap[row[0]] = { stringId: row[2], stringName: row[1] };
       } else {
-        namesStringMap[row[0]] = { stringId: "0", stringName: "" };
+        namesStringMap[row[0]] = { stringId: 0, stringName: "other" };
       }
       row.splice(1, 2);
     });
 
     headers = headers.filter(h => h !== "STRING id" && h !== "STRING Name");
-    actions.updateFileUpload({ json: fileData, headers });
-    actions.updateNamesMap({ namesStringMap });
-    goNextStep();
+    setMany([
+      ["json", fileData],
+      ["namesStringMap", namesStringMap]
+    ]).then(() => {
+      actions.updateFileUpload({headers: headers});
+      goNextStep();
+    })
   };
 
   const uploadFileData = (fileData: any[][], headers: string[]) => {
@@ -214,9 +222,10 @@ const FileUploadStep: FC<IStepProps> = ({ step, goNextStep }) => {
       setHasError("File is empty or invalid.");
       return;
     }
-    actions.updateFileUpload({ json: fileData, headers });
-    set(state.fileName, {json: fileData, headers: headers});
-    goNextStep();
+    actions.updateFileUpload({headers: headers});
+    set("json", fileData).then(() => {
+      goNextStep();
+    });
   };
 
   return (

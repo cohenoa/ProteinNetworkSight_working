@@ -8,6 +8,7 @@ import "react-toggle/style.css";
 import "../styles/ErrorInputText.css";
 import Toggle from "react-toggle";
 import { ClipLoader } from "react-spinners";
+import { get, set } from "idb-keyval";
 
 enum validOption {
   noValue,
@@ -16,25 +17,39 @@ enum validOption {
   valid,
 }
 
-const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName }) => {
+const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName, stringName }) => {
   const { state, actions } = useStateMachine({ updateNamesMap, updateIsLoading });
-  const [enteredName, setEnteredName] = useState<string>(state.namesStringMap[orgName]?.stringId !== "0" ? state.namesStringMap[orgName].stringName : "");
+  const [enteredName, setEnteredName] = useState<string>(stringName);
   const [smallLoad, setSmallLoad] = useState<boolean>(false);
-  const [isValid, setIsValid] = useState<validOption>(state.namesStringMap[orgName]?.stringId !== "0" ? validOption.valid : validOption.noValue);
-  const [isChecked, setIsChecked] = useState<boolean>(state.namesStringMap[orgName]?.stringId !== "0" ? true : false);
+  const [isValid, setIsValid] = useState<validOption>(stringName !== "" ? validOption.valid : validOption.noValue);
+  const [isChecked, setIsChecked] = useState<boolean>(stringName !== "" ? true : false);
 
   useEffect(() => {
     if (!isChecked) {
       setIsValid(validOption.disabled);
+      if (enteredName !== ""){
+        get("namesStringMap").then((namesStringMap: any) => {
+        const newNamesMap = {
+          ...namesStringMap,
+          [orgName]: {
+            stringName: "other",
+            stringId: 0,
+          },
+        };
+        set("namesStringMap", newNamesMap);
+      })
+      }
       setEnteredName("");
     }
 
   }, [isChecked]);
+
   const getStringId = (name: string) => {
     const body = JSON.stringify({
-      name: name,
+      name: name.trim(),
       organism: state.organism.value,
     });
+    console.log("body: ", body);
 
     actions.updateIsLoading({isLoading: true});
     setSmallLoad(true)
@@ -44,19 +59,22 @@ const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName }) => {
   const handleJsonStringId = (jsonString: string) => {
     const stringObj: IStringIdJson = JSON.parse(jsonString);
     const stringId = stringObj.match_id;
+    console.log("stringId in response: ", stringId);
 
     if (stringId === "id not found") setIsValid(validOption.notValid);
     else {
       setIsValid(validOption.valid);
 
-      const newNamesMap = {
-        ...state.namesStringMap,
-        [orgName]: {
-          stringName: enteredName,
-          stringId: stringId,
-        },
-      };
-      actions.updateNamesMap({ namesStringMap: newNamesMap });
+      get("namesStringMap").then((namesStringMap: any) => {
+        const newNamesMap = {
+          ...namesStringMap,
+          [orgName]: {
+            stringName: enteredName.trim(),
+            stringId: stringId,
+          },
+        };
+        set("namesStringMap", newNamesMap);
+      })
     }
     setSmallLoad(false)
     actions.updateIsLoading({isLoading: false});
@@ -115,6 +133,7 @@ const ErrorInputText: FC<IErrorInputTextProps> = ({ orgName }) => {
       </div>
     </div>
   );
+  // return <></>
 };
 
 export default ErrorInputText;

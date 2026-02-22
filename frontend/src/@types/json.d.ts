@@ -18,17 +18,13 @@ type suggestion = {
 
 export interface ISuggestionsJson {
   perfect_match: {
-    //{name:id, name:id, name:id,..}
-    [key: string]: string;
+    [key: string]: number;
   };
 
   alternative_match: {
-    //{name:[{suggestion}{suggestion}{suggestion}],
-    // name:[{suggestion}{suggestion}{suggestion}],..}
-    [key: string]: { [key: string]: string };
+    [key: string]: { [key: string]: number };
   };
 
-  //[name, name, name,..]
   no_match: string[];
 }
 

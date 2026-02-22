@@ -9,7 +9,7 @@ const GraphBar: FC<IGraphBarProps> = ({
   setOpenTable,
   nodesNum,
   linksNum,
-  clickedVector,
+  missingNodes,
   thresholds,
   setThresholds,
 }) => {
@@ -48,6 +48,15 @@ const GraphBar: FC<IGraphBarProps> = ({
         {/* <h1 className="title">{clickedVector}</h1> */}
         <div className="graph-info">
           Nodes: {nodesNum}, Links: {linksNum}
+          {CollapseSection({
+            label: "Missing Nodes",
+            children: missingNodes.map((node) => (
+              <div key={node.orgName + node.value}>
+                {`${node.orgName}(${node.value.toFixed(3)})`}
+              </div>
+            )),
+          })
+          }
         </div>
         <div className="threashold-row">
           <label className="thresholdTitle" htmlFor="positiveThreshold">P. Threshold: </label>
@@ -86,5 +95,57 @@ const GraphBar: FC<IGraphBarProps> = ({
     </div>
   );
 };
+
+type CollapseSectionProps = {
+  label: string;
+  children: React.ReactNode;
+};
+
+function CollapseSection({ label, children }: CollapseSectionProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div style={{ position: "relative" }}>
+      {/* Header */}
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        {open ? "▼" : "▶"} {label}
+      </button>
+
+      {/* Floating panel */}
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            width: "fit-content",
+            maxHeight: "calc(100vh - 100px)",
+            overflowY: "scroll",
+            background: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: 6,
+            padding: 10,
+            marginTop: 4,
+            zIndex: 1000, // ensures it sits above the graph
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          }}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default GraphBar;

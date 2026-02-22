@@ -62,9 +62,15 @@
 }
 
 .t-img {
-  margin-top: 30px;
-  width: 100%;
-  height: 100%;
+  display: block;
+  margin: 30px auto 0;
+  max-width: 100%;
+  height: auto;
+  /* margin-top: 30px;
+  justify-self: center;
+  height: fit-content;
+  max-width: 100%;
+  display: flex; */
 }
 
 .t-li {

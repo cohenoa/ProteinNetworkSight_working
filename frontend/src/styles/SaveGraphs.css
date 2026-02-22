@@ -83,8 +83,12 @@
 }
 
 .InvisibleComponent {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1000;
     visibility: hidden;
-    height: 50%;
-    width: 100%;
+    height: 80%;
+    width: 80%;
     overflow-y: scroll;
 }

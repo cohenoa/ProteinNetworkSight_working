@@ -2,15 +2,16 @@ import { FC, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { IStepProps } from "../@types/props";
 import { useStateMachine } from "little-state-machine";
-import { updateFileDetails, updateIsLoading, updateThresholds } from "../common/UpdateActions";
+import { updateFileDetails, updateIsLoading, updateThresholds, updateShowError } from "../common/UpdateActions";
 import { OptionType } from "../@types/json";
 import WindowedSelect from "react-windowed-select";
 import ClipLoader from "react-spinners/ClipLoader";
 import {organism } from "../assets/OrganismFile";
 import "../styles/FileDetails.css";
-import { get, set } from 'idb-keyval';
+import { get, setMany } from 'idb-keyval';
 import { headers } from "../assets/DefualtFile";
-import Modal from '../components/thresholdModal';
+import ThresholdsModal from '../components/thresholdModal';
+import { threshMap } from "../@types/global";
 
 type formValues = {
   idHeader: string;
@@ -22,15 +23,15 @@ type formValues = {
   thresholds:{};
 };
 
-type vectorsValues = {
-  [key: string]: number[];
-};
+const defaultThresholds: threshMap = {pos: 0.08, neg: -0.08};
 
 const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
-  const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading ,updateThresholds});
+  const { state, actions } = useStateMachine({ updateFileDetails, updateIsLoading ,updateThresholds, updateShowError});
   const [selectedOption, setSelectedOption] = useState<OptionType>({...state.organism});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [proteins, setProteins] = useState<any[]>([]);
+
+  console.log(state);
+
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -40,149 +41,140 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   };
 
   const collectThresholds = async (thresholds: Array<Array<number>>) => {
-    var results = get(state.fileName).then((val) => {
-      console.log(val['headers']);
-      const mappedThresholds = thresholds.map((item, index) => ({[`${state.headers[index + 1]}`]: item}));
-      console.log("mappedThresholds: ", thresholds)
-      const resultObject = mappedThresholds.reduce((acc, item) => {
-        const key = Object.keys(item)[0]; // Extracting the key from the current object
-        acc[key] = item[key]; // Assigning the key-value pair to the accumulator object
-        return acc;
-      }, {} as { [key: string]: number[] });
-      console.log('modified thresholds: ', resultObject);
-      state.thresholds = resultObject
-      // console.log( state.thresholds["G1"])
-      // updateThresholds(state, {thresholds:resultObject})
-      actions.updateThresholds({ thresholds: resultObject });
-      return resultObject
-    });
+    const mappedThresholds = thresholds.map((item, index) => ({[`${state.headers[index + 1]}`]: item}));
+    console.log("mappedThresholds: ", mappedThresholds);
+    const resultObject = mappedThresholds.reduce((acc, item) => {
+      const key = Object.keys(item)[0];
+      acc[key] = {pos: item[key][0], neg: item[key][1]};
+      return acc;
+    }, {} as { [key: string]: threshMap });
+    actions.updateThresholds({thresholds: resultObject});
+    console.log("resultObject: ", resultObject);
     closeModal();
-    return results;
+    return resultObject
   }
-
-  // let proteins: any[];
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<formValues>();
 
-  useEffect(() => {
-    get(state.fileName).then((val) => {
-      setProteins(val['json']);
-    }).catch((err) => {
-      console.log('It failed!', err);
-      return;
-    });
-  }, []);
+  const onSubmit = async (data: formValues) => {
+    try {
+      actions.updateIsLoading({isLoading: true});
+      const rawProteins = await get("json");
+      const headers = state.headers;
 
-  // get(state.fileName).then((val) => {
-  //   const headers = val['headers'];
-    
-  // }).catch((err) => {
-  //   console.log('It failed!', err);
-  //   return;
-  // });
+      console.log("data before idHeader: ", data);
+      console.log(state.headers);
+      console.log(headers);
+      const idIndex = state.headers.indexOf(data.idHeader);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       collectThresholds( Array.from({ length: headers.length - 1}, () => [Number(state.positiveThreshold), Number(state.negativeThreshold)]))
-  //     } catch (err) {
-  //       console.log('It failed!', err);
-  //       return;
-  //     }
-  //   };
+      // Normalize protein names
+      const proteins = normalizeProteins(rawProteins, idIndex);
 
-  //   fetchData();
-  //   // console.log("state vector headers: ", state.vectorsHeaders);
-  // }, [state.positiveThreshold, state.negativeThreshold]);      // Move the code that depends on headers and proteins here
-
-
-  const onSubmit =  async (data: formValues) => {
-    console.log(new Error().stack);
-    console.log(state);
-    get(state.fileName).then((val) => {
-      console.log(val);
-      const headers = val['headers'];
-      // proteins = val['json'];
-      proteins.forEach((protein:string[]) => {
-        if (protein[0].includes(';')){
-          var otherNames = protein[0].split(';');
-          protein[0] = otherNames[0];
-          
-          if(protein[0].includes("_")){
-            var firstPart = protein[0].split("_")[0]
-            var newProtein = protein;
-
-            newProtein[0] = firstPart + "_" + otherNames[1];
-            // newProtein = newProtein + otherNames[1]
-            if(newProtein !== undefined){
-              // proteins = [...proteins,newProtein];
-              proteins.push(newProtein)
-            } 
-        }}
-        // dividing the "," and adding a new row with the same values and a new name. 
-        if(protein[0].includes(",")){
-          var otherNames = protein[0].split(',');
-          protein[0] = otherNames[0];      
-        }
-      })
-      const idIndex = headers.indexOf(data.idHeader);
-      const proteinsNames = proteins.map((row: any) => row[idIndex]);
-      
-      //  !!!OPTION - if we want to accept every _S and _T option. (it changes the value to be of _pY kind).!!!
-      
-      const vectorsHeaders: string[] = [];
-      const vectorsValues: vectorsValues = {};
-  
-      headers.forEach((header:string, index:number) => {
-        if (header.includes(data.vectorsPrefix)) {
-          vectorsHeaders.push(header);
-          const values = proteins.map((row: any) => row[index]);
-          vectorsValues[header] = values;
-        }
-      });
-      console.log("setting headers: ", headers);
-      console.log(vectorsHeaders);
-      set(state.fileName,{json: proteins, headers: headers, vectorsHeaders: vectorsHeaders, vectorsValues: vectorsValues})
-      if(Object.entries(state.thresholds).length === 0){
-        console.log("inside new object")
-        collectThresholds(Array.from({ length: headers.length - 1}, () => [Number(data.positiveThreshold), Number(data.negativeThreshold)])).then((result:{})=>{
-          console.log(result)
-          actions.updateFileDetails({
-            proteinsNames: proteinsNames,
-            scoreThreshold: data.scoreThreshold,
-            positiveThreshold: data.positiveThreshold,
-            negativeThreshold: data.negativeThreshold,
-            organism: selectedOption,
-            vectorsHeaders: vectorsHeaders,
-            thresholds:result,
-            // vectorsValues: vectorsValues,
-          });
-          goNextStep();
-        })
+      // Extract protein names
+      const proteinsNames = new Array(proteins.length);
+      for (let i = 0; i < proteins.length; i++) {
+        proteinsNames[i] = proteins[i][idIndex];
       }
-      else{
-        actions.updateFileDetails({
-          proteinsNames: proteinsNames,
-          scoreThreshold: data.scoreThreshold,
-          positiveThreshold: data.positiveThreshold,
-          negativeThreshold: data.negativeThreshold,
-          organism: selectedOption,
-          vectorsHeaders: vectorsHeaders,
-          thresholds:state.thresholds,
-          // vectorsValues: vectorsValues,
-        });
-        goNextStep();
-      // console.log(Object.keys(state.thresholds).length === 0);
-    }})
-    .catch((err) => {
-      console.log('It failed!', err);
-      return;
-    });
-        
+      console.log("proteinsNames: ", proteinsNames);
+
+      // Extract vectors (single header scan)
+      const vectorsHeaders: string[] = [];
+      const vectors: [IDBValidKey, any][] = [];
+
+      for (let h = 0; h < headers.length; h++) {
+        const header = headers[h];
+        if (!header.includes(data.vectorsPrefix)) continue;
+
+        vectorsHeaders.push(header);
+        const col: number[] = new Array(proteins.length);
+
+        for (let i = 0; i < proteins.length; i++) {
+          col[i] = Number(proteins[i][h]);
+        }
+        vectors.push([header + "_data", col]);
+      }
+
+      console.log("vectorsHeaders: ", vectorsHeaders);
+      console.log("vectors: ", vectors);
+      console.log("proteinsNames: ", proteinsNames);
+
+      await setMany([
+        ["proteinsNames", proteinsNames],
+        ...vectors
+      ]);
+
+      const thresholds = Object.keys(state.thresholds).length === 0 ? 
+      vectorsHeaders.reduce((acc, header) => ({...acc, [header]: defaultThresholds} as threshMap), {}) as {[key: string]: threshMap}
+        : state.thresholds;
+
+      console.log("thresholds: ", thresholds);
+
+      actions.updateFileDetails({
+        scoreThreshold: data.scoreThreshold,
+        organism: selectedOption,
+        vectorsHeaders: vectorsHeaders,
+        thresholds: thresholds,
+      });
+
+      actions.updateIsLoading({ isLoading: false });
+      goNextStep();
+    } catch (err) {
+      actions.updateIsLoading({ isLoading: false });
+      actions.updateShowError({ showError: true });
+      console.error("Upload processing failed", err);
+    }
+  };
+
+  function normalizeProteins(proteins_raw: any[], nameIndex: number): any[] {
+    const normalized: any[] = [];
+
+    for (let i = 0; i < proteins_raw.length; i++) {
+      const expanded = expandProteinRow(proteins_raw[i], nameIndex);
+      for (let j = 0; j < expanded.length; j++) {
+        normalized.push(expanded[j]);
+      }
+    }
+
+    return normalized;
+  }
+
+  function expandProteinRow(row: any[], nameIndex: number): any[][] {
+    const nameCell = row[nameIndex];
+    if (typeof nameCell !== "string") return [row];
+
+    // Split aliases (; or ,)
+    const aliases = nameCell.split(/[;,]/);
+    if (aliases.length === 1) return [row];
+
+    // Detect modification suffix from the first alias
+    let base = aliases[0];
+    let mod = "";
+
+    const underscoreIndex = base.indexOf("_");
+    if (underscoreIndex !== -1) {
+      mod = base.slice(underscoreIndex);
+      base = base.slice(0, underscoreIndex);
+    }
+
+    // Generate new rows
+    const result: any[][] = new Array(aliases.length);
+
+    for (let i = 0; i < aliases.length; i++) {
+      const alias = aliases[i].trim();
+      const aliasBase = alias.split("_")[0];
+      const finalName = mod ? aliasBase + mod : aliasBase;
+
+      const newRow = row.slice(); // shallow copy, fast
+      newRow[nameIndex] = finalName;
+      result[i] = newRow;
+    }
+
+    return result;
   }
   
   return (
@@ -264,17 +256,9 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               className="text-input"
               min={0}
               max={1}
-              defaultValue={state.positiveThreshold}
+              defaultValue={defaultThresholds.pos}
               required
-            {...register("positiveThreshold", {
-              validate: {
-                json: (v) => {
-                  // console.log(v);
-                  console.log("proteins: ", proteins);
-                  return proteins.some((res: any) => res.some((cell: number) => cell > 0 && cell > v)) || v==0
-                },
-              },
-            })}
+            {...register("positiveThreshold")}
           />
 
           {errors.positiveThreshold && errors.positiveThreshold.type === "json" && (
@@ -292,14 +276,9 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               className="text-input"
               min={-1}
               max={0}
-              defaultValue={state.negativeThreshold}
+              defaultValue={defaultThresholds.neg}
               required
-              {...register("negativeThreshold", {
-                validate: {
-                  json: (v) =>
-                    proteins.some((res: any) => res.some((cell: number) =>cell < 0 && cell <  v))||v==0,
-                },
-              })}
+              {...register("negativeThreshold")}
             />
     
             {errors.negativeThreshold && errors.negativeThreshold.type === "json" && (
@@ -347,14 +326,14 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
           )}
         </div>
 
-        <Modal 
+        {isModalOpen && <ThresholdsModal 
           isOpen={isModalOpen}
           onClose={closeModal}
           onConfirm={collectThresholds}
           length={state.headers.length - 1}
           headers={state.headers.slice(1)}
-          defaultValues={[state.positiveThreshold, state.negativeThreshold]}
-        />
+          defaultValues={{pos: Number(watch("positiveThreshold")), neg: Number(watch("negativeThreshold"))}}
+        />}
       </form>
   );
 

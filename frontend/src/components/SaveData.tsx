@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useStateMachine } from "little-state-machine";
 import { updateIsLoading, updateShowError } from "../common/UpdateActions";
-import { get } from 'idb-keyval';
+import { getMany } from 'idb-keyval';
 import "../styles/SaveData.css";
 import ButtonsBar from "../bars/FormNavigateBar";
 import { IButtonConfig, nameStatus, replaceNameStatus } from "../@types/props";
 import { write, utils } from "xlsx";
+import { INamesStringMap } from "../@types/global";
 
 const SaveData = forwardRef((props, ref) => {
 
@@ -19,20 +20,22 @@ const SaveData = forwardRef((props, ref) => {
 
     useImperativeHandle(ref, () => ({
         getFormData: async () => {
+            actions.updateIsLoading({ isLoading: true });
 
-            const val = await get(state.fileName);
+            const headersValues = columnsToRows(await getMany(state.headers.map((header) => header + "_data")));
+            const [namesStringMap, proteinsNames] = await getMany(["namesStringMap", "proteinsNames"]);
 
-            let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(Object.keys(val['vectorsValues']))];
+            let xlsxContent = [['UID', 'STRING Name', 'STRING id'].concat(state.vectorsHeaders)];
 
-            Object.entries(state.namesStringMap).forEach(([name, match], index) => {
-                if (match === null || typeof match !== "object" || !("stringId" in match) || !("stringName" in match)) return;
+            (proteinsNames as string[]).forEach((name, index) => {
                 if (name in unMatchedMap && unMatchedMap[name].accepted) return;
+                const match = namesStringMap[name];
 
                 let orgName = name;
                 let orgSTRINGname = match.stringName;
-                let orgSTRINGId = match.stringId;
+                let orgSTRINGId = String(match.stringId);
 
-                if (orgSTRINGId == "0"){
+                if (orgSTRINGId === "0") {
                     orgSTRINGname = "";
                     orgSTRINGId = "";
                 };
@@ -41,13 +44,7 @@ const SaveData = forwardRef((props, ref) => {
                     orgName = replacementMap[name].string_name;
                 }
 
-                const row: string[] = [orgName, String(orgSTRINGname), String(orgSTRINGId)];
-
-                Object.keys(val['vectorsValues']).forEach((vectorName) => {
-                    row.push(val['vectorsValues'][vectorName][index]);
-                });
-
-                xlsxContent.push(row);
+                xlsxContent.push([orgName, orgSTRINGname, orgSTRINGId, ...headersValues[index]]);
             })
       
             const worksheet = utils.aoa_to_sheet(xlsxContent);
@@ -68,9 +65,24 @@ const SaveData = forwardRef((props, ref) => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            return "downloaded XLSX data file";
+            actions.updateIsLoading({ isLoading: false });
         }
-      }));
+    }));
+
+    function columnsToRows<T>(columns: T[][]): T[][] {
+        columns = columns.filter(c => c !== undefined);
+        const rowCount = Math.max(...columns.map(c => c.length));
+        const rows = Array.from({ length: rowCount }, () => Array(columns.length));
+
+        for (let col = 0; col < columns.length; col++) {
+            const column = columns[col];
+            for (let row = 0; row < column.length; row++) {
+            rows[row][col] = column[row];
+            }
+        }
+
+        return rows;
+    }
 
     useEffect(() => {
         actions.updateIsLoading({ isLoading: true });
@@ -84,19 +96,22 @@ const SaveData = forwardRef((props, ref) => {
         let manmap: { [key: string]: replaceNameStatus } = {};
         let unMatched: { [key: string]: nameStatus } = {};
 
-        for (const [name, match] of Object.entries(state.namesStringMap)) {
+        const [suggestionsObj, namesStringMap] = await getMany(["suggestionsObj", "namesStringMap"]);
+        for (const [name, match] of Object.entries(namesStringMap as INamesStringMap)) {
             if (match === undefined || match === null || typeof match !== "object" || !("stringName" in match) || !("stringId" in match)) continue;
 
-            if (name in state.suggestionsObj.alternative_match) {
-                altmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
-            } else if (state.suggestionsObj.no_match.includes(name) && match.stringId !== "0") {
+            if (name in suggestionsObj.alternative_match) {
+                altmap[name] = { string_name: match.stringName, string_id: match.stringId, accepted: false } as replaceNameStatus;
+            } else if (suggestionsObj.no_match.includes(name) && match.stringId !== 0) {
                 manmap[name] = {string_name: match.stringName, string_id: match.stringId, accepted: false} as replaceNameStatus;
             }
-            else if (match.stringId === "0") {
+            else if (match.stringId === 0) {
                 unMatched[name] = {accepted: false} as nameStatus;
             }
         }
 
+        console.log(altmap);
+        console.log(manmap);
         let replacementMap: { [key: string]: replaceNameStatus } = {...manmap, ...altmap};
 
         console.log(replacementMap);

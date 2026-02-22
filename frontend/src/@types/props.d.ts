@@ -13,7 +13,7 @@ export interface nameStatus {
 
 export interface replaceNameStatus extends nameStatus {
   string_name: string,
-  string_id: string,
+  string_id: int,
 }
 
 export interface formRef {
@@ -28,7 +28,8 @@ interface GraphExposedMethods extends HTMLDivElement {
   applyNodeSize: (size: SupportedNodeSize) => void,
   applyOpacity: (op: SupportedOpacity) => void,
   applyNodeColor: (type: 'pos' | 'neg', color: SupportedNodeColor) => void
-  downloadGraph: (type: downloadFileTypes) => void,
+  getGraphBlob: (type: downloadFileTypes) => Blob | null,
+  layoutRender: () => void
 }
 
 export interface graphRef extends React.RefObject<HTMLDivElement>{
@@ -42,6 +43,7 @@ export interface formRefProps {
 
 export interface IErrorInputTextProps {
   orgName: string;
+  stringName: string;
 }
 
 export interface IStepProps {
@@ -58,8 +60,7 @@ export interface IPanelProps {
 export interface IGraphProps {
   graphData: ICustomGraphData;
   clickedVector: string;
-  thresholds: threshMap;
-  alertLoading: () => any;
+  alertLoading: () => void;
 }
 
 export interface IStepsBarProps {
@@ -82,17 +83,16 @@ export interface IGraphBarProps {
   setOpenTable: React.Dispatch<React.SetStateAction<boolean>>;
   nodesNum: number;
   linksNum: number;
-  clickedVector: string;
+  missingNodes: {orgName: string; value: number}[];
   thresholds: threshMap;
   setThresholds: React.Dispatch<React.SetStateAction<threshMap>>;
 }
 
 export interface ISwitchableProps {
-  setNamesStringMap: React.Dispatch<
-    React.SetStateAction<INamesStringMap | undefined>
-  >;
+  setNamesStringMap: React.Dispatch<React.SetStateAction<INamesStringMap | undefined>>;
   orgName: string;
-  suggestions: { [key: string]: string };
+  suggestions: { [key: string]: number };
+  selected: string;
 }
 
 interface MenuItem {

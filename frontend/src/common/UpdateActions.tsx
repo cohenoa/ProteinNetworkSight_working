@@ -43,7 +43,7 @@ export function updateFileName(
 
 export function updateFileUpload(
   state: GlobalState,
-  payload: { json: any[]; headers: string[] }
+  payload: { headers: string[] }
 ): GlobalState {
   console.log(payload);
   return {
@@ -55,13 +55,13 @@ export function updateFileUpload(
 export function updateFileDetails(
   state: GlobalState,
   payload: {
-    proteinsNames: string[];
+    // proteinsNames: string[];
     scoreThreshold: number;
-    positiveThreshold: number;
-    negativeThreshold: number;
+    // positiveThreshold: number;
+    // negativeThreshold: number;
     organism: OptionType;
     vectorsHeaders: string[];
-    thresholds: {[x: string]: number[];}
+    thresholds: {[x: string]: threshMap;}
     // vectorsValues: IVectorsValues;
   }
 ): GlobalState {
@@ -120,7 +120,7 @@ export function updateUuid(
 
 export function updateThresholds(
   state: GlobalState,
-  payload: { thresholds: { [x: string]: number[]; }}
+  payload: { thresholds: { [x: string]: threshMap; }}
 ): GlobalState {
   console.log(payload);
   return {

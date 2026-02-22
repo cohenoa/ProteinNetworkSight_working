@@ -112,7 +112,7 @@ const Tutorial: FC = () => {
             “UID” the header of the numerical columns start with “G”, followed
             by some index. */}
           </p>
-          <img className="" src={example_rows} alt="example_rows" />
+          <img className="t-img" src={example_rows} alt="example_rows" />
         </div>
         {/* Setting parameters and thresholds DIV */}
         <div>

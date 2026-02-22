@@ -3,19 +3,17 @@ import { ISwitchableProps } from "../@types/props";
 import Switch, { Item } from "react-switchable-next";
 import "react-switchable-next/dist/index.esm.css";
 import { INamesStringMap } from "../@types/global";
-import { useStateMachine } from "little-state-machine";
 import "../styles/Switchable.css";
 
-const Switchable: FC<ISwitchableProps> = ({
-  setNamesStringMap,
-  orgName,
-  suggestions,
-}) => {
-  const { state } = useStateMachine();
+const Switchable: FC<ISwitchableProps> = ({setNamesStringMap, orgName, suggestions, selected}) => {
   const valDelim = ":";
 
-  const createValue = (strName: string, strId: string) => {
-    return orgName + valDelim + strName + valDelim + strId;
+  if (orgName === "ACC1"){
+    console.log("selected: ", selected);
+  }
+
+  const createValue = (strName: string, strId: number) => {
+    return orgName + valDelim + strName + valDelim + String(strId);
   };
 
   const splitValue = (value: string) => {
@@ -23,7 +21,7 @@ const Switchable: FC<ISwitchableProps> = ({
     return {
       orgName: splited[0],
       strName: splited[1],
-      strID: splited[2],
+      strID: Number(splited[2]),
     };
   };
 
@@ -41,12 +39,12 @@ const Switchable: FC<ISwitchableProps> = ({
   };
 
   const createItems = () => {
-    const items = Object.keys(suggestions).map((strName) => {
-      const value = createValue(strName, suggestions[strName]);
+    const items = Object.entries(suggestions).map(([strName, stringId]) => {
+      const value = createValue(strName, stringId);
       return (
         <Item
           key={strName}
-          default={strName === state.namesStringMap[orgName]?.stringName}
+          default={selected === strName}
           value={value}
         >
           {strName}
@@ -55,11 +53,11 @@ const Switchable: FC<ISwitchableProps> = ({
     });
 
     const otherKey = "other";
-    const otherValue = createValue("other", "0");
+    const otherValue = createValue("other", 0);
     items.push(
       <Item
         key={otherKey}
-        default={otherKey === state.namesStringMap[orgName]?.stringName}
+        default={selected === "other"}
         value={otherValue}
       >
         {otherKey}

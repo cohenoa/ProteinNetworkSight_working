@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState,useEffect, forwardRef, useImperativeHandle } from "react";
 import { ICustomLink, ICustomNode } from "../@types/graphs";
-import { graphRef, IGraphProps } from "../@types/props";
+import { IGraphProps } from "../@types/props";
 import "../styles/Graph.css";
 import "../styles/Button.css";
 import CytoscapeComponent from "react-cytoscapejs";
@@ -8,7 +8,7 @@ import cytoscape from 'cytoscape';
 import Panel from "./Panel";
 import ContextMenu from "./ContextMenu";
 import { saveAs } from 'file-saver';
-import { get, set } from 'idb-keyval';
+import { get, set, keys } from 'idb-keyval';
 import { useStateMachine } from "little-state-machine";
 import { MenuItem } from "../@types/props";
 import { supportedSettings, SupportedFileType, SupportedLayout, SupportedNodeSize, SupportedOpacity, SupportedNodeColor } from "../common/GraphSettings";
@@ -44,7 +44,7 @@ interface CytoscapeStyle {
  * The component create the graph, using cytoscape.js library.
  * The props are the graph data and the clikceed vector (for the files)
  */
-const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graphData, clickedVector, thresholds, alertLoading}, ref) => {
+const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graphData, clickedVector, alertLoading}, ref) => {
   const { state } = useStateMachine({});
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [selectedNode, setSelectedNode] = useState<ICustomNode | null>(null);
@@ -76,12 +76,6 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
       },
     },
   ]);
-
-  const resetElements = async () => {
-    setElements(() => {
-      return [];
-    });
-  };
   
   const [layout, setLayout] = useState<any>({
     name: supportedSettings.layouts.CIRCLE,
@@ -93,31 +87,44 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
     condense: true, // uses all available space on false, uses minimal space on true
     animate: false,
     positions: false,
-    stop: function() {
+    stop: async function() {
+      console.log("layout stop on cytoscape");
       setLayoutStop(true);
+      alertLoading();
+      // setTimeout(() => {
+      //   alertLoading();
+      // }, 100);
     }
   });
+
+  const setRef = (el: HTMLDivElement | null) => {
+    if (typeof ref === "function") ref(el);
+    else if (ref) ref.current = el;
+
+    if (el) {
+      // graphReadyResolveRef.current?.();
+    }
+  };
 
   const [layoutStop, setLayoutStop] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // useEffect(() => {
+  //   if (layoutStop) {
+  //     if (ref) {
+  //       alertLoading();
+  //     }
+  //     else{
+  //       console.log("no ref");
+  //     }
+  //   }
+  // }, [layoutStop]);
+
   //Create a ref to the cy core, and an on click function for the nodes
   const handleCyInit = useCallback(
     async (cy: cytoscape.Core) => {
-      // document.addEventListener('contextmenu', function (event) {
-      //   event.preventDefault();
-      // })
       cyRef.current = cy;
-      // cy.on('cxttapstart', (event) => {
-      //   // Check if the right mouse button is pressed (event.originalEvent.button === 2)
-      //   event.preventDefault();
-      // });
-      // cy.on('cxttapend', (event) => {
-      //   // Check if the right mouse button is pressed (event.originalEvent.button === 2)
-      //     // Prevent the default context menu only for right-clicks on the Cytoscape container
-      //     event.preventDefault();
-      // });
 
       cy.on("cxttap", (event) => {
         event.stopImmediatePropagation();
@@ -138,50 +145,20 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
       cy.on('free', 'node', (event) => {
         // node dropped
         setCurLayout(supportedSettings.layouts.PRESET);
-        // setLayout({
-        //   ...layout,
-        //   name: supportedSettings.layouts.PRESET,
-        //   fit: false
-        // })
       });
       window.addEventListener("click", (event) => {
         setOpenContextMenu(false);
       });
-      // window.addEventListener('contextmenu', (event) => {
-      //   console.log(event)
-      // })
 
       cyRef.current.on("click", "node", (event) => {
         const node = event.target;
         console.log("clicked node", node.id());
         console.log("graph data nodes", graphData.nodes);
         const clickedNode = (graphData.nodes as ICustomNode[]).find((n: ICustomNode) => n.id === node.id());
-        // const clickedNode = graphData.nodes.find(
-        //   (n: ICustomNode) => n.id === node.id()
-        // );
         console.log("clicked node", clickedNode);
         setSelectedNode({...clickedNode} as ICustomNode);
         setOpenPanel(true);
       });
-
-      try {
-        const val = await get(state.fileName);
-  
-        if (val) {
-          const clickedVectors = val.clicked_vectors || {};
-  
-          if (clickedVector in clickedVectors) {
-            const positions = clickedVectors[clickedVector].positions;
-  
-            if (positions && positions.length > 0) {
-              // Set the preset layout using the saved positions
-              cyRef.current.nodes().positions((node, i) => positions[i]);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data from IndexedDB", error);
-      }
     },
     [graphData,clickedVector, state.fileName]
   );
@@ -221,51 +198,32 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const val = await get(state.fileName);
-      const clickedVectors = val['clicked_vectors'] || { positions: [],threshold:{}, elements:[]};
+
+      const newElements: any[] = [];
+      createNodes(newElements, graphData.nodes);
+      createLinks(newElements, graphData.links);
       
-      var elementsVector = clickedVectors.elements || [];
-      if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
+      setElements(newElements);
 
-        elementsVector = clickedVectors[clickedVector].elements[0]
-        const positions = clickedVectors[clickedVector].positions;
-        if (positions !== undefined) {
-          setElements(elementsVector);
-          applyOpacity(clickedVectors[clickedVector].opacity);
-          setCurNodeColor(clickedVectors[clickedVector].color);
-          setCurNodeSize(clickedVectors[clickedVector].nodeSize);
-
-          let layoutName = clickedVectors[clickedVector].layout;
-
-          setCurLayout(layoutName as SupportedLayout);
-          layout.name = layoutName as SupportedLayout;
-          if (layoutName === supportedSettings.layouts.PRESET) {
-            layout.positions = positions.reduce((positionsObj: any, node: any) => {
-              const nodeId = Object.keys(node)[0];
-              const position = node[nodeId];
-              positionsObj[nodeId] = position;
-              return positionsObj;
-            }, {});
-          }
-        }
-      } else {
+      if ((await keys()).includes(clickedVector + "_layout")) {
+        applySavedGraph();
+      }      
+      else {
         console.log("Setting the elements for the first time");
 
-        if (clickedVector in clickedVectors){
-          delete  val.clicked_vectors[clickedVector];
-          await set(state.fileName,val);
-          console.log(val.clicked_vectors)
-        }
-        createNodes(elements, graphData.nodes);
-        createLinks(elements, graphData.links);
+        // if (clickedVector in clickedVectors){
+        //   delete  val.clicked_vectors[clickedVector];
+        //   await set(state.fileName,val);
+        //   console.log(val.clicked_vectors)
+        // }
+        // const newElements: any[] = [];
+        // createNodes(newElements, graphData.nodes);
+        // createLinks(newElements, graphData.links);
         
-        setElements(elements);
+        // setElements(newElements);
       }
-
-      cyRef.current?.layout(layout).run();
-      
     } catch (error) {
-      console.error("Error fetching data from IndexedDB", error);
+      console.error("Error loading graph data", error);
     }
     finally {
       // Set loading to false when the operation is complete
@@ -275,28 +233,35 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
   }, []);
   
   useEffect(() => {
-    resetElements().then(() => {
-      fetchData().then(() => {
-        console.log("HERE NODE SIZE: " + curNodeSize)
-      });
-    });
+    fetchData();
+    // resetElements().then(() => {
+    //   console.log("fetching data after reset");
+    //   fetchData();
+    // });
   }, [ graphData.nodes, graphData.links, state.fileName, fetchData]);
 
-  useEffect(() => {
+  const layoutRender = () => {
+    console.log("applying layout");
     cyRef.current?.layout(layout).run();
-  }, [layout, curNodeSize, elements]);
+  }
 
   useEffect(() => {
-    if (layoutStop && dataLoaded) {
-      setTimeout(() => {
-        alertLoading();
-      }, 2000);
+    layoutRender();
+    // console.log("applying layout");
+    // cyRef.current?.layout(layout).run();
+  }, [layout, curNodeSize, elements]);
+
+  // useEffect(() => {
+  //   if (layoutStop && dataLoaded) {
+  //     setTimeout(() => {
+
+  //     }, 2000);
       
-    }
-    else{
-      console.log(layoutStop, dataLoaded);
-    }
-  }, [layoutStop, dataLoaded])
+  //   }
+  //   else{
+  //     console.log(layoutStop, dataLoaded);
+  //   }
+  // }, [layoutStop, dataLoaded])
 
   
   // The function handle a click on the close button on the panel
@@ -306,62 +271,114 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
 
 
-//The function return the color of the link, based on the score
-const getLinkColor = (score: Number) => {
-  if (score === 1994) return "white";
-  if (score.valueOf() >= 0.95) return "black";
-  if (score.valueOf() >= 0.9) return "#101010";
-  if (score.valueOf() >= 0.8) return "#282828";
-  if (score.valueOf() >= 0.7) return "#383838";
-  if (score.valueOf() >= 0.6) return "#484848";
-  if (score.valueOf() >= 0.5) return "#585858";
-  if (score.valueOf() >= 0.4) return "#696969";
-  if (score.valueOf() >= 0.3) return "#888888";
-  return "white";
-};
+  //The function return the color of the link, based on the score
+  const getLinkColor = (score: Number) => {
+    if (score === 1994) return "white";
+    if (score.valueOf() >= 0.95) return "black";
+    if (score.valueOf() >= 0.9) return "#101010";
+    if (score.valueOf() >= 0.8) return "#282828";
+    if (score.valueOf() >= 0.7) return "#383838";
+    if (score.valueOf() >= 0.6) return "#484848";
+    if (score.valueOf() >= 0.5) return "#585858";
+    if (score.valueOf() >= 0.4) return "#696969";
+    if (score.valueOf() >= 0.3) return "#888888";
+    return "white";
+  };
 
-const saveGraph = async () => {
-
-  const nodePositions = cyRef.current?.nodes().map((node) => {
-    let positionObj = node.position();
-    return {[node.id()]: {x: positionObj.x, y: positionObj.y}};
-  });
-
-  if (nodePositions && nodePositions.length > 0) {
+  const saveGraph = async () => {
     try {
-      const val = await get(state.fileName);
 
-      const clickedVectors = val.clicked_vectors || {};
-      console.log(clickedVectors)
-      if (!(clickedVector in clickedVectors)) {
-        // If clickedVector is not in clickedVectors, create a new entry
-        clickedVectors[clickedVector] = { positions: [],threshold:{},elements:[] };
+      const nodePositions = curLayout === supportedSettings.layouts.PRESET ? cyRef.current?.nodes().map((node) => {
+        let positionObj = node.position();
+        return {[node.id()]: {x: positionObj.x, y: positionObj.y}};
+      }) : [];
+
+      if (nodePositions === undefined) {
+        console.log("nodePositions is undefined");
+        return false
+      };
+
+      const graphLayout = {
+        positions: [...nodePositions],
+        elements: elements,
+        layout: curLayout,
+        nodeSize: curNodeSize,
+        opacity: myStyle[1].style.opacity,
+        color: curNodeColor
       }
-      
-      const elementsVector = clickedVectors[clickedVector].elements || [];
-      elementsVector.push(elements);
-      clickedVectors[clickedVector].id = Object.keys(clickedVectors).length - 1;
-      clickedVectors[clickedVector].threshold = thresholds;
-      clickedVectors[clickedVector].positions = [...nodePositions];
-      clickedVectors[clickedVector].elements = elementsVector;
-      clickedVectors[clickedVector].layout = curLayout;
-      clickedVectors[clickedVector].nodeSize = curNodeSize;
-      clickedVectors[clickedVector].opacity = myStyle[1].style.opacity;
-      clickedVectors[clickedVector].color = curNodeColor;
-
-      
-      // Update the clicked_vectors and nodePositions in the existing data
-      console.log(clickedVectors) 
-
-      val.clicked_vectors = clickedVectors;
-      set(state.fileName, val);
+      console.log(graphLayout);
+      set(clickedVector + "_layout", graphLayout);
+      return true;
     } catch (error) {
       console.error("Error saving node positions to IndexedDB", error);
     }
-  }
-};
+    return false;
+  };
 
-  const downloadGraph = (type: SupportedFileType) => {
+  const applySavedGraph = async () => {
+    console.log("applySavedGraph");
+    get(clickedVector + "_layout").then((graphLayout: any) => {
+      if (graphLayout) {
+        console.log(graphLayout);
+        console.log("graphLayout found in local storage, applying it");
+        
+        applyOpacity(graphLayout.opacity);
+        applyNodeSize(graphLayout.nodeSize);
+        applyNodeColor('pos', graphLayout.color.pos);
+        applyNodeColor('neg', graphLayout.color.neg);
+        setCurNodeSize(graphLayout.nodeSize);
+
+        let layoutName = graphLayout.layout;
+
+        setCurLayout(layoutName as SupportedLayout);
+        let newLayout = {
+          ...layout,
+          name: layoutName,
+          animate: true,
+          fit: true,
+        };
+
+        if (layoutName === supportedSettings.layouts.PRESET) {
+          newLayout.positions = graphLayout.positions.reduce((positionsObj: any, node: any) => {
+            const nodeId = Object.keys(node)[0];
+            positionsObj[nodeId] = node[nodeId];
+            return positionsObj;
+          }, {});
+        }
+        setLayout(newLayout);
+        return true;
+      }
+    })
+    return false;
+  }
+
+  const getGraphBlob = (type: SupportedFileType) => {
+    const cy = cyRef.current;
+    if (cy){
+      let blob: Blob;
+      switch (type) {
+        case supportedSettings.fileTypes.SVG:
+          blob = new Blob([cy.svg()], { type: "image/svg+xml;charset=utf-8" });
+          break;
+        case supportedSettings.fileTypes.PNG:
+          blob = cy.png({ output: "blob", full: true });
+          break;
+        case supportedSettings.fileTypes.JSON:
+          blob = new Blob([JSON.stringify(cy.json())], { type: "application/json" });
+          break;
+        default:
+          console.log("type not supported");
+          return null;
+      }
+      return blob;
+    }
+    else{
+      console.log("no cy");
+    }
+    return null;
+  }
+
+  const downloadGraph = async (type: SupportedFileType) => {
     const cy = cyRef.current;
     if (cy){
       let blob: Blob;
@@ -382,46 +399,6 @@ const saveGraph = async () => {
       console.log("no cy");
     }
   };
-
-  const applySavedGraph = async () => {
-    const val = await get(state.fileName);
-    const clickedVectors = val['clicked_vectors'] || {};
-
-    if (clickedVector in clickedVectors && clickedVectors[clickedVector].threshold.pos === thresholds.pos && clickedVectors[clickedVector].threshold.neg === thresholds.neg) {
-      const elementsVector = clickedVectors[clickedVector].elements[0]
-      const positions = clickedVectors[clickedVector].positions;
-      if (positions !== undefined) {
-        console.log("applySavedGraph");
-        console.log(clickedVectors[clickedVector]);
-        setElements(elementsVector);
-        applyOpacity(clickedVectors[clickedVector].opacity);
-        setCurNodeColor(clickedVectors[clickedVector].color);
-        setCurNodeSize(clickedVectors[clickedVector].nodeSize);
-
-        let layoutName = clickedVectors[clickedVector].layout;
-
-        setCurLayout(layoutName as SupportedLayout);
-        let newLayout = {
-          ...layout,
-          name: layoutName,
-          animate: true,
-          fit: true,
-        }
-        if (layoutName === supportedSettings.layouts.PRESET) {
-          newLayout.positions = positions.reduce((positionsObj: any, node: any) => {
-            const nodeId = Object.keys(node)[0];
-            const position = node[nodeId];
-            positionsObj[nodeId] = position;
-            return positionsObj;
-          }, {});
-        }
-
-        setLayout(newLayout);
-      }
-      return true;
-    }
-    return false;
-  }
   
   {/* @ts-ignore */}
   useImperativeHandle(ref, () => ({
@@ -430,7 +407,9 @@ const saveGraph = async () => {
     applyNodeSize,
     applyOpacity,
     applyNodeColor,
-    downloadGraph
+    getGraphBlob,
+    layoutRender,
+    // downloadGraph
   }));
 
   // right click menu
@@ -477,6 +456,7 @@ const saveGraph = async () => {
 
   const applyLayout = async (name: SupportedLayout, animate: boolean) => {
     if (cyRef.current) {
+      // setLayoutStop(false);
       if (name === supportedSettings.layouts.PRESET) {
         if (!await applySavedGraph()) {
           alert("there is no saved layout. \nto save a layout open the submenu and click 'save'");
@@ -497,16 +477,27 @@ const saveGraph = async () => {
 
 const applyNodeColor = (nodeType: 'pos' | 'neg', color: SupportedNodeColor) => {
   console.log("setting node color");
-  const newNodeColors = {...curNodeColor, [nodeType]: color};
+  // setLayoutStop(false);
 
   cyRef.current?.nodes().forEach(function(node){
-    node.data('color', node.data('positive') ? newNodeColors.pos : newNodeColors.neg);
+    node.data('color', (node.data('positive') !== (nodeType === 'pos')) ? node.data('color') : color);
   });
+
+  const posNodes = cyRef.current?.nodes().filter(function(node){return node.data('positive')})
+  const negNodes = cyRef.current?.nodes().filter(function(node){return !node.data('positive')})
+
+  const newNodeColors = {
+    pos: posNodes ? posNodes[0].data('color') : color,
+    neg: negNodes ? negNodes[0].data('color') : color
+  };
+
+  console.log(newNodeColors);
 
   setCurNodeColor(newNodeColors);
 }
 const applyNodeSize = (size: SupportedNodeSize) => {
   console.log("setting node size");
+  // setLayoutStop(false);
   cyRef.current?.nodes().forEach(function(node){
     node.data('size', (parseInt(node.data('size')) / curNodeSize) * size);
   });
@@ -514,6 +505,7 @@ const applyNodeSize = (size: SupportedNodeSize) => {
 }
 const applyOpacity = (op: SupportedOpacity) => {
   console.log("setting opacity");
+  // setLayoutStop(false);
   const newStyle = [myStyle[0], {...(myStyle[1])}];
   newStyle[1].style.opacity = op;
   setMyStyle(newStyle);
