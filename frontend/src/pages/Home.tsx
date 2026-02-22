@@ -3,15 +3,13 @@ import { Link } from "react-router-dom";
 import "../styles/Home.css";
 import "../styles/Button.css";
 import { openLink } from "../common/GeneralCommon";
-import backgroundVideo from "../assets/video.mp4";
+import homeImageLight from "../assets/HomeImageBLWhite.png";
 const gitLink = "https://github.com/cohenoa/ProteinNetworkSight_working";
 
 export const HomePage: FC = () => {
   return (
-    <div className="prompt">
-      <video autoPlay muted loop id="video">
-        <source src={backgroundVideo} type="video/mp4" />
-      </video>
+    <div className="prompt" style={{ backgroundImage: `url(${homeImageLight})`, backgroundRepeat: "no-repeat", backgroundSize: "cover" }}>
+      {/* <img src={homeImage} alt="homeImage" /> */}
       <h1>
         Simultaneous building
         <br /> of multiple molecular
@@ -78,7 +76,7 @@ export const HomePage: FC = () => {
           <h5 className="creditRow">Tohar Tsivtman and Ayelet Gibli (2022)</h5>
           <h5 className="creditRow">Aviv Eldad (2023)</h5>
           <h5 className="creditRow">Nitzan Migdal (2023-2024)</h5>
-          <h5 className="creditRow">Omri Nahor (2023-2025)</h5>
+          <h5 className="creditRow">Omri Nahor (2023-2026)</h5>
         </div>
       </div>
     </div>
