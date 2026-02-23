@@ -3,6 +3,7 @@ import "../styles/Tutorial.css";
 import example_rows from "../assets/tutorial images/example_rows.png";
 import set_params from "../assets/tutorial images/set_params.png";
 import graph from "../assets/tutorial images/graph.png";
+import graph_bar from "../assets/tutorial images/graph_bar.png";
 import others from "../assets/tutorial images/others.png";
 import protein_names from "../assets/tutorial images/protein_names.png";
 import table from "../assets/tutorial images/table.png";
@@ -203,6 +204,7 @@ const Tutorial: FC = () => {
             interaction.
           </p>
           <img className="t-img" src={graph} alt="graph"/>
+          <img className="t-img" src={graph_bar} alt="graphBar"/>
           <p className="t-p">
             In this illustration, multiple protein interactions are depicted. For instance, 
             TIGAR is represented with a positive, sizeable value (indicated by the blue color) 

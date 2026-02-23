@@ -30,8 +30,6 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const [selectedOption, setSelectedOption] = useState<OptionType>({...state.organism});
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log(state);
-
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -101,16 +99,16 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
 
       console.log("vectorsHeaders: ", vectorsHeaders);
       console.log("vectors: ", vectors);
-      console.log("proteinsNames: ", proteinsNames);
+
 
       await setMany([
         ["proteinsNames", proteinsNames],
         ...vectors
       ]);
 
-      const thresholds = Object.keys(state.thresholds).length === 0 ? 
-      vectorsHeaders.reduce((acc, header) => ({...acc, [header]: defaultThresholds} as threshMap), {}) as {[key: string]: threshMap}
-        : state.thresholds;
+      console.log(vectorsHeaders);
+      console.log(data);
+      const thresholds = Object.keys(state.thresholds).length === 0 ? vectorsHeaders.reduce((acc, header) => ({...acc, [header]: {pos: data.positiveThreshold, neg: data.negativeThreshold} as threshMap}), {}) as {[key: string]: threshMap} : state.thresholds;
 
       console.log("thresholds: ", thresholds);
 
@@ -258,7 +256,11 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               max={1}
               defaultValue={defaultThresholds.pos}
               required
-            {...register("positiveThreshold")}
+              {...register("positiveThreshold", {
+                onChange: (e) => {
+                  actions.updateThresholds({thresholds: {}});
+                },
+              })}
           />
 
           {errors.positiveThreshold && errors.positiveThreshold.type === "json" && (
@@ -278,7 +280,11 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
               max={0}
               defaultValue={defaultThresholds.neg}
               required
-              {...register("negativeThreshold")}
+              {...register("negativeThreshold", {
+                onChange: (e) => {
+                  actions.updateThresholds({thresholds: {}});
+                },
+              })}
             />
     
             {errors.negativeThreshold && errors.negativeThreshold.type === "json" && (

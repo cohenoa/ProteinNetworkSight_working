@@ -11,7 +11,7 @@ import { Font, FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import "../styles/Result.css";
 import ErrorScreen from "../components/ErrorScreen";
 import CytoscapejsComponentself from "../components/Cytoscapejs";
-import { set, get, getMany } from 'idb-keyval';
+import { set, get, getMany, update } from 'idb-keyval';
 import {
   INamesStringMap,
   IVectorsValues,
@@ -31,6 +31,8 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     nodes: [],
     links: [],
   });
+
+  // const missingNodes = useRef<{orgName: string, value: number}[]>([]);
   const [missingNodes, setMissingNodes] = useState<{orgName: string, value: number}[]>([]);
   const [openTable, setOpenTable] = useState<boolean>(false);
   const [thresholds, setThresholds] = useState<threshMap>({
@@ -104,7 +106,10 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
       if (val && val.graphData && (val.thresholds as threshMap).pos === state.thresholds[clickedVector].pos && (val.thresholds as threshMap).neg === state.thresholds[clickedVector].neg) {
         console.log("graph data from mem: ", val.graphData);
         console.log("thresholds from mem: ", val.thresholds);
+        console.log("missing nodes from mem: ", val.missingNodes);
         setGraphData(val.graphData as ICustomGraphData);
+        // missingNodes.current = val.missingNodes as {orgName: string, value: number}[];
+        setMissingNodes(val.missingNodes as {orgName: string, value: number}[]);
         actions.updateIsLoading({ isLoading: false });
       }
       else {
@@ -139,6 +144,12 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
 
           setMissingNodes(missing);
 
+          set(clickedVector + "_graph", {
+            graphData: null,
+            thresholds: {...state.thresholds[clickedVector]} as threshMap,
+            missingNodes: missing
+          });
+
           const body = {
             values_map: values_map,
             thresh_pos: state.thresholds[clickedVector].pos,
@@ -159,28 +170,18 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
   const handleJsonGraphData = (jsonString: string) => {
     const tempGraphData: ICustomGraphData = JSON.parse(jsonString);
     setGraphData(tempGraphData);
-    set(clickedVector + "_graph", {
-      graphData: tempGraphData,
-      thresholds: {...state.thresholds[clickedVector]} as threshMap,
+    update(clickedVector + "_graph", (oldValue) => {
+      return {
+        ...oldValue,
+        graphData: tempGraphData,
+      };
     });
-    console.log("graph data: ", tempGraphData);
-    // getMany([clickedVector + "_data", "namesStringMap"]).then(([values_arr, namesStringMap]) => {
-    //   const graphNodes: string[] = tempGraphData.nodes.map((node) => node.id);
-    //   console.log("graphNodes in results: ", graphNodes);
-
-    //   let values_map: { [key: string]: number } = {};
-    //   for (let i = 0; i < values_arr.length; i++) {
-    //     values_map[ids_arr[i]] = values_arr[i];
-    //   }
-
-    //   const filteredNodes: { orgName: string; stringName: string }[] = Object.entries(namesStringMap)
-    //     .filter(([orgName, { stringName, stringId }]) => !graphNodes.includes(orgName) || stringName === "other")
-    //     .map(([orgName, { stringName, stringId }]) => {
-    //       return { orgName: orgName, stringName: stringName };
-    //     });
-    //     console.log("filteredNodes in results: ", filteredNodes);
-    //   // setFilteredNodes(filteredNodes);
+    // set(clickedVector + "_graph", {
+    //   graphData: tempGraphData,
+    //   thresholds: {...state.thresholds[clickedVector]} as threshMap,
+    //   missingNodes: missingNodes
     // });
+    console.log("graph data: ", tempGraphData);
     actions.updateIsLoading({ isLoading: false });
   };
 

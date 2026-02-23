@@ -317,38 +317,37 @@ const CytoscapejsComponentself = forwardRef<HTMLDivElement, IGraphProps>(({graph
 
   const applySavedGraph = async () => {
     console.log("applySavedGraph");
-    get(clickedVector + "_layout").then((graphLayout: any) => {
-      if (graphLayout) {
-        console.log(graphLayout);
-        console.log("graphLayout found in local storage, applying it");
-        
-        applyOpacity(graphLayout.opacity);
-        applyNodeSize(graphLayout.nodeSize);
-        applyNodeColor('pos', graphLayout.color.pos);
-        applyNodeColor('neg', graphLayout.color.neg);
-        setCurNodeSize(graphLayout.nodeSize);
+    const graphLayout = await get(clickedVector + "_layout")
+    if (graphLayout) {
+      console.log(graphLayout);
+      console.log("graphLayout found in local storage, applying it");
+      
+      applyOpacity(graphLayout.opacity);
+      applyNodeSize(graphLayout.nodeSize);
+      applyNodeColor('pos', graphLayout.color.pos);
+      applyNodeColor('neg', graphLayout.color.neg);
+      setCurNodeSize(graphLayout.nodeSize);
 
-        let layoutName = graphLayout.layout;
+      let layoutName = graphLayout.layout;
 
-        setCurLayout(layoutName as SupportedLayout);
-        let newLayout = {
-          ...layout,
-          name: layoutName,
-          animate: true,
-          fit: true,
-        };
+      setCurLayout(layoutName as SupportedLayout);
+      let newLayout = {
+        ...layout,
+        name: layoutName,
+        animate: true,
+        fit: true,
+      };
 
-        if (layoutName === supportedSettings.layouts.PRESET) {
-          newLayout.positions = graphLayout.positions.reduce((positionsObj: any, node: any) => {
-            const nodeId = Object.keys(node)[0];
-            positionsObj[nodeId] = node[nodeId];
-            return positionsObj;
-          }, {});
-        }
-        setLayout(newLayout);
-        return true;
+      if (layoutName === supportedSettings.layouts.PRESET) {
+        newLayout.positions = graphLayout.positions.reduce((positionsObj: any, node: any) => {
+          const nodeId = Object.keys(node)[0];
+          positionsObj[nodeId] = node[nodeId];
+          return positionsObj;
+        }, {});
       }
-    })
+      setLayout(newLayout);
+      return true;
+    }
     return false;
   }
 
