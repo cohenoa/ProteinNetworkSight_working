@@ -96,25 +96,42 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
     actions.updateIsLoading({ isLoading: false });
   };
 
+  const isGraphMemValuesValid = (
+      graphData: ICustomGraphData, 
+      thresholds: threshMap, 
+      missingNodes: {orgName: string, value: number}[], 
+      namesStringMap: INamesStringMap) => {
+
+    if (!graphData) return false;
+    if (thresholds.pos !== state.thresholds[clickedVector].pos || thresholds.neg !== state.thresholds[clickedVector].neg) return false;
+    
+    for (const missingNode of missingNodes){
+      if (namesStringMap[missingNode.orgName].stringName === "other") return false;
+    }
+    for (const node of graphData.nodes) {
+      if (namesStringMap[node.orgName].stringName === "other") return false;
+    }
+    return true;
+  }
+
   const getGraphData = (vectorName: string) => {
     console.log("getting graph data");
     setError(false);
     console.log(clickedVector);
     actions.updateIsLoading({ isLoading: true });
 
-    get(vectorName + "_graph").then((val) => {
-      if (val && val.graphData && (val.thresholds as threshMap).pos === state.thresholds[clickedVector].pos && (val.thresholds as threshMap).neg === state.thresholds[clickedVector].neg) {
+    getMany([vectorName + "_graph", "namesStringMap"]).then(([val, namesStringMap]) => {
+      if (val && isGraphMemValuesValid(val.graphData, val.thresholds, val.missingNodes, namesStringMap as INamesStringMap)) {
         console.log("graph data from mem: ", val.graphData);
         console.log("thresholds from mem: ", val.thresholds);
         console.log("missing nodes from mem: ", val.missingNodes);
         setGraphData(val.graphData as ICustomGraphData);
-        // missingNodes.current = val.missingNodes as {orgName: string, value: number}[];
         setMissingNodes(val.missingNodes as {orgName: string, value: number}[]);
         actions.updateIsLoading({ isLoading: false });
       }
       else {
         console.log("getting graph data from server");
-        getMany([vectorName + "_data", "proteinsNames", "namesStringMap"]).then(([values_arr, ids_arr, namesStringMap]) => {
+        getMany([vectorName + "_data", "proteinsNames"]).then(([values_arr, ids_arr]) => {
           const idsList: number[] = [];
           const stringNames: string[] = [];
           const proteins: string[] = [];
@@ -126,9 +143,6 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
           }
 
           Object.entries(namesStringMap as INamesStringMap).forEach(([orgName, { stringName, stringId }]) => {
-            // idsList.push(stringId);
-            // stringNames.push(stringName);
-            // proteins.push(orgName);
             const val = values_map[orgName];
             if (val > state.thresholds[clickedVector].pos || val < state.thresholds[clickedVector].neg) {
               if (stringName === "other"){
