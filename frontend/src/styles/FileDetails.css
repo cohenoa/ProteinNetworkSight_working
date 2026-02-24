@@ -47,13 +47,13 @@
 }
 
 .detail-error{
-    font-size:  var(--small-text);
+    font-size:  var(--big-text);
     color: red;
 }
 
 .detail-warning{
-    font-size:  var(--small-text);
-    color: rgb(255, 179, 0);
+    font-size:  var(--big-text);
+    color: rgb(255, 185, 0);
 }
 
 .button-container{
