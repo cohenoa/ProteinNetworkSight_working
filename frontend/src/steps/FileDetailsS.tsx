@@ -62,13 +62,13 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
   const onSubmit = async (data: formValues) => {
     try {
       actions.updateIsLoading({isLoading: true});
+      console.log("formValues: ", data);
       const rawProteins = await get("json");
       const headers = state.headers;
 
-      console.log("data before idHeader: ", data);
-      console.log(state.headers);
-      console.log(headers);
       const idIndex = state.headers.indexOf(data.idHeader);
+      console.log(data.idHeader);
+      console.log(state.headers)
 
       // Normalize protein names
       const proteins = normalizeProteins(rawProteins, idIndex);
@@ -106,8 +106,6 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
         ...vectors
       ]);
 
-      console.log(vectorsHeaders);
-      console.log(data);
       const thresholds = Object.keys(state.thresholds).length === 0 ? vectorsHeaders.reduce((acc, header) => ({...acc, [header]: {pos: data.positiveThreshold, neg: data.negativeThreshold} as threshMap}), {}) as {[key: string]: threshMap} : state.thresholds;
 
       console.log("thresholds: ", thresholds);
@@ -193,7 +191,7 @@ const FileDetailsStep: FC<IStepProps> = ({ step, goNextStep }) => {
             defaultValue={state.idHeader}
             required
             {...register("idHeader", {
-              validate: { header: (v) => headers.includes(v) },
+              validate: { header: (v) => state.headers.includes(v) },
             })}
           />
 
