@@ -16,9 +16,8 @@ const ErrorScreen: FC = () => {
             2.  try to refresh the page and start over.<br/>
         </p>
         <p className="error-text">if you need help, please contact us at</p>
-        <p className="error-text">ayelet.gibli@gmail.com</p>
-        <p className="error-text">toharbk@gmail.com</p>
-
+        <p className="error-text">omrinahor@gmail.com</p>
+        <p className="error-text">noace@jce.ac.il</p>
 
         </div>
     )

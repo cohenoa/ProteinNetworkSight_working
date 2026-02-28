@@ -142,6 +142,9 @@ const Result: FC<IStepProps> = ({ step, goNextStep }) => {
             values_map[ids_arr[i]] = values_arr[i];
           }
 
+          console.log("namesStringMap: ", namesStringMap);
+          console.log("values_map: ", values_map);
+
           Object.entries(namesStringMap as INamesStringMap).forEach(([orgName, { stringName, stringId }]) => {
             const val = values_map[orgName];
             if (val > state.thresholds[clickedVector].pos || val < state.thresholds[clickedVector].neg) {
